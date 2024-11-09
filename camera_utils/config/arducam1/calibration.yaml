@@ -1,0 +1,20 @@
+image_width: 3264
+image_height: 2448
+camera_name: uvc1
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [2892.186364170564, 0.0, 1606.4563947000584, 0.0, 2874.5655413097693, 1306.3139936666075, 0.0, 0.0, 1.0]
+distortion_model: plumb_bob
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [0.16363480632956107, -0.20658638063425103, 0.013414478001803311, -0.0020823331533115, 0.0]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [3012.7548828125, 0.0, 1599.5525598395034, 0.0, 0.0, 2968.427734375, 1334.394681645208, 0.0, 0.0, 0.0, 1.0, 0.0]

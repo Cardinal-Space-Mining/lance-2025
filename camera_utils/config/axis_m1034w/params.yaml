@@ -1,0 +1,6 @@
+ipcamera:
+  ros__parameters:
+    rtsp_uri: "rtsp://admin:PASSWORD_HERE@10.11.11.238/onvif-media/media.amp?profile=profile_1_h264&sessiontimeout=60&streamtype=unicast"
+    image_topic: "image_raw"
+    image_width: 1280
+    image_height: 800

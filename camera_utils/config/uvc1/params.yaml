@@ -1,0 +1,20 @@
+/**:
+  ros__parameters:
+    video_device: "/dev/video0"
+    framerate: 15.0
+    io_method: "mmap"
+    frame_id: "map"
+    pixel_format: "mjpeg2rgb"
+    av_device_format: "YUV422P"
+    image_width: 3264
+    image_height: 2448
+    camera_name: "uvc1"
+    brightness: 60
+    contrast: 25
+    saturation: 48
+    sharpness: 38
+    white_balance_automatic: 1
+    white_balance_temperature: 4600
+    auto_exposure: 3
+    exposure_time_absolute: 166
+    focus_automatic_continuous: 1

@@ -1,0 +1,20 @@
+/**:
+  ros__parameters:
+    video_device: "/dev/video0"
+    framerate: 30.0
+    io_method: "mmap"
+    frame_id: "camera"
+    pixel_format: "mjpeg2rgb"
+    av_device_format: "YUV422P"
+    image_width: 1280
+    image_height: 720
+    camera_name: "lifecam"
+    # camera_info_url: "package://usb_cam/config/camera_info.yaml"
+    brightness: 30
+    contrast: 10
+    saturation: 50
+    sharpness: 40
+    white_balance_automatic: 0
+    white_balance_temperature: 3000
+    auto_exposure: 1
+    exposure_time_absolute: 20
