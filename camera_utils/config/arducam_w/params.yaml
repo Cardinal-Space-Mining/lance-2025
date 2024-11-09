@@ -1,10 +1,10 @@
 /**:
   ros__parameters:
-    video_device: "/dev/video2"
+    video_device: "/dev/video0"
     framerate: 15.0
     io_method: "mmap"
     frame_id: "camera"
-    pixel_format: "mjpeg2rgb"
+    pixel_format: "yuyv"
     av_device_format: "YUV422P"
     image_width: 1920
     image_height: 1080
