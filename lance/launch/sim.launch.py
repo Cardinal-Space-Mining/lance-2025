@@ -29,7 +29,11 @@ def generate_launch_description():
         output = 'screen',
         parameters = [
             os.path.join(get_package_share_directory('cardinal_perception'), 'config', 'localization.yaml'),
-            { 'use_sim_time': True }
+            {
+                'use_sim_time': True,
+                # 'require_rebias_before_tf_pub': False,
+                # 'require_rebias_before_scan_pub': False
+            }
         ],
         remappings = [
             ('filtered_scan', '/cardinal_perception/filtered_scan'),
