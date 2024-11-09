@@ -1,0 +1,3 @@
+[submodule "cardinal-perception"]
+	path = cardinal-perception
+	url = https://github.com/Cardinal-Space-Mining/Cardinal-Perception
