@@ -8,12 +8,13 @@ mkdir ws && cd ws
 ```
 Clone this branch into the `src` directory.
 ```bash
-git clone --recurse-submodules -b remote https://github.com/Cardinal-Space-Mining/lance-2025 src
+git clone --recurse-submodules -b sim-remote https://github.com/Cardinal-Space-Mining/lance-2025 src
 ```
 If you forgot to clone recursively:
 ```bash
 git submodule update --init --recursive
 ```
+If you plan to test using Gazebo, follow the [csm_gz_sim README](https://github.com/Cardinal-Space-Mining/csm_gz_sim) to set this up.
 
 ## Build
 1. Install [ROS2](https://docs.ros.org/en/jazzy/Installation.html) if not already done (we are using Jazzy for 2024-2025)
