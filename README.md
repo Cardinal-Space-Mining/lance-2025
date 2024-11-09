@@ -2,11 +2,15 @@
 Different branches contain different deployments, as indicated by branch name. PLEASE DO NOT MERGE DEPLOYMENT-SPECIFIC BRANCHES INTO EACH OTHER! They are separated to simplify the workspace complexity for each deployment (as well as reduce clone/pull overhead), so doing this would defeat the purpose.
 
 ## Setup
-*Don't forget to clone recursively!*
-```bash
-git clone https://github.com/Cardinal-Space-Mining/deployment-2025 --recurse-submodules
+Create a new workspace directory
 ```
-*If you have already cloned non-recursively:*
+mkdir ws && cd ws
+```
+Clone this branch into the `src` directory.
+```bash
+git clone --recurse-submodules -b remote https://github.com/Cardinal-Space-Mining/lance-2025 src
+```
+If you forgot to clone recursively:
 ```bash
 git submodule update --init --recursive
 ```
@@ -31,3 +35,6 @@ git submodule update --init --recursive
     colcon build --symlink-install <--executor parallel> <--event-handlers console_direct+>
     source install/setup.bash
     ```
+
+## VSCode
+See the [Cardinal Perception README](https://github.com/Cardinal-Space-Mining/Cardinal-Perception) for details on fixing vscode.
