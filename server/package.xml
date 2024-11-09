@@ -9,6 +9,7 @@
 
   <depend>camera_utils</depend>
   <depend>cardinal_perception</depend>
+  <depend>csm_gz_sim</depend>
   <depend>foxglove_bridge</depend>
 
   <buildtool_depend>ament_cmake</buildtool_depend>

@@ -12,6 +12,25 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
 
+    sim_pkg_path = get_package_share_directory('csm_gz_sim')
+
+    # launch gazebo
+    launch_gazebo = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(sim_pkg_path, 'launch', 'gazebo_sim.launch.py')
+        ),
+        launch_arguments = {
+            'gz_gui' : LaunchConfiguration('gz_gui', default='false'),
+            'gz_map' : LaunchConfiguration('gz_map', default='arena')
+        }.items()
+    )
+    # launch xbox control
+    launch_xbox_ctrl = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(sim_pkg_path, 'launch', 'xbox_ctrl.launch.py')
+        )
+    )
+    # tag detector
     tag_detector = Node(
         name = 'cardinal_perception_tag_detection',
         package = 'cardinal_perception',
@@ -23,6 +42,7 @@ def generate_launch_description():
         ],
         remappings = [ ('tags_detections', '/cardinal_perception/tags_detections') ]
     )
+    # foxglove
     foxglove_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('tags_server'), 'launch', 'foxglove.launch.py')
@@ -32,7 +52,11 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        DeclareLaunchArgument('gz_gui', default_value='false'),
+        DeclareLaunchArgument('gz_map', default_value='arena'),
         DeclareLaunchArgument('foxglove', default_value='false'),
+        launch_gazebo,
+        launch_xbox_ctrl,
         tag_detector,
         foxglove_node
     ])
