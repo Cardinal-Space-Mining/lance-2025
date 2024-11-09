@@ -24,7 +24,7 @@ def generate_launch_description():
     pkg_path = get_package_share_directory('tags_server')
 
     cameras = [
-        ('uvc1', False)
+        ('arducam1', False)
     ]
     cam_nodes = [
         make_camera_driver(x[0], x[1])
