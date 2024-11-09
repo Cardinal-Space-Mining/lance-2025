@@ -46,7 +46,7 @@
         voxel_filter:
           scan:
             use: true   # voxelize each input scan?
-            res: 0.1   # leaf size
+            res: 0.04   # leaf size
           submap:
             use: true   # voxelize each submap?
             res: 0.1   # leaf size
@@ -59,7 +59,7 @@
         min_num_points: 1000  # minimum points required
         s2s:
           k_correspondences: 25
-          max_correspondence_distance: 5.
+          max_correspondence_distance: 1.
           max_iterations: 64
           transformation_epsilon: 0.01
           euclidean_fitness_epsilon: 0.005
