@@ -1,0 +1,9 @@
+std_msgs/Header header
+geometry_msgs/Vector3 translational_error_vec
+geometry_msgs/Vector3 translational_dev_vec
+geometry_msgs/Vector3 rotational_error_vec
+geometry_msgs/Vector3 rotational_dev_vec
+float64 translational_error
+float64 translational_dev
+float64 rotational_error
+float64 rotational_dev
