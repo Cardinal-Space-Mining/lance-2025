@@ -4,7 +4,7 @@ from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch.conditions import IfCondition, UnlessCondition
 from launch.actions import IncludeLaunchDescription, ExecuteProcess
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -22,7 +22,7 @@ def generate_launch_description():
             os.path.join(sim_pkg_path, 'launch', 'robot_state_publisher.launch.py')
         ),
         launch_arguments = {'use_sim_time': 'false'}.items(),
-        condition = UnlessCondition( LaunchConfiguration('bag', default='false') )
+        # condition = IfCondition( PythonExpression(["'true' if '", LaunchConfiguration('bag', default='false'), "' == 'false' else 'false'"]) )
     )
     # lidar driver
     multiscan_driver = Node(
@@ -36,7 +36,8 @@ def generate_launch_description():
         remappings = [
             ('lidar_scan', '/multiscan/lidar_scan'),
             ('lidar_imu', '/multiscan/imu')
-        ]
+        ],
+        condition = IfCondition( PythonExpression(["'true' if '", LaunchConfiguration('bag', default='false'), "' == 'false' else 'false'"]) )
     )
     # perception stack
     launch_localization = Node(
@@ -80,11 +81,11 @@ def generate_launch_description():
             'ros2', 'bag', 'play',
             LaunchConfiguration('bag', default=''),
             # '--loop',
-            # '--topics', '/multiscan/lidar_scan', '/multiscan/imu'
+            '--topics', '/multiscan/lidar_scan', '/multiscan/imu', '/cardinal_perception/tags_detections'
             # '--start-offset', '248'
         ],
         output='screen',
-        condition = IfCondition( LaunchConfiguration('bag', default='false') )
+        condition = IfCondition( PythonExpression(["'false' if '", LaunchConfiguration('bag', default='false'), "' == 'false' else 'true'"]) )
     )
     # foxglove server if enabled
     foxglove_node = IncludeLaunchDescription(
