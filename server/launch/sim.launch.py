@@ -97,6 +97,30 @@ def generate_launch_description():
         ],
         remappings = [ ('tags_detections', '/cardinal_perception/tags_detections') ]
     )
+    # robot state publisher
+    state_publisher = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(sim_pkg_path, 'launch', 'robot_state_publisher.launch.py')
+        ),
+        launch_arguments = { 'use_sim_time' : 'true' }.items(),
+        condition = IfCondition( LaunchConfiguration('full_system', default='false') )
+    )
+    # localization
+    localization_node = Node(
+        name = 'cardinal_perception_localization',
+        package = 'cardinal_perception',
+        executable = 'localization_node',
+        output = 'screen',
+        parameters = [
+            os.path.join(get_package_share_directory('cardinal_perception'), 'config', 'localization.yaml'),
+            { 'use_sim_time': True }
+        ],
+        remappings = [
+            ('filtered_scan', '/cardinal_perception/filtered_scan'),
+            ('tags_detections', '/cardinal_perception/tags_detections')
+        ],
+        condition = IfCondition( LaunchConfiguration('full_system', default='false') )
+    )
     # foxglove
     foxglove_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -109,10 +133,13 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('gz_gui', default_value='false'),
         DeclareLaunchArgument('gz_map', default_value='arena'),
+        DeclareLaunchArgument('full_system', default_value='false'),
         DeclareLaunchArgument('foxglove', default_value='false'),
         launch_gazebo,
         launch_xbox_ctrl,
         tag_detector,
+        state_publisher,
+        localization_node,
         foxglove_node,
         make_accuracy_analyzer('base_link', 'map', 'gz_base_link', 0.25, True, 'localization_acc_analysis'),
         make_accuracy_analyzer('base_link_e0', 'map', 'gz_base_link', 0.25, True, 'tags_detection_acc_analysis')

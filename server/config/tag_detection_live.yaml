@@ -5,7 +5,7 @@
 
     num_streams: 1
 
-    stream0: [ "/uvc1/image_raw", "/uvc1/camera_info", "map" ]
+    stream0: [ "/arducam1/image_raw", "/arducam1/camera_info", "map" ]
     stream0_offset: [ 0., 0., 0.76, 0.653, -0.653, 0.271, -0.271 ]
 
     feature:  # detection export key: 0=off, 1=enable, -1=only when filtered
@@ -23,7 +23,7 @@
       use_bounds: false
       thresh:
         min_tags_per_range: 0.          # there must be at least this number of tags per [avg] meter of distance to the detected tags
-        max_rms_per_tag: 0.40           # maximum valid RMS error per tag
+        max_rms_per_tag: 0.70           # maximum valid RMS error per tag
         min_sum_pix_area: 5000.         # minimum total pixels that detected tags must occupy
         require_nonplanar_after: 1.5
 
