@@ -8,7 +8,7 @@
     scan_topic: "/multiscan/lidar_scan"
     imu_topic: "/multiscan/imu"
 
-    use_tag_detections: -1                # 1: enable, 0: disable, -1: filtered only
+    use_tag_detections:  0                # 1: enable, 0: disable, -1: filtered only
     require_rebias_before_tf_pub: true    # wait until successful trajectory filter rebias before publishing map --> odom tf
     require_rebias_before_scan_pub: true  # wait until successful trajectory filter rebias before republishing scans
 
@@ -85,3 +85,8 @@
           ransac:
             iterations: 12
             outlier_rejection_thresh: 5.
+
+      mapping:
+        valid_range: 4.
+        frustum_search_radius: 0.01
+        delete_range_thresh: 0.1
