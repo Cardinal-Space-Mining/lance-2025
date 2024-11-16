@@ -1,6 +1,6 @@
 image_width: 3264
 image_height: 2448
-camera_name: uvc1
+camera_name: arducam1
 camera_matrix:
   rows: 3
   cols: 3
