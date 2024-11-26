@@ -41,12 +41,12 @@ def generate_launch_description():
     )
     # perception stack
     launch_localization = Node(
-        name = 'cardinal_perception_localization',
+        name = 'cardinal_perception',
         package = 'cardinal_perception',
         executable = 'localization_node',
         output = 'screen',
         parameters = [
-            os.path.join(pkg_path, 'config', 'localization_live.yaml'),
+            os.path.join(pkg_path, 'config', 'perception_live.yaml'),
             {
                 'use_sim_time': False,
                 'scan_topic': '/multiscan/lidar_scan',
@@ -55,7 +55,8 @@ def generate_launch_description():
         ],
         remappings = [
             ('filtered_scan', '/cardinal_perception/filtered_scan'),
-            ('tags_detections', '/cardinal_perception/tags_detections')
+            ('tags_detections', '/cardinal_perception/tags_detections'),
+            ('map_cloud', '/cardinal_perception/map_cloud')
         ],
         condition = IfCondition( LaunchConfiguration('processing', default='true') )
     )

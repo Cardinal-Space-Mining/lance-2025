@@ -23,12 +23,12 @@ def generate_launch_description():
     )
     # perception stack
     launch_localization = Node(
-        name = 'cardinal_perception_localization',
+        name = 'cardinal_perception',
         package = 'cardinal_perception',
-        executable = 'localization_node',
+        executable = 'perception_node',
         output = 'screen',
         parameters = [
-            os.path.join(get_package_share_directory('cardinal_perception'), 'config', 'localization.yaml'),
+            os.path.join(get_package_share_directory('cardinal_perception'), 'config', 'perception.yaml'),
             {
                 'use_sim_time': True,
                 # 'require_rebias_before_tf_pub': False,
@@ -37,7 +37,8 @@ def generate_launch_description():
         ],
         remappings = [
             ('filtered_scan', '/cardinal_perception/filtered_scan'),
-            ('tags_detections', '/cardinal_perception/tags_detections')
+            ('tags_detections', '/cardinal_perception/tags_detections'),
+            ('map_cloud', '/cardinal_perception/map_cloud')
         ]
     )
     # foxglove server if enabled
