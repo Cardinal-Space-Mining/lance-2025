@@ -31,7 +31,7 @@ def generate_launch_description():
         for x in cameras
     ]
     cam_nodes.append(Node(
-        name = 'cardinal_perception_tag_detection',
+        name = 'tags_detector',
         package = 'cardinal_perception',
         executable = 'tag_detection_node',
         output = 'screen',

@@ -13,7 +13,7 @@ from launch_ros.actions import Node
 def generate_launch_description():
 
     tag_detector = Node(
-        name = 'cardinal_perception_tag_detection',
+        name = 'tags_detector',
         package = 'cardinal_perception',
         executable = 'tag_detection_node',
         output = 'screen',
