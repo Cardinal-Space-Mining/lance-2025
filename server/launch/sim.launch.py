@@ -87,7 +87,7 @@ def generate_launch_description():
     )
     # tag detector
     tag_detector = Node(
-        name = 'cardinal_perception_tag_detection',
+        name = 'tags_detector',
         package = 'cardinal_perception',
         executable = 'tag_detection_node',
         output = 'screen',
@@ -106,18 +106,19 @@ def generate_launch_description():
         condition = IfCondition( LaunchConfiguration('full_system', default='false') )
     )
     # localization
-    localization_node = Node(
-        name = 'cardinal_perception_localization',
+    perception_node = Node(
+        name = 'cardinal_perception',
         package = 'cardinal_perception',
-        executable = 'localization_node',
+        executable = 'perception_node',
         output = 'screen',
         parameters = [
-            os.path.join(get_package_share_directory('cardinal_perception'), 'config', 'localization.yaml'),
+            os.path.join(get_package_share_directory('cardinal_perception'), 'config', 'perception.yaml'),
             { 'use_sim_time': True }
         ],
         remappings = [
             ('filtered_scan', '/cardinal_perception/filtered_scan'),
-            ('tags_detections', '/cardinal_perception/tags_detections')
+            ('tags_detections', '/cardinal_perception/tags_detections'),
+            ('map_cloud', '/cardinal_perception/map_cloud')
         ],
         condition = IfCondition( LaunchConfiguration('full_system', default='false') )
     )
@@ -139,8 +140,8 @@ def generate_launch_description():
         launch_xbox_ctrl,
         tag_detector,
         state_publisher,
-        localization_node,
+        perception_node,
         foxglove_node,
         make_accuracy_analyzer('base_link', 'map', 'gz_base_link', 0.25, True, 'localization_acc_analysis'),
-        make_accuracy_analyzer('base_link_e0', 'map', 'gz_base_link', 0.25, True, 'tags_detection_acc_analysis')
+        # make_accuracy_analyzer('base_link_e0', 'map', 'gz_base_link', 0.25, True, 'tags_detection_acc_analysis')
     ])
