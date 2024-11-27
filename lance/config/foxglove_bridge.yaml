@@ -5,7 +5,7 @@
     tls: false
     certfile: ""
     keyfile: ""
-    topic_whitelist: ['/localization/.*', '/multiscan/.*', '/tf.*', '/cardinal_perception/filtered_scan', '/robot_description']
+    topic_whitelist: ['/localization/.*', '/multiscan/.*', '/tf.*', '/cardinal_perception/filtered_scan', '/cardinal_perception/map_cloud', '/robot_description']
     param_whitelist: ['.*']
     service_whitelist: ['.*']
     client_topic_whitelist: ['.*']

@@ -43,7 +43,7 @@ def generate_launch_description():
     launch_localization = Node(
         name = 'cardinal_perception',
         package = 'cardinal_perception',
-        executable = 'localization_node',
+        executable = 'perception_node',
         output = 'screen',
         parameters = [
             os.path.join(pkg_path, 'config', 'perception_live.yaml'),
@@ -58,7 +58,8 @@ def generate_launch_description():
             ('tags_detections', '/cardinal_perception/tags_detections'),
             ('map_cloud', '/cardinal_perception/map_cloud')
         ],
-        condition = IfCondition( LaunchConfiguration('processing', default='true') )
+        condition = IfCondition( LaunchConfiguration('processing', default='true') ),
+        # prefix=['xterm -e gdb -ex run --args']
     )
     # bag2 record
     bag_recorder = ExecuteProcess(
@@ -82,9 +83,10 @@ def generate_launch_description():
             'ros2', 'bag', 'play',
             LaunchConfiguration('bag', default=''),
             # '--loop',
-            '--rate', '0.5',
-            '--topics', '/multiscan/lidar_scan', '/multiscan/imu', '/cardinal_perception/tags_detections'
+            # '--rate', '0.5',
+            '--topics', '/multiscan/lidar_scan', '/multiscan/imu', '/cardinal_perception/tags_detections',
             # '--start-offset', '248'
+            '--start-paused'
         ],
         output='screen',
         condition = IfCondition( PythonExpression(["'false' if '", LaunchConfiguration('bag', default='false'), "' == 'false' else 'true'"]) )
