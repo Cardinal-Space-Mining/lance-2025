@@ -19,6 +19,8 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
+#define LOG_LOOKUP_FAILURE 0
+
 
 namespace util
 {
@@ -128,7 +130,9 @@ protected:
                 catch(const std::exception& e)
                 {
                     failed++;
+                #if LOG_LOOKUP_FAILURE
                     RCLCPP_WARN(this->get_logger(), "[ACCURACY ANALYZER]: Tf lookup failed for %s <--> %s transform.\n\twhat(): %s", this->validation_frame.c_str(), this->active_frame.c_str(), e.what());
+                #endif
                 }
             }
 
@@ -192,7 +196,9 @@ protected:
                 catch(const std::exception& e)
                 {
                     failed++;
+                #if LOG_LOOKUP_FAILURE
                     RCLCPP_WARN(this->get_logger(), "[ACCURACY ANALYZER]: Tf lookup failed for %s <--> %s transform.\n\twhat(): %s", this->active_frame.c_str(), this->origin_frame.c_str(), e.what());
+                #endif
                 }
             }
 
