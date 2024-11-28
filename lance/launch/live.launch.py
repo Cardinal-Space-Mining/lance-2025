@@ -60,6 +60,7 @@ def generate_launch_description():
         ],
         condition = IfCondition( LaunchConfiguration('processing', default='true') ),
         # prefix=['xterm -e gdb -ex run --args']
+        # prefix=['valgrind --leak-check=yes']
     )
     # bag2 record
     bag_recorder = ExecuteProcess(
