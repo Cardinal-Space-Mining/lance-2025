@@ -120,7 +120,8 @@ def generate_launch_description():
             ('tags_detections', '/cardinal_perception/tags_detections'),
             ('map_cloud', '/cardinal_perception/map_cloud')
         ],
-        condition = IfCondition( LaunchConfiguration('full_system', default='false') )
+        condition = IfCondition( LaunchConfiguration('full_system', default='false') ),
+        # prefix=['xterm -e gdb -ex run --args']
     )
     # foxglove
     foxglove_node = IncludeLaunchDescription(
