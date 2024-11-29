@@ -14,7 +14,7 @@
 
     metrics_pub_freq: 10.  # frequency for printing stats
 
-    max_localization_threads: 3
+    max_localization_threads: 2
     max_mapping_threads: 2
 
     trajectory_filter:
