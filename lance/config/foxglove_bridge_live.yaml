@@ -5,14 +5,14 @@
     tls: false
     certfile: ""
     keyfile: ""
-    topic_whitelist: ['.*']
+    topic_whitelist: ['/localization/.*', '/multiscan/.*', '/tf.*', '/cardinal_perception/filtered_scan', '/cardinal_perception/map_cloud', '/robot_description']
     param_whitelist: ['.*']
     service_whitelist: ['.*']
     client_topic_whitelist: ['.*']
     min_qos_depth: 1
     max_qos_depth: 10
     num_threads: 0
-    send_buffer_limit: 50000000
+    send_buffer_limit: 500000
     capabilities: [ clientPublish, parameters, parametersSubscribe, services, connectionGraph, assets ]
     include_hidden: false
     asset_uri_allowlist: ['^package://(?:\\w+/)*\\w+\\.(?:dae|fbx|glb|gltf|jpeg|jpg|mtl|obj|png|stl|tif|tiff|urdf|webp|xacro)$']
