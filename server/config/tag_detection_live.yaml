@@ -23,7 +23,7 @@
       use_bounds: false
       thresh:
         min_tags_per_range: 0.          # there must be at least this number of tags per [avg] meter of distance to the detected tags
-        max_rms_per_tag: 0.75           # maximum valid RMS error per tag
+        max_rms_per_tag: 1.25           # maximum valid RMS error per tag
         min_sum_pix_area: 5000.         # minimum total pixels that detected tags must occupy
         require_nonplanar_after: 1.5
 
@@ -68,3 +68,29 @@
                       0.055, -0.039, 0.042,
                       0.055, -0.040, 0.122,
                       0.055,  0.039, 0.123 ]
+
+    # ORIGINAL ROBOT TAG CONFIG
+      # tag0_static: false
+      # tag0_frames: [ "base_link" ]
+      # tag0_corners: [ 0.119, -0.350, 0.411,
+      #                 0.115, -0.350, 0.577,
+      #                 0.282, -0.350, 0.580,
+      #                 0.285, -0.350, 0.414 ]
+      # tag1_static: false
+      # tag1_frames: [ "base_link" ]
+      # tag1_corners: [ 0.115, 0.350, 0.577,
+      #                 0.119, 0.350, 0.411,
+      #                 0.285, 0.350, 0.414,
+      #                 0.282, 0.350, 0.580 ]
+      # tag4_static: false
+      # tag4_frames: [ "base_link" ]
+      # tag4_corners: [ 0.370, -0.273, 0.518,
+      #                 0.327, -0.340, 0.518,
+      #                 0.326, -0.340, 0.598,
+      #                 0.369, -0.273, 0.598 ]
+      # tag5_static: false
+      # tag5_frames: [ "base_link" ]
+      # tag5_corners: [ 0.327, 0.340, 0.518,
+      #                 0.370, 0.273, 0.518,
+      #                 0.369, 0.273, 0.598,
+      #                 0.326, 0.340, 0.598 ]
