@@ -8,9 +8,9 @@
     scan_topic: "/multiscan/lidar_scan"
     imu_topic: "/multiscan/imu"
 
-    use_tag_detections:  0                # 1: enable, 0: disable, -1: filtered only
-    require_rebias_before_tf_pub: true    # wait until successful trajectory filter rebias before publishing map --> odom tf
-    require_rebias_before_scan_pub: true  # wait until successful trajectory filter rebias before republishing scans
+    use_tag_detections: 1                # 1: enable, 0: disable, -1: filtered only
+    require_rebias_before_tf_pub: false    # wait until successful trajectory filter rebias before publishing map --> odom tf
+    require_rebias_before_scan_pub: false  # wait until successful trajectory filter rebias before republishing scans
 
     metrics_pub_freq: 10.  # frequency for printing stats
 
@@ -18,8 +18,8 @@
     max_mapping_threads: 2
 
     trajectory_filter:
-      sampling_window_s: 1.5
-      min_filter_window_s: 0.4
+      sampling_window_s: 2.5
+      min_filter_window_s: 1.2
       thresh:
         avg_linear_error: 0.13
         avg_angular_error: 0.09
