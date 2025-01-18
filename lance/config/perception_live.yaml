@@ -29,7 +29,7 @@
         max_angular_deviation: 0.04
 
     dlo:
-      use_timestamps_as_init: true
+      use_timestamps_as_init: false
       gravity_align: false   # enable/disable gravity alignment on startup
       adaptive_params:
         use: true           # whether or not keyframe params scale with "spaciousness"
@@ -39,8 +39,8 @@
         thresh_R: 30.   # rotation threshold in degrees for creating a new keyframe
         submap:
           knn: 10   # how many nearest-neightbor poses to extract when building a submap?
-          kcv: 15   # convex hull
-          kcc: 15   # concave hull
+          kcv: 10   # convex hull
+          kcc: 10   # concave hull
       initial_pose:
         use: true                         # start with the provided pose?
         position: [ 0., 0., 0. ]          # x, y, z
@@ -68,10 +68,10 @@
         use_orientation: true
         calib_time: 3       # calibration time
       gicp:
-        num_threads: 4
+        num_threads: 2
         min_num_points: 500  # minimum points required
         s2s:
-          k_correspondences: 15
+          k_correspondences: 20
           max_correspondence_distance: 0.25
           max_iterations: 32
           transformation_epsilon: 0.01
@@ -86,16 +86,16 @@
           transformation_epsilon: 0.0009
           euclidean_fitness_epsilon: 0.005
           ransac:
-            iterations: 6
+            iterations: 5
             outlier_rejection_thresh: 0.05
 
     mapping:
-      frustum_search_radius: 0.009
-      radial_distance_thresh: 0.01
-      delete_delta_coeff: 0.03
-      delete_max_range: 4.
-      add_max_range: 4.
-      voxel_size: 0.08
+      frustum_search_radius: 0.05
+      radial_distance_thresh: 0.07
+      delete_delta_coeff: 0.08
+      delete_max_range: 3.5
+      add_max_range: 3.5
+      voxel_size: 0.06
 
     fiducial_detection:
       max_range: 2.

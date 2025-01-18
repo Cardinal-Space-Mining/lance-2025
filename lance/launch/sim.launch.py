@@ -28,11 +28,11 @@ def generate_launch_description():
         executable = 'perception_node',
         output = 'screen',
         parameters = [
-            os.path.join(get_package_share_directory('cardinal_perception'), 'config', 'perception.yaml'),
+            os.path.join(get_package_share_directory('lance'), 'config', 'perception_live.yaml'),
             {
                 'use_sim_time': True,
-                # 'require_rebias_before_tf_pub': False,
-                # 'require_rebias_before_scan_pub': False
+                'scan_topic': '/lance/lidar_scan',
+                'imu_topic': '/lance/imu'
             }
         ],
         remappings = [
