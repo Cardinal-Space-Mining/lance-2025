@@ -7,7 +7,7 @@
   <maintainer email="samrichter888@gmail.com">Sam Richter</maintainer>
   <license>TODO: License declaration</license>
 
-  <depend>csm_gz_sim</depend>
+  <depend>csm_sim</depend>
   <depend>cardinal_perception</depend>
   <depend>multiscan_driver</depend>
   <depend>foxglove_bridge</depend>
