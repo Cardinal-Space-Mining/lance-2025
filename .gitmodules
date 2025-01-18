@@ -4,7 +4,7 @@
 [submodule "multiscan-driver"]
 	path = multiscan-driver
 	url = https://github.com/Cardinal-Space-Mining/multiscan-driver
-[submodule "csm-gz-sim"]
-	path = csm-gz-sim
-	url = https://github.com/Cardinal-Space-Mining/csm_gz_sim
-	branch = description-only
+[submodule "csm-sim"]
+	path = csm-sim
+	url = https://github.com/Cardinal-Space-Mining/csm-sim
+	branch = lance-1

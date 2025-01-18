@@ -16,7 +16,7 @@ def generate_launch_description():
     # launch robot_state_publisher using sim description
     robot_state_publisher = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(get_package_share_directory('csm_gz_sim'), 'launch', 'robot_state_publisher.launch.py')
+            os.path.join(get_package_share_directory('csm_sim'), 'launch', 'robot_state_publisher.launch.py')
         ),
         launch_arguments = {'use_sim_time': 'true'}.items(),
         condition = IfCondition( LaunchConfiguration('use_state_pub', default='true') )
@@ -46,14 +46,14 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('lance'), 'launch', 'foxglove.launch.py')
         ),
-        launch_arguments = {'use_sim_time': 'false'}.items(),
-        condition = IfCondition(LaunchConfiguration('foxglove', default='false'))
+        launch_arguments = {'use_sim_time': 'true'}.items(),
+        condition = IfCondition(LaunchConfiguration('foxglove', default='true'))
     )
 
 
     return LaunchDescription([
         DeclareLaunchArgument('use_state_pub', default_value='true'),
-        DeclareLaunchArgument('foxglove', default_value='false'),
+        DeclareLaunchArgument('foxglove', default_value='true'),
         robot_state_publisher,
         launch_localization,
         foxglove_node

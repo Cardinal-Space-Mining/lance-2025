@@ -14,7 +14,7 @@ from launch_ros.actions import Node
 def generate_launch_description():
 
     pkg_path = get_package_share_directory('lance')
-    sim_pkg_path = get_package_share_directory('csm_gz_sim')
+    sim_pkg_path = get_package_share_directory('csm_sim')
 
     # launch robot_state_publisher using sim description
     robot_state_publisher = IncludeLaunchDescription(
@@ -40,7 +40,7 @@ def generate_launch_description():
         condition = IfCondition( PythonExpression(["'true' if '", LaunchConfiguration('bag', default='false'), "' == 'false' else 'false'"]) )
     )
     # perception stack
-    launch_localization = Node(
+    launch_perception = Node(
         name = 'cardinal_perception',
         package = 'cardinal_perception',
         executable = 'perception_node',
@@ -60,7 +60,8 @@ def generate_launch_description():
         ],
         condition = IfCondition( LaunchConfiguration('processing', default='true') ),
         # prefix=['xterm -e gdb -ex run --args']
-        # prefix=['valgrind --leak-check=yes']
+        # prefix=['valgrind --leak-check=yes -v']
+        # prefix=['valgrind --tool=callgrind --dump-instr=yes --simulate-cache=yes --collect-jumps=yes']
     )
     # bag2 record
     bag_recorder = ExecuteProcess(
@@ -109,7 +110,7 @@ def generate_launch_description():
         DeclareLaunchArgument('bag', default_value='false'),
         robot_state_publisher,
         multiscan_driver,
-        launch_localization,
+        launch_perception,
         bag_recorder,
         bag_player,
         foxglove_node
