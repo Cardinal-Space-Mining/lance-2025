@@ -15,6 +15,7 @@ def generate_launch_description():
 
     pkg_path = get_package_share_directory('lance')
     sim_pkg_path = get_package_share_directory('csm_sim')
+    perception_pkg_path = get_package_share_directory('cardinal_perception')
 
     # launch robot_state_publisher using sim description
     robot_state_publisher = IncludeLaunchDescription(
@@ -25,13 +26,13 @@ def generate_launch_description():
         condition = IfCondition( LaunchConfiguration('use_state_pub', default='true') )
     )
     # perception stack
-    launch_localization = Node(
+    perception_node = Node(
         name = 'cardinal_perception',
         package = 'cardinal_perception',
         executable = 'perception_node',
         output = 'screen',
         parameters = [
-            os.path.join(pkg_path, 'config', 'perception_live.yaml'),
+            os.path.join(perception_pkg_path, 'config', 'perception.yaml'),
             {
                 'use_sim_time': True,
                 'scan_topic': '/lance/lidar_scan',
@@ -87,6 +88,27 @@ def generate_launch_description():
             )
         )
     )
+    tag_detection_node = Node(
+        name = 'tags_detector',
+        package = 'cardinal_perception',
+        executable = 'tag_detection_node',
+        output = 'screen',
+        parameters = [
+            os.path.join(perception_pkg_path, 'config', 'tag_detection.yaml'),
+            { 'use_sim_time': True }
+        ],
+        remappings = [
+            ('tags_detections', '/cardinal_perception/tags_detections')
+        ],
+        condition = IfCondition(
+            AndSubstitution(
+                LaunchConfiguration('gz_sim'),
+                NotSubstitution(
+                    LaunchConfiguration('isaac_sim')
+                )
+            )
+        )
+    )
 
 
     return LaunchDescription([
@@ -95,8 +117,9 @@ def generate_launch_description():
         DeclareLaunchArgument('isaac_sim', default_value='false'),
         DeclareLaunchArgument('gz_sim', default_value='false'),
         robot_state_publisher,
-        launch_localization,
+        perception_node,
         foxglove_node,
         isaac_sim,
-        gz_sim
+        gz_sim,
+        tag_detection_node
     ])
