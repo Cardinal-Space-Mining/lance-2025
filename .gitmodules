@@ -6,5 +6,5 @@
 	url = https://github.com/Cardinal-Space-Mining/multiscan-driver
 [submodule "csm-sim"]
 	path = csm-sim
-	url = https://gitlab.com/S1ink/csm-sim-mirror
+	url = https://gitlab.com/csm2.0/csm-sim.git
 	branch = lance-1
