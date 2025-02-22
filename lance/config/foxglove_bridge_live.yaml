@@ -6,12 +6,15 @@
     certfile: ""
     keyfile: ""
     topic_whitelist: [
-      '/localization/.*',
       '/multiscan/.*',
       '/tf.*',
       '/cardinal_perception/filtered_scan',
       '/cardinal_perception/map_cloud',
       '/cardinal_perception/tags_detections',
+      '/cardinal_perception/traversibility_points',
+      '/cardinal_perception/process_metrics',
+      '/cardinal_perception/scan_cb_metrics',
+      '/cardinal_perception/mapping_cb_metrics',
       '/robot_description'
     ]
     param_whitelist: ['.*']

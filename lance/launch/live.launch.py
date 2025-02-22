@@ -70,7 +70,7 @@ def generate_launch_description():
             # '-o', '<OUTPUT FILE HERE>',
             '/multiscan/lidar_scan',
             '/multiscan/imu',
-            '/cardinal_perception/tags_detections',
+            # '/cardinal_perception/tags_detections',
             '/tf',
             '/tf_static',
             # '--compression-mode', 'file',
