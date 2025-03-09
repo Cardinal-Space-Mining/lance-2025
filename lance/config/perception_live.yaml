@@ -95,7 +95,7 @@
       delete_delta_coeff: 0.08
       delete_max_range: 3.5
       add_max_range: 3.5
-      voxel_size: 0.06
+      voxel_size: 0.15
 
     fiducial_detection:
       max_range: 2.
