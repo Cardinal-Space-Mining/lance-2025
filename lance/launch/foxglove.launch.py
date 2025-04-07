@@ -20,7 +20,7 @@ def generate_launch_description():
             executable = 'foxglove_bridge',
             output = 'screen',
             parameters = [
-                os.path.join(pkg_path, 'config', 'foxglove_bridge_live.yaml'),
+                os.path.join(pkg_path, 'config', 'foxglove_bridge.yaml'),
                 {
                     'use_sim_time': LaunchConfiguration('use_sim_time', default='false'),
                 }
