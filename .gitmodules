@@ -10,6 +10,3 @@
 [submodule "motor-control"]
 	path = motor-control
 	url = https://github.com/Cardinal-Space-Mining/PhoenixMotorInterface
-[submodule "gui-interface"]
-	path = gui-interface
-	url = https://github.com/Cardinal-Space-Mining/ControlInterface
