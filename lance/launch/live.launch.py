@@ -101,7 +101,8 @@ def generate_launch_description():
         launch_arguments =
             {
                 'use_sim_time': 'false',
-                'mode' : LaunchConfiguration('mode', default='live')
+                'mode' : LaunchConfiguration('foxglove_mode', default='live')
+		# 'mode' : 'test'
             }.items(),
         condition = IfCondition(LaunchConfiguration('foxglove', default='true'))
     )
