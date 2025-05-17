@@ -15,7 +15,7 @@ def generate_launch_description():
     pkg_path = get_package_share_directory('lance')
     phx5_path = get_package_share_directory('phoenix5_driver')
     phx6_path = get_package_share_directory('phoenix6_driver')
-    controller_path = get_package_share_directory('test_control')
+    controller_path = get_package_share_directory('teleop_control')
 
     perception_live = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
