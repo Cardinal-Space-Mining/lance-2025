@@ -32,8 +32,8 @@ def generate_launch_description():
         DeclareLaunchArgument('mode', default_value='live'),
         generate_conditional_node_config(
             os.path.join(pkg_path, 'config', 'foxglove_bridge_live.yaml'),
-            IfCondition( PythonExpression(["'true' if '", LaunchConfiguration('mode', default='live'), "' == 'test' else 'false'"]) ) ),
+            IfCondition( PythonExpression(["'false' if '", LaunchConfiguration('mode', default='live'), "' == 'test' else 'true'"]) ) ),
         generate_conditional_node_config(
             os.path.join(pkg_path, 'config', 'foxglove_bridge_test.yaml'),
-            IfCondition( PythonExpression(["'false' if '", LaunchConfiguration('mode', default='live'), "' == 'test' else 'false'"]) ) ),
+            IfCondition( PythonExpression(["'true' if '", LaunchConfiguration('mode', default='live'), "' == 'test' else 'false'"]) ) ),
     ])
