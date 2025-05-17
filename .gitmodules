@@ -7,6 +7,3 @@
 [submodule "csm-sim"]
 	path = csm-sim
 	url = https://gitlab.com/csm2.0/csm-sim.git
-[submodule "motor-control"]
-	path = motor-control
-	url = https://github.com/Cardinal-Space-Mining/PhoenixMotorInterface
