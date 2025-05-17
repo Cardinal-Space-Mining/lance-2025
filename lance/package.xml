@@ -11,6 +11,8 @@
   <depend>cardinal_perception</depend>
   <depend>multiscan_driver</depend>
   <depend>foxglove_bridge</depend>
+  <depend>phoenix6_driver</depend>
+  <depend>test_control</depend>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

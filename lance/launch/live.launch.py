@@ -98,13 +98,18 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             os.path.join(pkg_path, 'launch', 'foxglove.launch.py')
         ),
-        launch_arguments = {'use_sim_time': 'false'}.items(),
+        launch_arguments =
+            {
+                'use_sim_time': 'false',
+                'mode' : LaunchConfiguration('mode', default='live')
+            }.items(),
         condition = IfCondition(LaunchConfiguration('foxglove', default='true'))
     )
 
 
     return LaunchDescription([
         DeclareLaunchArgument('foxglove', default_value='true'),
+        DeclareLaunchArgument('foxglove_mode', default_value='live'),
         DeclareLaunchArgument('processing', default_value='true'),
         DeclareLaunchArgument('record', default_value='false'),
         DeclareLaunchArgument('bag', default_value='false'),
