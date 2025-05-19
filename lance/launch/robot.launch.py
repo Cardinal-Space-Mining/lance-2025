@@ -26,7 +26,8 @@ def generate_launch_description():
             'foxglove_mode' : LaunchConfiguration('foxglove_mode', default='live'),
             'processing' : 'true',
             'record' : LaunchConfiguration('record_lidar', default='false'),
-            'bag' : 'false' }.items(),
+            'bag' : 'false',
+            'disable_state_pub' : LaunchConfiguration('disable_state_pub', default='false') }.items(),
         condition = IfCondition( LaunchConfiguration('perception', default='true') )
     )
 
@@ -86,6 +87,7 @@ def generate_launch_description():
         DeclareLaunchArgument('perception', default_value='true'),
         DeclareLaunchArgument('record_lidar', default_value='false'),
         DeclareLaunchArgument('record_motor', default_value='false'),
+        DeclareLaunchArgument('disable_state_pub', default_value='false'),
         DeclareLaunchArgument('phoenix_driver', default_value='6'),
         DeclareLaunchArgument('controller', default_value='true'),
         perception_live,

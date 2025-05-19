@@ -11,5 +11,6 @@ ros2 launch lance robot.launch.py \
     perception:=true \
     record_lidar:=false \
     record_motor:=true \
+    disable_state_pub:=false \
     phoenix_driver:=6 \
     controller:=true

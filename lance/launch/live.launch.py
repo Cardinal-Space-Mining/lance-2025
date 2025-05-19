@@ -23,7 +23,7 @@ def generate_launch_description():
             os.path.join(sim_pkg_path, 'launch', 'robot_state_publisher.launch.py')
         ),
         launch_arguments = {'use_sim_time': 'false'}.items(),
-        # condition = IfCondition( PythonExpression(["'true' if '", LaunchConfiguration('bag', default='false'), "' == 'false' else 'false'"]) )
+        condition = UnlessCondition( LaunchConfiguration('disable_state_pub', default='false') )
     )
     # lidar driver
     multiscan_driver = Node(
@@ -103,7 +103,7 @@ def generate_launch_description():
             {
                 'use_sim_time': 'false',
                 'mode' : LaunchConfiguration('foxglove_mode', default='live')
-		# 'mode' : 'test'
+                # 'mode' : 'test'
             }.items(),
         condition = IfCondition(LaunchConfiguration('foxglove', default='true'))
     )
@@ -115,6 +115,7 @@ def generate_launch_description():
         DeclareLaunchArgument('processing', default_value='true'),
         DeclareLaunchArgument('record', default_value='false'),
         DeclareLaunchArgument('bag', default_value='false'),
+        DeclareLaunchArgument('disable_state_pub', default_value='false'),
         robot_state_publisher,
         multiscan_driver,
         launch_perception,

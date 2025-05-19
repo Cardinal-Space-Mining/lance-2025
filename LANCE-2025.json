@@ -31,7 +31,7 @@
       "buttonColor": "#5400ff"
     },
     "Indicator!2tgedv2": {
-      "path": "/lance/robot_mode",
+      "path": "/lance/robot_mode.data",
       "style": "background",
       "fontSize": 36,
       "fallbackColor": "#a0a0a0",
@@ -55,9 +55,9 @@
     "3D!3o2i4gc": {
       "cameraState": {
         "perspective": true,
-        "distance": 15.475618749803372,
-        "phi": 18.123682252890262,
-        "thetaOffset": -97.12909633605456,
+        "distance": 8.802533372920422,
+        "phi": 31.67771993053734,
+        "thetaOffset": -138.15311308168543,
         "targetOffset": [
           0.732824459194285,
           0.4112049936851414,
