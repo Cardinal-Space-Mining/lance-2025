@@ -1,4 +1,5 @@
 import os
+import datetime
 
 from ament_index_python.packages import get_package_share_directory
 
@@ -67,7 +68,7 @@ def generate_launch_description():
     bag_recorder = ExecuteProcess(
         cmd = [
             'ros2', 'bag', 'record',
-            # '-o', '<OUTPUT FILE HERE>',
+            '-o', f"lance_lidar_data_{ datetime.datetime.now().strftime("%Y_%m_%d-%H_%M_%S") }",
             '/multiscan/lidar_scan',
             '/multiscan/imu',
             # '/cardinal_perception/tags_detections',
