@@ -6,6 +6,7 @@ MOTOR_LOGGING=true
 # local bridge mode starts the robot state publisher and foxglove bridge nodes on the client rather than robot
 LOCAL_BRIDGE=false
 if [[ "$1" == "--local-bridge" ]]; then
+    echo "Local bridge mode set. Running state publisher and foxglove bridge."
     LOCAL_BRIDGE=true
 fi
 

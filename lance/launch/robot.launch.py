@@ -58,8 +58,7 @@ def generate_launch_description():
         cmd = [
             'ros2', 'bag', 'record',
             '-o', f"lance_motor_data_{ datetime.datetime.now().strftime("%Y_%m_%d-%H_%M_%S") }",
-            '/lance/robot_mode',
-            '/lance/watchdog_feed',
+            '/lance/watchdog_status',
             '/lance/track_left/ctrl',
             '/lance/track_left/faults',
             '/lance/track_left/info',

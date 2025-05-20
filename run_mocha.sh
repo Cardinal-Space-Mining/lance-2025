@@ -14,6 +14,7 @@ $SCRIPTPATH/motor-control/scripts/can_bringup.sh
 RUN_FG=$FG_ENABLED
 DISABLE_STATE_PUB=false
 if [[ "$1" == "--remote-bridge" ]]; then
+    echo "Remote bridge mode set. Not running state publisher or foxglove bridge."
     RUN_FG=false
     DISABLE_STATE_PUB=true
 fi
