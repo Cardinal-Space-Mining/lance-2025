@@ -1,7 +1,7 @@
-## Branches
-Different branches contain different deployments, as indicated by branch name. PLEASE DO NOT MERGE DEPLOYMENT-SPECIFIC BRANCHES INTO EACH OTHER! They are separated to simplify the workspace complexity for each deployment (as well as reduce clone/pull overhead), so doing this would defeat the purpose.
+## LANCE-2025
+This repo houses all client and robot code used for running LANCE "1.5" (2025). If setting up from scratch, you will want to read this entire document. For instructions on building/running, see the relevant sections: [BUILDING](#building) | [RUNNING](#running).
 
-## Setup
+## Workspace Setup
 Create a new workspace directory
 ```
 mkdir ws && cd ws
@@ -15,10 +15,10 @@ If you forgot to clone recursively:
 git submodule update --init --recursive
 ```
 
-## Build
-1. Install [ROS2](https://docs.ros.org/en/jazzy/Installation.html) if not already done (we are using Jazzy for 2024-2025)
+## Dependencies
+1. Install [ROS2](https://docs.ros.org/en/jazzy/Installation.html) if not already done (we are using Jazzy for 2024-2025).
 
-2. Use rosdep to install dependencies
+2. Use rosdep to install dependencies.
     - Initialize rosdep if not already done:
         ```bash
         sudo rosdep init
@@ -28,13 +28,94 @@ git submodule update --init --recursive
         rosdep update
         rosdep install --ignore-src --from-paths . -r -y
         ```
-    - Check submodule READMEs to install any other necessary deps
 
-3. Build with colcon
-    ```bash
-    colcon build --symlink-install <--executor parallel> <--event-handlers console_direct+>
-    source install/setup.bash
-    ```
+3. Install submodule dependencies.
+    - Cardinal-Perception: Install PCL and OpenCV
+        ```bash
+        sudo apt update
+        sudo apt-get install libpcl-dev libopencv-dev
+        ```
+    - Motor-control: [Install CTRE Phoenix 6](https://v6.docs.ctr-electronics.com/en/stable/docs/installation/installation-nonfrc.html)
+        ```bash
+        YEAR=2025
+        sudo curl -s --compressed -o /usr/share/keyrings/ctr-pubkey.gpg "https://deb.ctr-electronics.com/ctr-pubkey.gpg"
+        sudo curl -s --compressed -o /etc/apt/sources.list.d/ctr${YEAR}.list "https://deb.ctr-electronics.com/ctr${YEAR}.list"
+        ```
+        ```bash
+        sudo apt update
+        sudo apt install phoenix6
+        ```
+
+## Building
+The included build script builds all included packages. Run the following when inside the top-level workspace directory **(same for client AND robot)**:
+```bash
+./src/build.sh
+source install/setup.bash
+```
+The "frappepanda" [lattepanda] needs minimal packages to run, so to speed up build times, use the following argument:
+```bash
+./src/build.sh --frappe-only
+source install/setup.bash
+```
+
+## Running
+Each target platform/machine has it's own script:
+
+### 1. Client Laptop
+Run:
+```bash
+./src/run_local.sh
+```
+To run the robot state publisher and foxglove bridge locally:
+```bash
+./src/run_local.sh --local-bridge
+```
+*Closing foxglove will end all other processes as well.*
+
+### 2. "Mochapanda"
+Run:
+```bash
+./src/run_mocha.sh
+```
+If running the client with the `--local-bridge` argument, disable the robot state publisher and foxglove bridge from running robot-side:
+```bash
+./src/run_mocha.sh --remote-bridge
+```
+
+### 3. "Frappepanda"
+Run:
+```bash
+./src/run_frappe.sh
+```
+Note that this runs a simplified script. If logging or other utility nodes need to be run (via script configuration parameters), run (this requires having built all packages):
+```bash
+./src/run_frappe.sh --full
+```
+
+## Foxglove Studio
+A foxglove studio layout configuration (`foxglove_layout.json`) is included which provides a main control dashboard as well as tabs for each perception stage and motor status info. This can be loaded by clicking the **"LAYOUT"** dropdown in the top right corner of foxglove studio, then clicking **"Import from file..."** and navigating to the json.
 
 ## VSCode
-See the [Cardinal Perception README](https://github.com/Cardinal-Space-Mining/Cardinal-Perception) for details on fixing vscode.
+The build script exports compile commands which can help VSCode's C/C++ extension resolve correct syntax highlighting. To ensure this is working, paste the following code into the `c_cpp_properties.json` file (under .vscode directory in a workspace):
+```json
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "intelliSenseMode": "linux-gcc-x64",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "compileCommands": [
+                "build/compile_commands.json"
+            ]
+        }
+    ],
+    "version": 4
+}
+```
+__*Last updated: 5/20/25*__

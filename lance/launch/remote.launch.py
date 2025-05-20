@@ -70,7 +70,7 @@ def generate_launch_description():
     motor_recorder = ExecuteProcess(
         cmd = [
             'ros2', 'bag', 'record',
-            '-o', f"lance_motor_data_{ datetime.datetime.now().strftime("%Y_%m_%d-%H_%M_%S") }",
+            '-o', f"bag_recordings/lance_motor_data_{ datetime.datetime.now().strftime("%Y_%m_%d-%H_%M_%S") }",
             '/lance/watchdog_status',
             '/lance/track_left/ctrl',
             '/lance/track_left/faults',
