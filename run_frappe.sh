@@ -19,6 +19,8 @@ if [[ "$1" == "--full" ]]; then
         disable_state_pub:=true \
         phoenix_driver:=5 \
         controller:=false
+
+    $SCRIPTPATH/motor-control/scripts/can_shutdown.sh
 else
     $SCRIPTPATH/motor-control/scripts/launch_phoenix5_standalone.sh
 fi

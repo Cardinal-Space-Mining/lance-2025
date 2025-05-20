@@ -1,6 +1,6 @@
 #!/bin/bash
 
-RUN_PERCEPTION=true
+RUN_PERCEPTION=false
 FG_ENABLED=true
 FG_BRIDGE_MODE=test
 LIDAR_LOGGING=false
@@ -28,3 +28,5 @@ ros2 launch lance robot.launch.py \
     disable_state_pub:=$DISABLE_STATE_PUB \
     phoenix_driver:=6 \
     controller:=true
+
+$SCRIPTPATH/motor-control/scripts/can_shutdown.sh
