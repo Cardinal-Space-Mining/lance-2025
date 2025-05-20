@@ -22,8 +22,8 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             os.path.join(pkg_path, 'launch', 'live.launch.py') ),
         launch_arguments = {
-            'foxglove' : LaunchConfiguration('foxglove', default='false'),
-            'foxglove_mode' : LaunchConfiguration('foxglove_mode', default='live'),
+            'foxglove' : 'false',
+            'foxglove_mode' : 'live',
             'processing' : 'true',
             'record' : LaunchConfiguration('record_lidar', default='false'),
             'bag' : 'false',
@@ -81,6 +81,20 @@ def generate_launch_description():
         condition = IfCondition( LaunchConfiguration('record_motor', default='false') )
     )
 
+    # foxglove server if enabled
+    foxglove_bridge = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(pkg_path, 'launch', 'foxglove.launch.py')
+        ),
+        launch_arguments =
+            {
+                'use_sim_time': 'false',
+                'mode' : LaunchConfiguration('foxglove_mode', default='live')
+                # 'mode' : 'test'
+            }.items(),
+        condition = IfCondition(LaunchConfiguration('foxglove', default='false'))
+    )
+
     return LaunchDescription([
         DeclareLaunchArgument('foxglove', default_value='false'),
         DeclareLaunchArgument('foxglove_mode', default_value='live'),
@@ -94,5 +108,6 @@ def generate_launch_description():
         phoenix5_driver,
         phoenix6_driver,
         controller_node,
-        motor_recorder
+        motor_recorder,
+        foxglove_bridge
     ])
