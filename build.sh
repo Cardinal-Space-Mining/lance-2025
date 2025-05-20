@@ -8,8 +8,17 @@ then
     export MAKEFLAGS="-j 1"
 fi
 
-colcon build \
-    --symlink-install \
-    --executor parallel \
-    --event-handlers console_direct+ \
-    --cmake-args=-DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=ON
+if [[ "$1" == "--frappe-only" ]]; then
+    colcon build \
+        --symlink-install \
+        --executor parallel \
+        --event-handlers console_direct+ \
+        --packages-select talon_msgs phoenix5_driver \
+        --cmake-args=-DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=ON
+else
+    colcon build \
+        --symlink-install \
+        --executor parallel \
+        --event-handlers console_direct+ \
+        --cmake-args=-DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=ON
+fi

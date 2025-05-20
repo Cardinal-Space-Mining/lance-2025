@@ -1,14 +1,15 @@
 #!/bin/bash
 
-SCRIPT=$(readlink -f "$0")
-SCRIPTPATH=$(dirname "$SCRIPT")
-$SCRIPTPATH/motor-control/scripts/can_bringup.sh
-
 RUN_PERCEPTION=true
 FG_ENABLED=true
 FG_BRIDGE_MODE=test
 LIDAR_LOGGING=false
 MOTOR_LOGGING=true
+
+SCRIPT=$(readlink -f "$0")
+SCRIPTPATH=$(dirname "$SCRIPT")
+
+$SCRIPTPATH/motor-control/scripts/can_bringup.sh
 
 RUN_FG=$FG_ENABLED
 DISABLE_STATE_PUB=false
