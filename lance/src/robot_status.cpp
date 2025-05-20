@@ -36,6 +36,7 @@ public:
                 [this](SetRobotMode::Request::SharedPtr req, SetRobotMode::Response::SharedPtr resp)
                 {
                     this->robot_mode = req->mode;
+                    RCLCPP_INFO(this->get_logger(), "SET ROBOT MODE : %d", this->robot_mode);
                     resp->success = true;
                 } )
         },
