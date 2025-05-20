@@ -39,6 +39,11 @@ def generate_launch_description():
         executable = 'joy_node'
     )
 
+    robot_status_node = Node(
+        package = 'lance',
+        executable = 'robot_status'
+    )
+
     # publish robot transforms locally to be able to see collada model in foxglove
     robot_state_publisher = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -105,6 +110,7 @@ def generate_launch_description():
         DeclareLaunchArgument('enable_state_pub', default_value='false'),
         DeclareLaunchArgument('record_motor', default_value='false'),
         joy_node,
+        robot_status_node,
         robot_state_publisher,
         foxglove_bridge,
         motor_recorder,

@@ -1,50 +1,50 @@
 {
   "configById": {
-    "Publish!2a458o": {
-      "buttonText": "Enable Robot",
-      "buttonTooltip": "",
-      "advancedView": false,
-      "value": "{\n  \"data\": 0\n}",
-      "topicName": "/lance/robot_mode",
-      "datatype": "std_msgs/msg/Int8",
-      "foxglovePanelTitle": "Enable",
-      "buttonColor": "#00ff15"
+    "CallService!1gvldsh": {
+      "requestPayload": "{\n  \"mode\": 1\n}",
+      "layout": "vertical",
+      "timeoutSeconds": 10,
+      "serviceName": "/lance/set_robot_mode",
+      "editingMode": false,
+      "buttonColor": "#00ff1e",
+      "buttonText": "Enable",
+      "foxglovePanelTitle": "Enable Robot"
     },
-    "Publish!19qmusb": {
-      "buttonText": "Disable Robot",
-      "buttonTooltip": "",
-      "advancedView": false,
-      "value": "{\n    \"data\": 1\n}",
-      "topicName": "/lance/robot_mode",
-      "datatype": "std_msgs/msg/Int8",
-      "foxglovePanelTitle": "Disable",
-      "buttonColor": "#ff0000"
+    "CallService!3vavkl6": {
+      "requestPayload": "{\n  \"mode\": 0\n}",
+      "layout": "vertical",
+      "timeoutSeconds": 10,
+      "serviceName": "/lance/set_robot_mode",
+      "editingMode": false,
+      "buttonText": "Disable",
+      "buttonColor": "#ff0000",
+      "foxglovePanelTitle": "Disable Robot"
     },
-    "Publish!1n215r7": {
+    "CallService!3gyep2l": {
+      "requestPayload": "{\n  \"mode\": -1\n}",
+      "layout": "vertical",
+      "timeoutSeconds": 10,
+      "serviceName": "/lance/set_robot_mode",
+      "editingMode": false,
+      "buttonColor": "#5500ff",
       "buttonText": "Autonomous",
-      "buttonTooltip": "",
-      "advancedView": false,
-      "value": "{\n  \"data\": 2\n}",
-      "topicName": "/lance/robot_mode",
-      "datatype": "std_msgs/msg/Int8",
-      "foxglovePanelTitle": "Autonomous",
-      "buttonColor": "#5400ff"
+      "foxglovePanelTitle": "Start Autonomous"
     },
     "Indicator!2tgedv2": {
-      "path": "/lance/robot_mode.data",
+      "path": "/lance/watchdog_status.data",
       "style": "background",
       "fontSize": 36,
       "fallbackColor": "#a0a0a0",
       "fallbackLabel": "Disabled",
       "rules": [
         {
-          "operator": "=",
-          "rawValue": "2",
+          "operator": "<",
+          "rawValue": "0",
           "color": "#5400ff",
-          "label": "Autonomous"
+          "label": "Auto"
         },
         {
-          "operator": "=",
+          "operator": ">",
           "rawValue": "0",
           "color": "#33ff00",
           "label": "Enabled"
@@ -825,6 +825,222 @@
       "isSynced": true,
       "foxglovePanelTitle": "Hopper Belt Faults"
     },
+    "StateTransitions!2ih3nej": {
+      "paths": [
+        {
+          "value": "/lance/track_left/faults.faults",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/track_right/faults.device_temp_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/track_left/faults.proc_temp_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/track_left/faults.stator_current_limit_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/track_left/faults.supply_current_limit_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/track_left/faults.overvoltage_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/track_left/faults.undervoltage_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/track_left/faults.unstable_voltage_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/track_left/faults.bridge_brownout_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/track_left/faults.boot_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/track_left/faults.hardware_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/track_left/faults.static_brake_disabled_fault",
+          "timestampMethod": "receiveTime"
+        }
+      ],
+      "isSynced": true,
+      "foxglovePanelTitle": "Left Track"
+    },
+    "StateTransitions!v7s4kj": {
+      "paths": [
+        {
+          "value": "/lance/trencher/faults.faults",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/trencher/faults.device_temp_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/trencher/faults.proc_temp_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/trencher/faults.stator_current_limit_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/trencher/faults.supply_current_limit_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/trencher/faults.overvoltage_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/trencher/faults.undervoltage_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/trencher/faults.unstable_voltage_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/trencher/faults.bridge_brownout_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/trencher/faults.boot_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/trencher/faults.hardware_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/trencher/faults.static_brake_disabled_fault",
+          "timestampMethod": "receiveTime"
+        }
+      ],
+      "isSynced": true,
+      "foxglovePanelTitle": "Trencher"
+    },
+    "StateTransitions!4fihzwb": {
+      "paths": [
+        {
+          "value": "/lance/track_right/faults.faults",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/track_right/faults.device_temp_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/track_right/faults.proc_temp_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/track_right/faults.stator_current_limit_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/track_right/faults.supply_current_limit_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/track_right/faults.overvoltage_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/track_right/faults.undervoltage_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/track_right/faults.unstable_voltage_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/track_right/faults.bridge_brownout_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/track_right/faults.boot_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/track_right/faults.hardware_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/track_right/faults.static_brake_disabled_fault",
+          "timestampMethod": "receiveTime"
+        }
+      ],
+      "isSynced": true,
+      "foxglovePanelTitle": "Right Track"
+    },
+    "StateTransitions!48jsvi2": {
+      "paths": [
+        {
+          "value": "/lance/hopper_belt/faults.faults",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/hopper_belt/faults.device_temp_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/hopper_belt/faults.proc_temp_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/hopper_belt/faults.stator_current_limit_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/hopper_belt/faults.supply_current_limit_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/hopper_belt/faults.overvoltage_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/hopper_belt/faults.undervoltage_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/hopper_belt/faults.unstable_voltage_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/hopper_belt/faults.bridge_brownout_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/hopper_belt/faults.boot_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/hopper_belt/faults.hardware_fault",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/hopper_belt/faults.static_brake_disabled_fault",
+          "timestampMethod": "receiveTime"
+        }
+      ],
+      "isSynced": true,
+      "foxglovePanelTitle": "Hopper Belt"
+    },
     "3D!3bd7eia": {
       "cameraState": {
         "perspective": true,
@@ -1524,24 +1740,24 @@
           "layout": {
             "first": {
               "first": {
-                "first": "Publish!2a458o",
+                "first": "CallService!1gvldsh",
                 "second": {
-                  "first": "Publish!19qmusb",
+                  "first": "CallService!3vavkl6",
                   "second": {
-                    "first": "Publish!1n215r7",
+                    "first": "CallService!3gyep2l",
                     "second": "Indicator!2tgedv2",
                     "direction": "column",
-                    "splitPercentage": 10.526315789473683
+                    "splitPercentage": 12.730201114713797
                   },
                   "direction": "column",
-                  "splitPercentage": 8.512467755803955
+                  "splitPercentage": 10.89149642719483
                 },
                 "direction": "column",
                 "splitPercentage": 9.423676012461058
               },
               "second": "3D!3o2i4gc",
               "direction": "row",
-              "splitPercentage": 16.252274105518495
+              "splitPercentage": 16.408469376159996
             },
             "second": {
               "first": "Plot!4kazw24",
@@ -1589,6 +1805,23 @@
               "splitPercentage": 49.9290780141844
             },
             "direction": "column"
+          }
+        },
+        {
+          "title": "TalonFX HARD Faults",
+          "layout": {
+            "first": {
+              "first": "StateTransitions!2ih3nej",
+              "second": "StateTransitions!v7s4kj",
+              "direction": "column"
+            },
+            "second": {
+              "first": "StateTransitions!4fihzwb",
+              "second": "StateTransitions!48jsvi2",
+              "direction": "column"
+            },
+            "direction": "row",
+            "splitPercentage": 49.81203007518797
           }
         },
         {
