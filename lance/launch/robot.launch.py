@@ -42,6 +42,9 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             os.path.join(phx6_path, 'launch', 'main.launch.py')
         ),
+        launch_arguments = {
+            'arduino_device' : LaunchConfiguration('arduino_device', default='/dev/ttyACM0')
+        }.items(),
         condition = IfCondition(
             PythonExpression(["'true' if '", LaunchConfiguration('phoenix_driver', default='false'), "' == '6' else 'false'"]) )
     )
@@ -103,6 +106,7 @@ def generate_launch_description():
         DeclareLaunchArgument('disable_state_pub', default_value='false'),
         DeclareLaunchArgument('phoenix_driver', default_value='6'),
         DeclareLaunchArgument('controller', default_value='true'),
+        DeclareLaunchArgument("arduino_device", default_value="/dev/ttyACM0"),
         perception_live,
         phoenix5_driver,
         phoenix6_driver,
