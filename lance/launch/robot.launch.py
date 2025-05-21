@@ -61,6 +61,7 @@ def generate_launch_description():
         cmd = [
             'ros2', 'bag', 'record',
             '-o', f"bag_recordings/lance_motor_data_{ datetime.datetime.now().strftime("%Y_%m_%d-%H_%M_%S") }",
+            '/joy',
             '/lance/watchdog_status',
             '/lance/track_left/ctrl',
             '/lance/track_left/faults',
@@ -71,10 +72,12 @@ def generate_launch_description():
             '/lance/trencher/ctrl',
             '/lance/trencher/faults',
             '/lance/trencher/info',
-            '/lance/hopper_act/ctrl',
             '/lance/hopper_belt/ctrl',
             '/lance/hopper_belt/faults',
             '/lance/hopper_belt/info',
+            '/lance/hopper_act/ctrl',
+            '/lance/hopper_act/faults',
+            '/lance/hopper_act/info',
             '/rosout'
             # '--compression-mode', 'file',
             # '--compression-format', 'zstd'
