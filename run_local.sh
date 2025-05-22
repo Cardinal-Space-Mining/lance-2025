@@ -2,6 +2,7 @@
 
 FG_BRIDGE_MODE=test
 MOTOR_LOGGING=true
+LIDAR_LOGGING=true
 
 # local bridge mode starts the robot state publisher and foxglove bridge nodes on the client rather than robot
 LOCAL_BRIDGE=false
@@ -15,4 +16,5 @@ ros2 launch lance remote.launch.py \
     foxglove_bridge:=$LOCAL_BRIDGE \
     foxglove_bridge_mode:=$FG_BRIDGE_MODE \
     enable_state_pub:=$LOCAL_BRIDGE \
-    record_motor:=$MOTOR_LOGGING
+    record_motor:=$MOTOR_LOGGING \
+    record_lidar:=$LIDAR_LOGGING

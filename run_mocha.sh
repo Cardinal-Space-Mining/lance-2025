@@ -33,7 +33,7 @@ fi
 
 #--------------------------------------------------
 
-RUN_PERCEPTION=false
+RUN_PERCEPTION=true
 FG_ENABLED=true
 FG_BRIDGE_MODE=test
 LIDAR_LOGGING=false

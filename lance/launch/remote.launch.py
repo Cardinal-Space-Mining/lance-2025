@@ -96,6 +96,22 @@ def generate_launch_description():
         condition = IfCondition( LaunchConfiguration('record_motor', default='false') )
     )
 
+    lidar_recorder = ExecuteProcess(
+        cmd = [
+            'ros2', 'bag', 'record',
+            '-o', f"bag_recordings/lance_lidar_data_{ datetime.datetime.now().strftime("%Y_%m_%d-%H_%M_%S") }",
+            '/multiscan/lidar_scan',
+            '/multiscan/imu',
+            # '/cardinal_perception/tags_detections',
+            '/tf',
+            '/tf_static',
+            # '--compression-mode', 'file',
+            # '--compression-format', 'zstd'
+        ],
+        output='screen',
+        condition = IfCondition( LaunchConfiguration('record_lidar', default='false') )
+    )
+
     # launch foxglove gui (local connection)
     foxglove_gui_local = make_foxglove_gui_launch(
                             'localhost:8765',
@@ -111,11 +127,13 @@ def generate_launch_description():
         DeclareLaunchArgument('foxglove_bridge_mode', default_value='live'),
         DeclareLaunchArgument('enable_state_pub', default_value='false'),
         DeclareLaunchArgument('record_motor', default_value='false'),
+        DeclareLaunchArgument('record_lidar', default_value='false'),
         joy_node,
         robot_status_node,
         robot_state_publisher,
         foxglove_bridge,
         motor_recorder,
+        lidar_recorder,
         foxglove_gui_local,
         foxglove_gui_remote
     ])
