@@ -1,12 +1,11 @@
 import os
-import datetime
 
 from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration, PythonExpression
-from launch.conditions import IfCondition, UnlessCondition
+from launch.conditions import IfCondition
 from launch.actions import IncludeLaunchDescription, ExecuteProcess
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
@@ -22,8 +21,7 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             os.path.join(sim_pkg_path, 'launch', 'robot_state_publisher.launch.py')
         ),
-        launch_arguments = {'use_sim_time': 'false'}.items(),
-        condition = UnlessCondition( LaunchConfiguration('disable_state_pub', default='false') )
+        launch_arguments = {'use_sim_time': 'false'}.items()
     )
     # lidar driver
     multiscan_driver = Node(
@@ -32,7 +30,10 @@ def generate_launch_description():
         executable = 'multiscan_driver',
         output = 'screen',
         parameters = [
-            os.path.join(pkg_path, 'config', 'multiscan_driver.yaml')
+            os.path.join(pkg_path, 'config', 'multiscan_driver.yaml'),
+            {
+                'driver_hostname': os.popen( 'echo $(hostname -I | awk \'{print $1}\')' ).read().rstrip()
+            }
         ],
         remappings = [
             ('lidar_scan', '/multiscan/lidar_scan'),
@@ -59,25 +60,16 @@ def generate_launch_description():
             ('tags_detections', '/cardinal_perception/tags_detections'),
             ('map_cloud', '/cardinal_perception/map_cloud')
         ],
-        condition = IfCondition( LaunchConfiguration('processing', default='true') ),
+        condition = IfCondition( LaunchConfiguration('perception', default='true') ),
         # prefix=['xterm -e gdb -ex run --args']
         # prefix=['valgrind --leak-check=yes -v']
         # prefix=['valgrind --tool=callgrind --dump-instr=yes --simulate-cache=yes --collect-jumps=yes']
     )
     # bag2 record
-    bag_recorder = ExecuteProcess(
-        cmd = [
-            'ros2', 'bag', 'record',
-            '-o', f"bag_recordings/lance_lidar_data_{ datetime.datetime.now().strftime("%Y_%m_%d-%H_%M_%S") }",
-            '/multiscan/lidar_scan',
-            '/multiscan/imu',
-            # '/cardinal_perception/tags_detections',
-            '/tf',
-            '/tf_static',
-            # '--compression-mode', 'file',
-            # '--compression-format', 'zstd'
-        ],
-        output='screen',
+    bag_recorder = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(pkg_path, 'launch', 'record_lidar.launch.py')
+        ),
         condition = IfCondition( LaunchConfiguration('record', default='false') )
     )
     # bag2 play
@@ -112,10 +104,9 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('foxglove', default_value='true'),
         DeclareLaunchArgument('foxglove_mode', default_value='live'),
-        DeclareLaunchArgument('processing', default_value='true'),
+        DeclareLaunchArgument('perception', default_value='true'),
         DeclareLaunchArgument('record', default_value='false'),
         DeclareLaunchArgument('bag', default_value='false'),
-        DeclareLaunchArgument('disable_state_pub', default_value='false'),
         robot_state_publisher,
         multiscan_driver,
         launch_perception,

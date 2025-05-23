@@ -12,17 +12,27 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 
 
-def make_foxglove_gui_launch(connection, condition):
-    return ExecuteProcess(
-        cmd = [
-            'foxglove-studio',
-            f"\"foxglove://open?ds=foxglove-websocket&ds.url=ws://{connection}/\""  # why doesn't this work!?
-        ],
-        shell = 'true',
-        output = 'screen',
-        condition = IfCondition( condition ),
-        on_exit = Shutdown(reason='gui closed')
-    )
+def make_foxglove_gui_launch(connection, condition, use_xdg_launch):
+    if(use_xdg_launch):
+        return ExecuteProcess(
+            cmd = [
+                'xdg-open',
+                f'foxglove://open?ds=foxglove-websocket&ds.url=ws://{connection}/'
+            ],
+            output = 'screen',
+            condition = IfCondition(condition)
+        )
+    else:
+        return ExecuteProcess(
+            cmd = [
+                'foxglove-studio',
+                '--url',
+                f'"foxglove://open?ds=foxglove-websocket&ds.url=ws://{connection}/\"'
+            ],
+            output = 'screen',
+            condition = IfCondition( condition ),
+            on_exit = Shutdown(reason='gui closed')
+        )
 
 def generate_launch_description():
 
@@ -67,59 +77,30 @@ def generate_launch_description():
     )
 
     # record motor data locally
-    motor_recorder = ExecuteProcess(
-        cmd = [
-            'ros2', 'bag', 'record',
-            '-o', f"bag_recordings/lance_motor_data_{ datetime.datetime.now().strftime("%Y_%m_%d-%H_%M_%S") }",
-            '/joy',
-            '/lance/watchdog_status',
-            '/lance/track_left/ctrl',
-            '/lance/track_left/faults',
-            '/lance/track_left/info',
-            '/lance/track_right/ctrl',
-            '/lance/track_right/faults',
-            '/lance/track_right/info',
-            '/lance/trencher/ctrl',
-            '/lance/trencher/faults',
-            '/lance/trencher/info',
-            '/lance/hopper_belt/ctrl',
-            '/lance/hopper_belt/faults',
-            '/lance/hopper_belt/info',
-            '/lance/hopper_act/ctrl',
-            '/lance/hopper_act/faults',
-            '/lance/hopper_act/info',
-            '/rosout'
-            # '--compression-mode', 'file',
-            # '--compression-format', 'zstd'
-        ],
-        output='screen',
+    motor_recorder = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(pkg_path, 'launch', 'record_motor.launch.py')
+        ),
         condition = IfCondition( LaunchConfiguration('record_motor', default='false') )
     )
 
-    lidar_recorder = ExecuteProcess(
-        cmd = [
-            'ros2', 'bag', 'record',
-            '-o', f"bag_recordings/lance_lidar_data_{ datetime.datetime.now().strftime("%Y_%m_%d-%H_%M_%S") }",
-            '/multiscan/lidar_scan',
-            '/multiscan/imu',
-            # '/cardinal_perception/tags_detections',
-            '/tf',
-            '/tf_static',
-            # '--compression-mode', 'file',
-            # '--compression-format', 'zstd'
-        ],
-        output='screen',
+    lidar_recorder = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(pkg_path, 'launch', 'record_lidar.launch.py')
+        ),
         condition = IfCondition( LaunchConfiguration('record_lidar', default='false') )
     )
 
     # launch foxglove gui (local connection)
     foxglove_gui_local = make_foxglove_gui_launch(
                             'localhost:8765',
-                            AndSubstitution(using_foxglove_gui, using_local_foxglove_bridge) )
+                            AndSubstitution(using_foxglove_gui, using_local_foxglove_bridge),
+                            True )
     # launch foxglove gui (remote connection)
     foxglove_gui_remote = make_foxglove_gui_launch(
                             'mochapanda.local:8765',
-                            AndSubstitution(using_foxglove_gui, NotSubstitution(using_local_foxglove_bridge)) )
+                            AndSubstitution(using_foxglove_gui, NotSubstitution(using_local_foxglove_bridge)),
+                            True )
 
     return LaunchDescription([
         DeclareLaunchArgument('foxglove_gui', default_value='true'),

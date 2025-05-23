@@ -20,37 +20,64 @@ for DEV in /dev/ttyACM*; do
     DEVICE_ID="$VID:$PID"
 
     if [ "$DEVICE_ID" == "$Arduino_ID" ]; then
-        DEVICE="$DEV"
-        echo "Arduino device is $DEVICE"
+        ARDUINO_DEVICE="$DEV"
+        echo "Arduino device is $ARDUINO_DEVICE"
         break
     fi
 done
 
-if [ -z "$DEVICE" ]; then
-    echo "ERROR: WELP"
-    exit 1
+if [ -z "$ARDUINO_DEVICE" ]; then
+    echo "Failed to detect serial arduino."
+    ARDUINO_DEVICE=/dev/ttyACM0
+    # exit 1
 fi
 
 #--------------------------------------------------
 
-RUN_PERCEPTION=true
+# Default values
+RUN_PERCEPTION=false
 FG_ENABLED=true
 FG_BRIDGE_MODE=test
 LIDAR_LOGGING=false
 MOTOR_LOGGING=true
+
+RUN_FG=$FG_ENABLED
+DISABLE_STATE_PUB=false
+
+# Parse named arguments
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    perception=*)
+      RUN_PERCEPTION="${1#*=}"
+      shift
+      ;;
+    lidar-logging=*)
+      LIDAR_LOGGING="${1#*=}"
+      shift
+      ;;
+    --client-bridge)
+      RUN_FG=false
+      DISABLE_STATE_PUB=true
+      shift
+      ;;
+    *)
+      echo "Unknown option: $1"
+      exit 1
+      ;;
+  esac
+done
 
 SCRIPT=$(readlink -f "$0")
 SCRIPTPATH=$(dirname "$SCRIPT")
 
 $SCRIPTPATH/motor-control/scripts/can_bringup.sh
 
-RUN_FG=$FG_ENABLED
-DISABLE_STATE_PUB=false
-if [[ "$1" == "--remote-bridge" ]]; then
-    echo "Remote bridge mode set. Not running state publisher or foxglove bridge."
-    RUN_FG=false
-    DISABLE_STATE_PUB=true
-fi
+# echo "RUN_FG: $RUN_FG"
+# echo "FG_BRIDGE_MODE: $FG_BRIDGE_MODE"
+# echo "RUN_PERCEPTION: $RUN_PERCEPTION"
+# echo "DISABLE_STATE_PUB: $DISABLE_STATE_PUB"
+
+source $SCRIPTPATH/../install/setup.bash
 
 # source install/setup.bash
 ros2 launch lance robot.launch.py \
@@ -62,6 +89,7 @@ ros2 launch lance robot.launch.py \
     disable_state_pub:=$DISABLE_STATE_PUB \
     phoenix_driver:=6 \
     controller:=true \
-    arduino_device:=$DEVICE
+    arduino_device:=$ARDUINO_DEVICE \
+    force_lidar_driver:=$LIDAR_LOGGING
 
 $SCRIPTPATH/motor-control/scripts/can_shutdown.sh

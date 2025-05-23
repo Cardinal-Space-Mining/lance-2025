@@ -6,27 +6,56 @@
     certfile: ""
     keyfile: ""
     topic_whitelist: [
-      '/multiscan/.*',
+      '/rosout',
+      '/robot_description',
       '/tf.*',
+      '/multiscan/.*',
+
+      '/cardinal_perception/process_metrics',
+      '/cardinal_perception/scan_cb_metrics',
+      '/cardinal_perception/trav_cb_metrics',
+      '/cardinal_perception/mapping_cb_metrics',
+
+      '/cardinal_perception/gravity_estimation/*',
       '/cardinal_perception/filtered_scan',
       '/cardinal_perception/traversability_points',
       '/cardinal_perception/trav_interp_points',
-      '/cardinal_perception/process_metrics',
-      '/cardinal_perception/scan_cb_metrics',
-      '/cardinal_perception/mapping_cb_metrics',
-      '/cardinal_perception/trav_cb_metrics',
-      '/cardinal_perception/gravity_estimation/*',
-      '/robot_description'
       # '/cardinal_perception/map_cloud',
       # '/cardinal_perception/tags_detections',
+
+      '/joy',
+      '/lance/watchdog_status',
+      '/lance/control_level',
+      '/lance/mining_status',
+      '/lance/offload_status',
+
+      '/lance/track_left/ctrl',
+      '/lance/track_left/faults',
+      '/lance/track_left/info',
+
+      '/lance/track_right/ctrl',
+      '/lance/track_right/faults',
+      '/lance/track_right/info',
+
+      '/lance/trencher/ctrl',
+      '/lance/trencher/faults',
+      '/lance/trencher/info',
+
+      '/lance/hopper_belt/ctrl',
+      '/lance/hopper_belt/faults',
+      '/lance/hopper_belt/info',
+
+      '/lance/hopper_act/ctrl',
+      '/lance/hopper_act/faults',
+      '/lance/hopper_act/info'
     ]
-    param_whitelist: ['.*']
+    # param_whitelist: []
     service_whitelist: ['.*']
     client_topic_whitelist: ['.*']
     min_qos_depth: 1
     max_qos_depth: 10
     num_threads: 0
-    send_buffer_limit: 1000000
-    capabilities: [ clientPublish, parameters, parametersSubscribe, services, connectionGraph, assets ]
+    send_buffer_limit: 10000000
+    capabilities: [ clientPublish, services, connectionGraph, assets ]
     include_hidden: false
     asset_uri_allowlist: ['^package://(?:\\w+/)*\\w+\\.(?:dae|fbx|glb|gltf|jpeg|jpg|mtl|obj|png|stl|tif|tiff|urdf|webp|xacro)$']

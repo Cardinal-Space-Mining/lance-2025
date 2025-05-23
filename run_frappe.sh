@@ -6,6 +6,8 @@ MOTOR_LOGGING=true
 SCRIPT=$(readlink -f "$0")
 SCRIPTPATH=$(dirname "$SCRIPT")
 
+source $SCRIPTPATH/../install/setup.bash
+
 if [[ "$1" == "--full" ]]; then
     $SCRIPTPATH/motor-control/scripts/can_bringup.sh
 
@@ -18,7 +20,8 @@ if [[ "$1" == "--full" ]]; then
         record_motor:=$MOTOR_LOGGING \
         disable_state_pub:=true \
         phoenix_driver:=5 \
-        controller:=false
+        controller:=false \
+        force_lidar_driver:=false
 
     $SCRIPTPATH/motor-control/scripts/can_shutdown.sh
 else

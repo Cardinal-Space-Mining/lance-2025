@@ -64,22 +64,21 @@ Each target platform/machine has it's own script:
 ### 1. Client Laptop
 Run:
 ```bash
-./src/run_local.sh
+./src/run_client.sh
 ```
-To run the robot state publisher and foxglove bridge locally:
+If foxglove-bridge and robot-state-publisher are to be run on the robot, use:
 ```bash
-./src/run_local.sh --local-bridge
+./src/run_local.sh --remote-bridge
 ```
-*Closing foxglove will end all other processes as well.*
 
 ### 2. "Mochapanda"
 Run:
 ```bash
-./src/run_mocha.sh
+./src/run_mocha.sh --client-bridge <perception={true/false}> <lidar-logging={true/false}>
 ```
-If running the client with the `--local-bridge` argument, disable the robot state publisher and foxglove bridge from running robot-side:
+To run foxglove-bridge and robot-state-publisher on the robot, remove the `--client-bridge` argument:
 ```bash
-./src/run_mocha.sh --remote-bridge
+./src/run_mocha.sh <perception={true/false}> <lidar-logging={true/false}>
 ```
 
 ### 3. "Frappepanda"
