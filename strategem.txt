@@ -1,4 +1,6 @@
 --- 5/23/25 -------------------------------
-MOCHA: ./src/run_mocha.sh --client-bridge lidar-logging=true
+MOCHA: ./src/run_mocha.sh --client-bridge lidar-logging=true percpetion=true
 FRAPPE: ./src/run_frappe.sh
 CLIENT: ./src/run_client.sh
+
+**IF BAD DISABLE PERCEPTION (KEEP LOGGING)
