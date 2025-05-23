@@ -34,7 +34,7 @@
       "path": "/lance/watchdog_status.data",
       "style": "background",
       "fontSize": 36,
-      "fallbackColor": "#a0a0a0",
+      "fallbackColor": "#ff0000",
       "fallbackLabel": "Disabled",
       "rules": [
         {
@@ -52,16 +52,24 @@
       ],
       "foxglovePanelTitle": "Robot Status"
     },
+    "RawMessages!3o67d49": {
+      "diffEnabled": false,
+      "diffMethod": "custom",
+      "diffTopicPath": "",
+      "showFullMessageForDiff": false,
+      "topicPath": "/joy",
+      "fontSize": 12
+    },
     "3D!3o2i4gc": {
       "cameraState": {
         "perspective": true,
-        "distance": 8.802533372920422,
-        "phi": 31.67771993053734,
-        "thetaOffset": -138.15311308168543,
+        "distance": 14.701837812151927,
+        "phi": 13.98501970433922,
+        "thetaOffset": 77.96595753641319,
         "targetOffset": [
-          0.732824459194285,
-          0.4112049936851414,
-          -1.8336994140694087e-16
+          0.8719920486752575,
+          -2.2084332468462233,
+          3.476406068063238e-16
         ],
         "target": [
           0,
@@ -107,24 +115,26 @@
         },
         "frame:right_track_link": {
           "visible": false
-        }
+        },
+        "frame:collection_link": {}
       },
       "topics": {
         "/cardinal_perception/filtered_scan": {
-          "visible": false,
-          "pointSize": 2,
+          "visible": true,
+          "pointSize": 5,
           "colorField": "z",
           "colorMode": "colormap",
           "colorMap": "turbo"
         },
         "/multiscan/lidar_scan": {
-          "visible": false,
-          "colorField": "reflective",
+          "visible": true,
+          "colorField": "z",
           "colorMode": "colormap",
-          "colorMap": "turbo"
+          "colorMap": "turbo",
+          "pointSize": 3
         },
         "/cardinal_perception/trav_interp_points": {
-          "visible": true,
+          "visible": false,
           "colorField": "intensity",
           "colorMode": "colormap",
           "colorMap": "turbo",
@@ -133,7 +143,7 @@
           "maxValue": 1
         },
         "/cardinal_perception/traversability_points": {
-          "visible": true,
+          "visible": false,
           "colorField": "intensity",
           "colorMode": "colormap",
           "colorMap": "turbo",
@@ -278,19 +288,19 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_left/info.velocity",
-          "enabled": true,
+          "enabled": false,
           "color": "#4e98e2"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_left/info.output_voltage",
-          "enabled": true,
+          "enabled": false,
           "color": "#f5774d"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_left/info.output_current",
-          "enabled": true,
+          "enabled": false,
           "color": "#f7df71"
         },
         {
@@ -302,55 +312,55 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_left/info.supply_current",
-          "enabled": true,
+          "enabled": false,
           "color": "#61cbff"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_left/info.device_temp",
-          "enabled": true,
+          "enabled": false,
           "color": "#a395e2"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_left/info.processor_temp",
-          "enabled": true,
+          "enabled": false,
           "color": "#cad660"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_left/info.enabled",
-          "enabled": true,
+          "enabled": false,
           "color": "#4e98e2"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_left/info.bridge_mode",
-          "enabled": true,
+          "enabled": false,
           "color": "#f5774d"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_left/info.control_mode",
-          "enabled": true,
+          "enabled": false,
           "color": "#f7df71"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_left/info.motor_state",
-          "enabled": true,
+          "enabled": false,
           "color": "#5cd6a9"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_left/info.acceleration",
-          "enabled": true,
+          "enabled": false,
           "color": "#61cbff"
         }
       ],
       "showXAxisLabels": true,
       "showYAxisLabels": true,
-      "showLegend": true,
+      "showLegend": false,
       "legendDisplay": "floating",
       "showPlotValuesInLegend": true,
       "isSynced": true,
@@ -362,19 +372,19 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/trencher/info.velocity",
-          "enabled": true,
+          "enabled": false,
           "color": "#4e98e2"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/trencher/info.output_voltage",
-          "enabled": true,
+          "enabled": false,
           "color": "#f5774d"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/trencher/info.output_current",
-          "enabled": true,
+          "enabled": false,
           "color": "#f7df71"
         },
         {
@@ -386,55 +396,55 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/trencher/info.supply_current",
-          "enabled": true,
+          "enabled": false,
           "color": "#61cbff"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/trencher/info.device_temp",
-          "enabled": true,
+          "enabled": false,
           "color": "#a395e2"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/trencher/info.processor_temp",
-          "enabled": true,
+          "enabled": false,
           "color": "#cad660"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/trencher/info.enabled",
-          "enabled": true,
+          "enabled": false,
           "color": "#4e98e2"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/trencher/info.bridge_mode",
-          "enabled": true,
+          "enabled": false,
           "color": "#f5774d"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/trencher/info.control_mode",
-          "enabled": true,
+          "enabled": false,
           "color": "#f7df71"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/trencher/info.motor_state",
-          "enabled": true,
+          "enabled": false,
           "color": "#5cd6a9"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/trencher/info.acceleration",
-          "enabled": true,
+          "enabled": false,
           "color": "#61cbff"
         }
       ],
       "showXAxisLabels": true,
       "showYAxisLabels": true,
-      "showLegend": true,
+      "showLegend": false,
       "legendDisplay": "floating",
       "showPlotValuesInLegend": true,
       "isSynced": true,
@@ -446,19 +456,19 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_right/info.velocity",
-          "enabled": true,
+          "enabled": false,
           "color": "#4e98e2"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_right/info.output_voltage",
-          "enabled": true,
+          "enabled": false,
           "color": "#f5774d"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_right/info.output_current",
-          "enabled": true,
+          "enabled": false,
           "color": "#f7df71"
         },
         {
@@ -470,55 +480,55 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_right/info.supply_current",
-          "enabled": true,
+          "enabled": false,
           "color": "#61cbff"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_right/info.device_temp",
-          "enabled": true,
+          "enabled": false,
           "color": "#a395e2"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_right/info.processor_temp",
-          "enabled": true,
+          "enabled": false,
           "color": "#cad660"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_right/info.enabled",
-          "enabled": true,
+          "enabled": false,
           "color": "#4e98e2"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_right/info.bridge_mode",
-          "enabled": true,
+          "enabled": false,
           "color": "#f5774d"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_right/info.control_mode",
-          "enabled": true,
+          "enabled": false,
           "color": "#f7df71"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_right/info.motor_state",
-          "enabled": true,
+          "enabled": false,
           "color": "#5cd6a9"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_right/info.acceleration",
-          "enabled": true,
+          "enabled": false,
           "color": "#61cbff"
         }
       ],
       "showXAxisLabels": true,
       "showYAxisLabels": true,
-      "showLegend": true,
+      "showLegend": false,
       "legendDisplay": "floating",
       "showPlotValuesInLegend": true,
       "isSynced": true,
@@ -530,19 +540,19 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/hopper_belt/info.velocity",
-          "enabled": true,
+          "enabled": false,
           "color": "#4e98e2"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/hopper_belt/info.output_voltage",
-          "enabled": true,
+          "enabled": false,
           "color": "#f5774d"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/hopper_belt/info.output_current",
-          "enabled": true,
+          "enabled": false,
           "color": "#f7df71"
         },
         {
@@ -554,55 +564,55 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/hopper_belt/info.supply_current",
-          "enabled": true,
+          "enabled": false,
           "color": "#61cbff"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/hopper_belt/info.device_temp",
-          "enabled": true,
+          "enabled": false,
           "color": "#a395e2"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/hopper_belt/info.processor_temp",
-          "enabled": true,
+          "enabled": false,
           "color": "#cad660"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/hopper_belt/info.enabled",
-          "enabled": true,
+          "enabled": false,
           "color": "#4e98e2"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/hopper_belt/info.bridge_mode",
-          "enabled": true,
+          "enabled": false,
           "color": "#f5774d"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/hopper_belt/info.control_mode",
-          "enabled": true,
+          "enabled": false,
           "color": "#f7df71"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/hopper_belt/info.motor_state",
-          "enabled": true,
+          "enabled": false,
           "color": "#5cd6a9"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/hopper_belt/info.acceleration",
-          "enabled": true,
+          "enabled": false,
           "color": "#61cbff"
         }
       ],
       "showXAxisLabels": true,
       "showYAxisLabels": true,
-      "showLegend": true,
+      "showLegend": false,
       "legendDisplay": "floating",
       "showPlotValuesInLegend": true,
       "isSynced": true,
@@ -1043,19 +1053,18 @@
     },
     "3D!3bd7eia": {
       "cameraState": {
-        "perspective": true,
         "distance": 6.147137354450123,
+        "perspective": true,
         "phi": 72.17258125998842,
-        "thetaOffset": -34.648562352707025,
-        "targetOffset": [
-          0.5942376571673369,
-          -0.19910445927227907,
-          -2.5814527619687778e-17
-        ],
         "target": [
           0,
           0,
           0
+        ],
+        "targetOffset": [
+          0.5942376571673369,
+          -0.19910445927227907,
+          -2.5814527619687778e-17
         ],
         "targetOrientation": [
           0,
@@ -1063,6 +1072,7 @@
           0,
           1
         ],
+        "thetaOffset": -34.648562352707025,
         "fovy": 45,
         "near": 0.5,
         "far": 5000
@@ -1732,6 +1742,108 @@
       "buttonText": "Play 4x Speed",
       "buttonColor": "#00b2ff"
     },
+    "Plot!21olb3k": {
+      "paths": [
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/lance/track_left/ctrl.value",
+          "enabled": true,
+          "color": "#4e98e2"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/lance/track_right/ctrl.value",
+          "enabled": true,
+          "color": "#f5774d"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/lance/hopper_act/ctrl.value",
+          "enabled": true,
+          "color": "#f7df71"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/lance/trencher/ctrl.value",
+          "enabled": true,
+          "color": "#5cd6a9"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/lance/hopper_belt/ctrl.value",
+          "enabled": true,
+          "color": "#61cbff"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/lance/hopper_act/info.position",
+          "enabled": false,
+          "color": "#a395e2"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/lance/hopper_act/ctrl.value",
+          "enabled": false,
+          "color": "#cad660"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/lance/track_left/info.velocity",
+          "enabled": true,
+          "color": "#4e98e2"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/lance/track_right/info.velocity",
+          "enabled": true,
+          "color": "#f5774d"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/lance/hopper_act/info.output_percent",
+          "enabled": true,
+          "color": "#f7df71"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/lance/trencher/info.velocity",
+          "enabled": true,
+          "color": "#5cd6a9"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/lance/hopper_belt/info.velocity",
+          "enabled": true,
+          "color": "#61cbff"
+        }
+      ],
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "showLegend": false,
+      "legendDisplay": "floating",
+      "showPlotValuesInLegend": true,
+      "isSynced": true,
+      "xAxisVal": "timestamp",
+      "sidebarDimension": 240
+    },
+    "StateTransitions!3gtyevq": {
+      "paths": [
+        {
+          "value": "/lance/control_level.data",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/mining_status.data",
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/offload_status.data",
+          "timestampMethod": "receiveTime"
+        }
+      ],
+      "isSynced": true,
+      "showPoints": false
+    },
     "Tab!1nwcji4": {
       "activeTabIdx": 0,
       "tabs": [
@@ -1745,7 +1857,12 @@
                   "first": "CallService!3vavkl6",
                   "second": {
                     "first": "CallService!3gyep2l",
-                    "second": "Indicator!2tgedv2",
+                    "second": {
+                      "first": "Indicator!2tgedv2",
+                      "second": "RawMessages!3o67d49",
+                      "direction": "column",
+                      "splitPercentage": 29.794149512459366
+                    },
                     "direction": "column",
                     "splitPercentage": 12.730201114713797
                   },
@@ -1771,7 +1888,7 @@
               "splitPercentage": 31.15264797507788
             },
             "direction": "row",
-            "splitPercentage": 76.13111726685133
+            "splitPercentage": 72.99687825182102
           }
         },
         {
@@ -1780,7 +1897,8 @@
             "first": {
               "first": "Plot!1eynys5",
               "second": "Plot!t3e0jl",
-              "direction": "column"
+              "direction": "column",
+              "splitPercentage": 50
             },
             "second": {
               "first": "Plot!2407nbh",
@@ -1880,6 +1998,15 @@
             },
             "direction": "column",
             "splitPercentage": 39.018691588785046
+          }
+        },
+        {
+          "title": "Control Status",
+          "layout": {
+            "first": "Plot!21olb3k",
+            "second": "StateTransitions!3gtyevq",
+            "direction": "column",
+            "splitPercentage": 68.75
           }
         }
       ]
