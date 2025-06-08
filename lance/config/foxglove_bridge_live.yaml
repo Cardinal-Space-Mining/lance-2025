@@ -11,10 +11,10 @@
       '/tf.*',
       '/multiscan/.*',
 
-      '/cardinal_perception/process_metrics',
-      '/cardinal_perception/scan_cb_metrics',
-      '/cardinal_perception/trav_cb_metrics',
-      '/cardinal_perception/mapping_cb_metrics',
+      '/cardinal_perception/metrics/process_stats',
+      '/cardinal_perception/metrics/scan_cb_stats',
+      '/cardinal_perception/metrics/trav_cb_stats',
+      '/cardinal_perception/metrics/mapping_cb_stats',
 
       '/cardinal_perception/gravity_estimation/*',
       '/cardinal_perception/filtered_scan',
