@@ -80,7 +80,7 @@ def generate_launch_description():
             # '--loop',
             # '--rate', '0.5',
             '--topics', '/multiscan/lidar_scan', '/multiscan/imu', '/cardinal_perception/tags_detections',
-            # '--start-offset', '248'
+            # '--start-offset', '300',
             '--start-paused'
         ],
         output='screen',
