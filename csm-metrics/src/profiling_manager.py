@@ -1,4 +1,44 @@
 #!/usr/bin/env python3
+'''
+/*******************************************************************************
+*   Copyright (C) 2025 Cardinal Space Mining Club                              *
+*                                                                              *
+*                                 ;xxxxxxx:                                    *
+*                                ;$$$$$$$$$       ...::..                      *
+*                                $$$$$$$$$$x   .:::::::::::..                  *
+*                             x$$$$$$$$$$$$$$::::::::::::::::.                 *
+*                         :$$$$$&X;      .xX:::::::::::::.::...                *
+*                 .$$Xx++$$$$+  :::.     :;:   .::::::.  ....  :               *
+*                :$$$$$$$$$  ;:      ;xXXXXXXXx  .::.  .::::. .:.              *
+*               :$$$$$$$$: ;      ;xXXXXXXXXXXXXx: ..::::::  .::.              *
+*              ;$$$$$$$$ ::   :;XXXXXXXXXXXXXXXXXX+ .::::.  .:::               *
+*               X$$$$$X : +XXXXXXXXXXXXXXXXXXXXXXXX; .::  .::::.               *
+*                .$$$$ :xXXXXXXXXXXXXXXXXXXXXXXXXXXX.   .:::::.                *
+*                 X$$X XXXXXXXXXXXXXXXXXXXXXXXXXXXXx:  .::::.                  *
+*                 $$$:.XXXXXXXXXXXXXXXXXXXXXXXXXXX  ;; ..:.                    *
+*                 $$& :XXXXXXXXXXXXXXXXXXXXXXXX;  +XX; X$$;                    *
+*                 $$$: XXXXXXXXXXXXXXXXXXXXXX; :XXXXX; X$$;                    *
+*                 X$$X XXXXXXXXXXXXXXXXXXX; .+XXXXXXX; $$$                     *
+*                 $$$$ ;XXXXXXXXXXXXXXX+  +XXXXXXXXx+ X$$$+                    *
+*               x$$$$$X ;XXXXXXXXXXX+ :xXXXXXXXX+   .;$$$$$$                   *
+*              +$$$$$$$$ ;XXXXXXx;;+XXXXXXXXX+    : +$$$$$$$$                  *
+*               +$$$$$$$$: xXXXXXXXXXXXXXX+      ; X$$$$$$$$                   *
+*                :$$$$$$$$$. +XXXXXXXXX;      ;: x$$$$$$$$$                    *
+*                ;x$$$$XX$$$$+ .;+X+      :;: :$$$$$xX$$$X                     *
+*               ;;;;;;;;;;X$$$$$$$+      :X$$$$$$&.                            *
+*               ;;;;;;;:;;;;;x$$$$$$$$$$$$$$$$x.                               *
+*               :;;;;;;;;;;;;.  :$$$$$$$$$$X                                   *
+*                .;;;;;;;;:;;    +$$$$$$$$$                                    *
+*                  .;;;;;;.       X$$$$$$$:                                    *
+*                                                                              *
+*   Unless required by applicable law or agreed to in writing, software        *
+*   distributed under the License is distributed on an "AS IS" BASIS,          *
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   *
+*   See the License for the specific language governing permissions and        *
+*   limitations under the License.                                             *
+*                                                                              *
+*******************************************************************************/
+'''
 
 import rclpy
 from rclpy.node import Node
@@ -8,7 +48,7 @@ from rclpy.qos import *
 from builtin_interfaces.msg import Time as BuiltinTime
 from std_msgs.msg import Float64
 
-from ros_profiling.msg import TraceNotification, TraceNotifications, ThreadStatus
+from csm_metrics.msg import TraceNotification, TraceNotifications, LabelStamped
 
 class ProfilingManager(Node):
     def __init__(self):
@@ -59,19 +99,19 @@ class ProfilingManager(Node):
         return self.label_indices[label]
 
     def construct_status(nanos : int, label : str):
-        status = ThreadStatus()
+        status = LabelStamped()
         t = RclTime(nanoseconds=nanos)
         status.stamp = t.to_msg()
-        status.task = label
+        status.label = label
         return status
 
-    def publish_status(self, thread_idx : int, depth : int, msg : ThreadStatus):
+    def publish_status(self, thread_idx : int, depth : int, msg : LabelStamped):
         pubs = self.thread_status_pubs[thread_idx]
 
         while len(pubs) <= depth:
             pubs.append(
                 self.create_publisher(
-                    ThreadStatus,
+                    LabelStamped,
                     f'profiling/thread{thread_idx}_d{len(pubs)}',
                     self.PUB_QOS ) )
 

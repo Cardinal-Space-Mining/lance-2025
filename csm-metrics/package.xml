@@ -1,16 +1,16 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>ros_profiling</name>
+  <name>csm_metrics</name>
   <version>0.0.1</version>
-  <description>ROS2 Profiling Tools</description>
+  <description>ROS2 process statistics and profiling utilities</description>
   <maintainer email="samrichter888@gmail.com">Sam Richter</maintainer>
-  <license>UNLISCENCED</license>
+  <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <!-- <depend>rclcpp</depend> -->
   <depend>rclpy</depend>
+  <depend>rclcpp</depend>
   <depend>builtin_interfaces</depend>
   <depend>std_msgs</depend>
 
