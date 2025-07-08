@@ -65,6 +65,18 @@ def generate_launch_description():
         # prefix=['valgrind --leak-check=yes -v']
         # prefix=['valgrind --tool=callgrind --dump-instr=yes --simulate-cache=yes --collect-jumps=yes']
     )
+    # profiling manager for perception
+    run_profiling_manager = Node(
+        name = 'profiling_manager',
+        package = 'csm_metrics',
+        executable = 'profiling_manager.py',
+        output = 'screen',
+        parameters = [
+            {
+                'notification_topic' : 'trace_notifications'
+            }
+        ]
+    )
     # bag2 record
     bag_recorder = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -110,6 +122,7 @@ def generate_launch_description():
         robot_state_publisher,
         multiscan_driver,
         launch_perception,
+        run_profiling_manager,
         bag_recorder,
         bag_player,
         foxglove_node
