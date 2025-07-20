@@ -120,9 +120,9 @@ def generate_launch_description():
         DeclareLaunchArgument('record', default_value='false'),
         DeclareLaunchArgument('bag', default_value='false'),
         robot_state_publisher,
+        run_profiling_manager,
         multiscan_driver,
         launch_perception,
-        run_profiling_manager,
         bag_recorder,
         bag_player,
         foxglove_node

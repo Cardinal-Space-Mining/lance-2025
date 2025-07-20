@@ -3,7 +3,7 @@
 
     map_frame_id: "map"         # global frame (contains tags)
     odom_frame_id: "odom"       # odometry frame
-    base_frame_id: "base_link"  # robot frame
+    base_frame_id: "lidar_link"  # robot frame
 
     scan_topic: "/multiscan/lidar_scan"
     imu_topic: "/multiscan/imu"
@@ -87,13 +87,14 @@
 
     fiducial_detection:
       max_range: 2.
-      plane_distance_threshold: 0.02
-      plane_eps_thresh: 0.3
-      vox_resolution: 0.025
-      avg_center_offset: 0.2
-      remaining_points_thresh: 0.05
-      minimum_input_points: 100
-      minimum_segmented_points: 50
+      plane_seg_thickness: 0.02
+      ground_seg_thickness: 0.02
+      up_vec_max_angular_dev: 0.2
+      planes_max_angular_dev: 0.1
+      vox_resolution: 0.03
+      max_proportion_leftover: 0.05
+      min_num_input_points: 100
+      min_plane_seg_points: 30
 
     mapping:
       frustum_search_radius: 0.04   # 0.05/0.009 (realistic/ideal)
