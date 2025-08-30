@@ -65,6 +65,13 @@ def generate_launch_description():
         # prefix=['valgrind --leak-check=yes -v']
         # prefix=['valgrind --tool=callgrind --dump-instr=yes --simulate-cache=yes --collect-jumps=yes']
     )
+    # path planning service caller
+    pplan_server = Node(
+        name = 'pplan_server',
+        package = 'lance',
+        executable = 'fg_path_server',
+        output = 'screen'
+    )
     # profiling manager for perception
     run_profiling_manager = Node(
         name = 'profiling_manager',
@@ -123,6 +130,7 @@ def generate_launch_description():
         run_profiling_manager,
         multiscan_driver,
         launch_perception,
+        pplan_server,
         bag_recorder,
         bag_player,
         foxglove_node

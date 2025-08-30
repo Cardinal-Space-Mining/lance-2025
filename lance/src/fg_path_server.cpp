@@ -8,11 +8,10 @@
 #include <cardinal_perception/srv/update_path_planning_mode.hpp>
 
 #define FG_CLICKED_POINT_TOPIC "/clicked_point"
-#define PATH_SERVER_SERVICE "/cardinal_perception/update_path_planning"
+#define PATH_SERVER_SERVICE    "/cardinal_perception/update_path_planning"
 
 
-class FgPathServer :
-    public rclcpp::Node
+class FgPathServer : public rclcpp::Node
 {
     using PointStampedMsg = geometry_msgs::msg::PointStamped;
     using UpdatePathPlanSrv = cardinal_perception::srv::UpdatePathPlanningMode;
@@ -29,34 +28,26 @@ protected:
 
     rclcpp::Subscription<PointStampedMsg>::SharedPtr target_sub;
     rclcpp::Client<UpdatePathPlanSrv>::SharedPtr path_plan_client;
-
+//
 };
 
 
 FgPathServer::FgPathServer() :
     Node("fg_path_server"),
-    tf_buffer{ std::make_shared<rclcpp::Clock>(RCL_ROS_TIME) },
-    tf_listener{ tf_buffer },
-    target_sub
-    {
-        this->create_subscription<PointStampedMsg>(
-            FG_CLICKED_POINT_TOPIC,
-            rclcpp::SensorDataQoS{},
-            [this](const PointStampedMsg::ConstSharedPtr& msg)
-            {
-                this->handleClickedPoint(msg);
-            }
-        )
-    },
-    path_plan_client
-    {
-        this->create_client<UpdatePathPlanSrv>(PATH_SERVER_SERVICE)
-    }
-{}
-
-void FgPathServer::handleClickedPoint(const PointStampedMsg::ConstSharedPtr& msg)
+    tf_buffer{std::make_shared<rclcpp::Clock>(RCL_ROS_TIME)},
+    tf_listener{tf_buffer},
+    target_sub{this->create_subscription<PointStampedMsg>(
+        FG_CLICKED_POINT_TOPIC,
+        rclcpp::SensorDataQoS{},
+        [this](const PointStampedMsg& msg) { this->handleClickedPoint(msg); })},
+    path_plan_client{
+        this->create_client<UpdatePathPlanSrv>(PATH_SERVER_SERVICE)}
 {
-    if(!this->path_plan_client->service_is_ready())
+}
+
+void FgPathServer::handleClickedPoint(const PointStampedMsg& msg)
+{
+    if (!this->path_plan_client->service_is_ready())
     {
         return;
     }
@@ -64,12 +55,13 @@ void FgPathServer::handleClickedPoint(const PointStampedMsg::ConstSharedPtr& msg
     this->path_plan_client->prune_pending_requests();
 
     auto req = std::make_shared<UpdatePathPlanSrv::Request>();
-    req->target = *msg;
+    req->target.header = msg.header;
+    req->target.pose.position = msg.point;
     req->completed = false;
 
     this->path_plan_client->async_send_request(
         req,
-        [this](rclcpp::Client<UpdatePathPlanSrv>::SharedFuture) {} );
+        [this](rclcpp::Client<UpdatePathPlanSrv>::SharedFuture) {});
 }
 
 
