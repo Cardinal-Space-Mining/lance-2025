@@ -20,6 +20,9 @@ find_package(rosidl_default_generators REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(cardinal_perception REQUIRED)
 
 rosidl_generate_interfaces(
     ${PROJECT_NAME}
@@ -31,13 +34,28 @@ rosidl_get_typesupport_target(
 
 add_executable(robot_status src/robot_status.cpp)
 target_link_libraries(robot_status "${lance_custom_types}")
-ament_target_dependencies(robot_status rclcpp std_msgs)
+ament_target_dependencies(robot_status
+  rclcpp
+  std_msgs)
 
-ament_export_dependencies(rclcpp std_msgs rosidl_default_runtime)
+add_executable(fg_path_server src/fg_path_server.cpp)
+ament_target_dependencies(fg_path_server
+  rclcpp
+  geometry_msgs
+  tf2_ros
+  cardinal_perception)
+
+ament_export_dependencies(
+  rclcpp
+  rosidl_default_runtime
+  std_msgs
+  geometry_msgs
+  tf2_ros
+  cardinal_perception)
 ament_package()
 
 install(
-    TARGETS robot_status
+    TARGETS robot_status fg_path_server
     DESTINATION lib/${PROJECT_NAME}
 )
 install(
