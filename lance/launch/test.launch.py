@@ -15,8 +15,7 @@ from launch.substitutions import LaunchConfiguration
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 
-dir_path = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(dir_path)
+sys.path.append(os.path.join(get_package_share_directory('lance'), 'launch'))
 
 from util import print_something
 
@@ -37,6 +36,7 @@ def json_to_yaml():
         raise RuntimeError('error reading json file')
 
     print(yaml.dump(json_data))
+    print(print_something())
 
 def run_launch(context, *args, **kwargs):
     json_to_yaml()
