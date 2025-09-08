@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import json
 import yaml
@@ -98,3 +99,91 @@ def get_util_actions(config):
             )
         )
     return a
+
+
+# ----
+
+def get_bag_topic_types(bag : str):
+    topic_pattern = re.compile(r'Topic:\s+(\S+)\s+\|\s+Type:\s+(\S+)')  # "Parse lines like: '/topic_name [msg_type]'"
+    output = os.popen(f'ros2 bag info {bag}').read().rstrip()
+
+    type_topics = {}
+    for line in output.splitlines():
+        match = topic_pattern.search(line)
+        if match:
+            topic, msg_type = match.groups()
+            if msg_type not in type_topics:
+                type_topics[msg_type] = []
+            type_topics[msg_type].append(topic)
+
+    return type_topics
+
+def add_bag_play_action(
+        bag : str,
+        topics : list,
+        actions : list,
+        paused : bool = True,
+        loop : bool = False,
+        remappings : dict = {} ):
+    cmd_args = ['ros2', 'bag', 'play', '--clock', '10', bag]
+    if topics:
+        cmd_args.append('--topics')
+        cmd_args.extend(topics)
+    if paused:
+        cmd_args.append('--start-paused')
+    if loop:
+        cmd_args.append('--loop')
+    if remappings:
+        cmd_args.append('--remap')
+        for in_, out_ in remappings.items():
+            cmd_args.append(f'{in_}:={out_}')
+
+    actions.append(
+        ExecuteProcess(
+            cmd = cmd_args,
+            output = 'screen'
+        )
+    )
+def add_bag_record_action(
+        topics : list,
+        actions : list,
+        file_prefix = 'bag_recordings/bag',
+        mcap = True ):
+    cmd_args = [
+        'ros2', 'bag', 'record',
+        '-o', f'{file_prefix}_{ datetime.now().strftime("%Y_%m_%d-%H_%M_%S") }' ]
+    if mcap:
+        cmd_args.append('-s')
+        cmd_args.append('mcap')
+    if topics:
+        cmd_args.extend(topics)
+    else:
+        cmd_args.append('--all')
+    actions.append(
+        ExecuteProcess(
+            cmd = cmd_args,
+            output = 'screen'
+        )
+    )
+def add_bag_rerecord_action(
+        actions : list,
+        src_bag : str,
+        exclude_topics : list = [],
+        mcap = True,
+        bag_name = ''):
+    cmd_args = [
+        'ros2', 'bag', 'record', '--all', '--use-sim-time',
+        '-o', (bag_name if bag_name else
+                f'{src_bag.rstrip("/")}-rerecord_{ datetime.now().strftime("%Y_%m_%d-%H_%M_%S") }') ]
+    if mcap:
+        cmd_args.append('-s')
+        cmd_args.append('mcap')
+    if exclude_topics:
+        cmd_args.append('--exclude')
+        cmd_args.append('|'.join(exclude_topics))
+    actions.append(
+        ExecuteProcess(
+            cmd = cmd_args,
+            output = 'screen'
+        )
+    )
