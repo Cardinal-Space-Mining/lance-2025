@@ -15,8 +15,7 @@ def generate_launch_description():
 
     pkg_path = get_package_share_directory('lance')
     sim_pkg_path = get_package_share_directory('csm_sim')
-    phx5_path = get_package_share_directory('phoenix5_driver')
-    phx6_path = get_package_share_directory('phoenix6_driver')
+    phx_path = get_package_share_directory('phoenix_ros_driver')
     controller_path = get_package_share_directory('teleop_control')
 
     is_state_pub_disabled = LaunchConfiguration('disable_state_pub', default='false')
@@ -83,25 +82,26 @@ def generate_launch_description():
 
     phoenix5_driver = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(phx5_path, 'launch', 'main.launch.py')
+            os.path.join(phx_path, 'launch', 'phx5_driver.launch.py')
         ),
         condition = IfCondition(
             PythonExpression(["'true' if '", phoenix_driver_version, "' == '5' else 'false'"]) )
     )
     phoenix6_driver = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(phx6_path, 'launch', 'main.launch.py')
+            os.path.join(phx_path, 'launch', 'phx6_driver.launch.py')
         ),
         launch_arguments = { 'arduino_device' : arduino_device_id }.items(),
         condition = IfCondition(
             PythonExpression(["'true' if '", phoenix_driver_version, "' == '6' else 'false'"]) )
     )
 
-    controller_node = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(controller_path, 'launch', 'main.launch.py')
-        ),
-        condition = IfCondition( is_running_controller )
+    controller_node = Node(
+        name = 'teleop_control',
+        package = 'lance',
+        executable = 'teleop_control',
+        output = 'screen',
+        # parameters = []
     )
 
     # bag2 record (motors)

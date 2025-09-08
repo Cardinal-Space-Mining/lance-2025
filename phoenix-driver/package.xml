@@ -1,31 +1,23 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>lance</name>
+  <name>phoenix_ros_driver</name>
   <version>1.0.0</version>
-  <description>Core configs/controller nodes for LANCE</description>
+  <description>Phoenix 5/6 ROS2 Driver</description>
   <maintainer email="samrichter888@gmail.com">Sam Richter</maintainer>
-  <license>TODO: License declaration</license>
+  <maintainer email="willmoiser@gmail.com">sigma</maintainer>
+  <license>MIT</license>
 
-  <depend>csm_sim</depend>
-  <depend>cardinal_perception</depend>
-  <depend>multiscan_driver</depend>
-  <depend>foxglove_bridge</depend>
-  <depend>phoenix_ros_driver</depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>rosidl_default_generators</buildtool_depend>
 
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>geometry_msgs</depend>
-  <depend>tf2_ros</depend>
 
-  <buildtool_depend>ament_cmake</buildtool_depend>
-  <buildtool_depend>rosidl_default_generators</buildtool_depend>
   <exec_depend>rosidl_default_runtime</exec_depend>
   <member_of_group>rosidl_interface_packages</member_of_group>
-
-  <test_depend>ament_lint_auto</test_depend>
-  <test_depend>ament_lint_common</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
