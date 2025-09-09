@@ -2,6 +2,15 @@ import os
 import json
 import netifaces
 
+from ament_index_python.packages import get_package_share_directory
+
+
+def does_package_exist(pkg):
+    try:
+        get_package_share_directory(pkg)
+        return True
+    except:
+        return False
 
 def try_load_json(json_path, default_json_path = ''):
     if not json_path:
@@ -24,6 +33,25 @@ def flatten_dict(d, parent_key='', sep='.'):
         else:
             items[new_key] = v
     return items
+
+def parse_launch_args(arg_list):
+    """
+    Parse a list of arguments in the format 'key:=value' into a dictionary.
+
+    Args:
+        arg_list (list of str): Arguments like ['key:=value', 'key2:=value2']
+
+    Returns:
+        dict: Parsed key:value pairs
+    """
+    parsed_dict = {}
+    for arg in arg_list:
+        if ":=" in arg:
+            key, value = arg.split(":=", 1)  # Split only on the first occurrence
+            parsed_dict[key.strip()] = value.strip()
+    return parsed_dict
+
+
 
 def get_local_ips():
     ips = []

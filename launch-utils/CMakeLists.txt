@@ -7,4 +7,6 @@ ament_package()
 
 install(DIRECTORY
     src
+    config
+    launch
     DESTINATION share/${PROJECT_NAME} )

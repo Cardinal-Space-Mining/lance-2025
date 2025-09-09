@@ -80,22 +80,22 @@ def extract_util_configs(config):
 
 def get_util_actions(config):
     a = []
-    if 'urdf' in config:
+    if 'robot_tf' in config:
         a.append(
             get_robot_state_pub_action_from_urdf(
-                tf_converter.json_to_urdf(config['urdf'])
+                tf_converter.json_to_urdf(config['robot_tf'])
             )
         )
-    if 'fg_bridge' in config:
+    if 'foxglove_bridge' in config:
         a.append(
             get_fg_bridge_action(
-                common.flatten_dict(config['fg_bridge'])
+                common.flatten_dict(config['foxglove_bridge'])
             )
         )
-    if 'joy' in config:
+    if 'joy_node' in config:
         a.append(
             get_joy_node_action(
-                common.flatten_dict(config['joy'])
+                common.flatten_dict(config['joy_node'])
             )
         )
     return a
