@@ -7,10 +7,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(geometry_msgs REQUIRED)
-find_package(tf2_ros REQUIRED)
 find_package(phoenix_ros_driver REQUIRED)
-find_package(cardinal_perception REQUIRED)
 
 # --- Presets ------------------------------------------------------------------
 if(NOT CMAKE_CXX_STANDARD)
@@ -51,29 +48,18 @@ ament_target_dependencies(robot_status
     rclcpp
     std_msgs)
 
-add_executable(fg_path_server src/fg_path_server.cpp)
-ament_target_dependencies(fg_path_server
-    rclcpp
-    geometry_msgs
-    tf2_ros
-    cardinal_perception)
-
 # --- Export -------------------------------------------------------------------
 ament_export_dependencies(
     rclcpp
     rosidl_default_runtime
     std_msgs
     sensor_msgs
-    geometry_msgs
-    tf2_ros
-    phoenix_ros_driver
-    cardinal_perception)
+    phoenix_ros_driver)
 ament_package()
 
 install(TARGETS
     teleop_control
     robot_status
-    fg_path_server
     DESTINATION lib/${PROJECT_NAME} )
 install(DIRECTORY
     config
