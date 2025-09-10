@@ -111,12 +111,15 @@ def preprocess_launch_json(config: dict, overrides: dict = None) -> dict:
         chosen_preset = overrides.get(action, default_preset)
 
         if chosen_preset is None or does_eval_null(chosen_preset):
-            continue  # skip this action entirely
-        if does_eval_default(chosen_preset):
+            chosen_present = None
+        elif does_eval_default(chosen_preset):
             chosen_preset = default_preset
 
         resolved = resolve_preset(block, chosen_preset)
         if resolved is not None:
             result[action] = resolved
+            print(f"[LAUNCH PREPROC]: Configured action '{action}' with preset '{chosen_preset}'")
+        else:
+            print(f"[LAUNCH PREPROC]: Removed action '{action}'")
 
     return result

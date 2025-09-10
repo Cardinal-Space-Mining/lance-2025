@@ -14,6 +14,8 @@ def does_package_exist(pkg):
 
 def try_load_json(json_path, default_json_path = ''):
     if not json_path:
+        if not default_json_path:
+            raise RuntimeError('No JSON file provided.')
         json_path = default_json_path
     try:
         with open(json_path, 'r') as f: json_data = f.read()
@@ -23,6 +25,12 @@ def try_load_json(json_path, default_json_path = ''):
         return json.loads(json_data)
     except Exception as e:
         raise RuntimeError(f"Failed to load json data from file '{json_path}' : {e}")
+
+def try_load_json_from_args(launch_args, default_json_path = ''):
+    json_data = launch_args.get('json_data', None)
+    if not json_data:
+        json_data = try_load_json(launch_args.get('json_path', ''), default_json_path)
+    return json_data if json_data else {}
 
 def flatten_dict(d, parent_key='', sep='.'):
     items = {}
