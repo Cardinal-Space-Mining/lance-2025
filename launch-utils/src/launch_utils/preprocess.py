@@ -111,7 +111,7 @@ def preprocess_launch_json(config: dict, overrides: dict = None) -> dict:
         chosen_preset = overrides.get(action, default_preset)
 
         if chosen_preset is None or does_eval_null(chosen_preset):
-            chosen_present = None
+            chosen_preset = None
         elif does_eval_default(chosen_preset):
             chosen_preset = default_preset
 

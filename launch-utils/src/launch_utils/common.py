@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import netifaces
 
@@ -107,3 +108,18 @@ def get_mac_from_arp(ip):
     except Exception:
         pass
     return None
+
+def get_bag_topic_types(bag : str):
+    topic_pattern = re.compile(r'Topic:\s+(\S+)\s+\|\s+Type:\s+(\S+)')  # "Parse lines like: '/topic_name [msg_type]'"
+    output = os.popen(f'ros2 bag info {bag}').read().rstrip()
+
+    type_topics = {}
+    for line in output.splitlines():
+        match = topic_pattern.search(line)
+        if match:
+            topic, msg_type = match.groups()
+            if msg_type not in type_topics:
+                type_topics[msg_type] = []
+            type_topics[msg_type].append(topic)
+
+    return type_topics
