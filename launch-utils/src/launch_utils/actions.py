@@ -9,12 +9,12 @@ from datetime import datetime
 from ament_index_python.packages import get_package_share_directory
 
 from launch_ros.actions import Node
-from launch.actions import DeclareLaunchArgument, OpaqueFunction, IncludeLaunchDescription, ExecuteProcess
-from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.actions import ExecuteProcess
 from launch_ros.actions import Node
 
 sys.path.append(os.path.join(get_package_share_directory('launch_utils'), 'src'))
-from launch_utils import common, tf_converter
+from launch_utils.common import flatten_dict
+from launch_utils.tf_converter import json_to_urdf
 
 
 class NodeAction:
@@ -59,9 +59,14 @@ class NodeAction:
                     else default)
 
     def get_flattened_params(self) -> dict:
-        return common.flatten_dict(self.config)
+        return flatten_dict(self.config)
 
     def format_node(self, package: str, executable: str, **kwargs) -> Node:
+        '''
+        Create a launchable `Node` from the provided config block and passed parameters.
+        Note that any provided `kwargs` may be overridden by the internal options if
+        there are conflicting keys.
+        '''
         return Node(
             package = package,
             executable = executable,
@@ -74,15 +79,13 @@ class NodeAction:
 
 
 def get_fg_bridge_action(config):
-    return Node(
-        name = 'fg_bridge',
-        package = 'foxglove_bridge',
+    return NodeAction(config).format_node(
+        package= 'foxglove_bridge',
         executable = 'foxglove_bridge',
-        output = 'screen',
-        parameters = [config]
+        output = 'screen'
     )
 
-def get_fg_gui_action(connection):
+def get_direct_fg_gui_action(connection):
     return ExecuteProcess(
         cmd = [
             'foxglove-studio',
@@ -99,24 +102,30 @@ def get_xdg_fg_gui_action(connection):
         ],
         output = 'screen'
     )
+def get_fg_gui_action(config):
+    connection = config.get('connection', 'localhost')
+    if config.get('use_xdg', False):
+        return get_xdg_fg_gui_action(connection)
+    else:
+        return get_direct_fg_gui_action(connection)
 
 def get_joy_node_action(config):
-    return Node(
-        name = 'joy_node',
+    return NodeAction(config).format_node(
         package = 'joy',
         executable = 'joy_node',
-        parameters = [config]
+        output = 'screen'
     )
 
-def get_robot_state_pub_action_from_urdf(urdf):
-    return get_robot_state_pub_action({'robot_description' : urdf})
 def get_robot_state_pub_action(config):
-    return Node(
+    if 'robot_description' in config:
+        # replace json description with urdf string --> already formatted for passing to params
+        config['robot_description'] = json_to_urdf(config['robot_description'])
+    else:
+        config['robot_description'] = {}
+    return NodeAction(config).format_node(
         package = 'robot_state_publisher',
         executable = 'robot_state_publisher',
-        name = 'robot_state_publisher',
-        output = 'screen',
-        parameters = [config]
+        output = 'screen'
     )
 
 # ----
@@ -150,8 +159,10 @@ def get_bag_play_action_from_config(bag, config):
         config.get('topics', []),
         config.get('start_paused', True),
         config.get('loop', False),
-        config.get('remappings', {}))
-def add_bag_record_action(
+        config.get('remappings', {})
+    )
+
+def get_bag_record_action(
         topics : list,
         file_prefix = 'bag_recordings/bag',
         mcap = True ):
@@ -169,7 +180,14 @@ def add_bag_record_action(
         cmd = cmd_args,
         output = 'screen'
     )
-def add_bag_rerecord_action(
+def get_bag_record_action_from_config(config):
+    return get_bag_record_action(
+        config.get('topics', None),
+        config.get('output_prefix', ''),
+        config.get('mcap', True)
+    )
+
+def get_bag_rerecord_action(
         src_bag : str,
         exclude_topics : list = [],
         mcap = True,
@@ -188,37 +206,39 @@ def add_bag_rerecord_action(
         cmd = cmd_args,
         output = 'screen'
     )
+def get_bag_rerecord_action_from_config(bag, config):
+    return get_bag_rerecord_action(
+        bag,
+        config.get('exclude_topics', None),
+        config.get('mcap', True),
+        config.get('output_bag_name', '')
+    )
 
 
 # ---
 
-def extract_util_configs(config):
-    v = {}
-    for tag in ['urdf', 'fg_bridge', 'joy']:
-        if tag in config:
-            v[tag] = config[tag]
-            del config[tag]
-
 def get_util_actions(config, launch_args = {}):
+    '''
+    Handles starting the following utilities using preset action names and launch args:
+    - Foxglove bridge node - requires `foxglove_bridge` config block
+    - Foxglove gui - requires `foxglove_gui` config block
+    - Ros2 joy node - requires `joy_node` config block
+    - Robot state publisher - requires `robot_tf` config block
+    - Ros2 bag player - requires `bag` launch arg and uses `bag_play` config block if present
+    - Ros2 bag record - requires `bag_record` config block
+    - Bag rerecorder - requres `bag` launch arg and `bag_rerecord` config block
+
+    Returns list of launchable items, which can be directly passed to `LaunchDescription`.
+    '''
     a = []
-    if 'robot_tf' in config:
-        a.append(
-            get_robot_state_pub_action_from_urdf(
-                tf_converter.json_to_urdf(config['robot_tf'])
-            )
-        )
     if 'foxglove_bridge' in config:
-        a.append(
-            get_fg_bridge_action(
-                common.flatten_dict(config['foxglove_bridge'])
-            )
-        )
+        a.append(get_fg_bridge_action(config['foxglove_bridge']))
+    if 'foxglove_gui' in config:
+        a.append(get_fg_gui_action(config['foxglove_gui']))
     if 'joy_node' in config:
-        a.append(
-            get_joy_node_action(
-                common.flatten_dict(config['joy_node'])
-            )
-        )
+        a.append(get_joy_node_action(config['joy_node']))
+    if 'robot_tf' in config:
+        a.append(get_robot_state_pub_action(config['robot_tf']))
     if 'bag' in launch_args:
         a.append(
             get_bag_play_action_from_config(
@@ -226,4 +246,37 @@ def get_util_actions(config, launch_args = {}):
                 config.get('bag_play', {})
             )
         )
+        if 'bag_rerecord' in config:
+            a.append(
+                get_bag_rerecord_action_from_config(
+                    launch_args['bag'],
+                    config['bag_rerecord']
+                )
+            )
+    if 'bag_record' in config:
+        a.append(get_bag_record_action_from_config(config['bag_record']))
     return a
+
+def extract_util_configs(config):
+    '''
+    Removes the following preset action blocks from the config and returns them as a separate dict:
+    - `foxglove_bridge`
+    - `foxglove_gui`
+    - `joy_node`
+    - `robot_tf`
+    - `bag_play`
+    - `bag_record`
+    - `bag_rerecord`
+    '''
+    v = { tag: config[tag] for tag in config if tag in
+            [
+                'foxglove_bridge',
+                'foxglove_gui',
+                'joy_node',
+                'robot_tf',
+                'bag_play',
+                'bag_record',
+                'bag_rerecord'
+            ] }
+    for key in v: del config[key]
+    return v

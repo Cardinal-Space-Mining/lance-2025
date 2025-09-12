@@ -1,5 +1,6 @@
 import xml.etree.ElementTree as ET
 
+
 class JsonToUrdf:
     @staticmethod
     def dict_to_origin(data):
@@ -83,7 +84,7 @@ class JsonToUrdf:
         return joint
 
 def json_to_urdf(json_data : dict):
-    root = json_data['robot'] if 'robot' in json_data else json_data
+    root = json_data['robot_description'] if 'robot_description' in json_data else json_data
     if 'name' not in root or 'structure' not in root:
         return ''
     robot = ET.Element("robot", name=root["name"])

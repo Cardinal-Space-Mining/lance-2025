@@ -7,6 +7,9 @@ from ament_index_python.packages import get_package_share_directory
 
 
 def does_package_exist(pkg):
+    '''
+    Test if a package can be found using `get_package_share_directory()`
+    '''
     try:
         get_package_share_directory(pkg)
         return True
@@ -14,6 +17,10 @@ def does_package_exist(pkg):
         return False
 
 def try_load_json(json_path, default_json_path = ''):
+    '''
+    Attempt to load a json if the path is valid, otherwise fallback to the default.
+    If both are invalid, or if parsing fails, a `RuntimeError` is thrown.
+    '''
     if not json_path:
         if not default_json_path:
             raise RuntimeError('No JSON file provided.')
@@ -28,12 +35,22 @@ def try_load_json(json_path, default_json_path = ''):
         raise RuntimeError(f"Failed to load json data from file '{json_path}' : {e}")
 
 def try_load_json_from_args(launch_args, default_json_path = ''):
+    '''
+    Search for `json_data` arg, followed by `json_path` arg via CLI args,
+    then finally use a default path parameter. Raises a `RuntimeError` if none of these
+    options are valid.
+    '''
     json_data = launch_args.get('json_data', None)
     if not json_data:
         json_data = try_load_json(launch_args.get('json_path', ''), default_json_path)
     return json_data if json_data else {}
 
 def flatten_dict(d, parent_key='', sep='.'):
+    '''
+    Flatten a nested parameter dict into a dict with single depth, appending
+    namespaces using the '.' syntax. This allows for direct insertion into the
+    `Node` class's parameters argument.
+    '''
     items = {}
     for k, v in d.items():
         new_key = f"{parent_key}{sep}{k}" if parent_key else k

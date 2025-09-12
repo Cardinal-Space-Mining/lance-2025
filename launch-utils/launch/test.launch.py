@@ -2,8 +2,7 @@ import os
 import sys
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction, IncludeLaunchDescription, ExecuteProcess
-from launch.substitutions import LaunchConfiguration
+from launch.actions import OpaqueFunction
 from launch_ros.actions import Node
 
 from ament_index_python.packages import get_package_share_directory
@@ -20,8 +19,8 @@ def launch(context, *args, **kwargs):
     json_data = try_load_json_from_args(launch_args, os.path.join(PKG_PATH, 'config', 'test.json'))
     # print(json_data)
     pp_config = preprocess_launch_json(json_data, launch_args)
-    print(pp_config)
-    return get_util_actions(json_data)
+    # print(pp_config)
+    return get_util_actions(pp_config, launch_args)
 
 def generate_launch_description():
     return LaunchDescription([
