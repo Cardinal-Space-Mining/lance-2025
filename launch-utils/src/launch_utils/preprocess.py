@@ -1,9 +1,11 @@
 import copy
 
 
-MARKER_TAG = 'pragma.enable_preproc'
-DEFAULT_TAG = 'pragma.default'
-DERIVED_TAG = 'pragma.derived'
+MARKER_TAG = 'pragma:enable_preproc'
+DEFAULT_TAG = 'pragma:default'
+DERIVED_TAG = 'pragma:derived'
+PRESET_OVERRIDE_TAG = 'pragma:action_overrides'
+
 
 def does_eval_null(str):
     low = str.lower()
@@ -93,6 +95,20 @@ def resolve_preset(block: dict, preset_name: str, seen=None) -> dict | None:
     return prune_nulls(merged)
 
 
+def extract_linked_overrides(resolved_block: dict, overrides: dict) -> None:
+    '''
+    Appends linked action preset overrides and removes the block from the config.
+    Only adds overrides that aren't already configured.
+    '''
+    # print(resolved_block)
+    if PRESET_OVERRIDE_TAG in resolved_block:
+        links = resolved_block.pop(PRESET_OVERRIDE_TAG)
+        for k, v in links.items():
+            if k not in overrides:
+                overrides[k] = v
+                print(f"[LAUNCH PREPROC]: Added '{v}' preset override for '{k}'")
+
+
 def preprocess_launch_json(config: dict, overrides: dict = None) -> dict:
     """
     Preprocess the whole config.
@@ -103,7 +119,7 @@ def preprocess_launch_json(config: dict, overrides: dict = None) -> dict:
     else:
         config.pop(MARKER_TAG)
 
-    overrides = overrides or {}
+    overrides = copy.deepcopy(overrides) if overrides else {}
     result = {}
 
     for action, block in config.items():
@@ -117,6 +133,7 @@ def preprocess_launch_json(config: dict, overrides: dict = None) -> dict:
 
         resolved = resolve_preset(block, chosen_preset)
         if resolved is not None:
+            extract_linked_overrides(resolved, overrides)
             result[action] = resolved
             print(f"[LAUNCH PREPROC]: Configured action '{action}' with preset '{chosen_preset}'")
         else:

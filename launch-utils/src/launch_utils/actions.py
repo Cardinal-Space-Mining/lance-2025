@@ -17,6 +17,62 @@ sys.path.append(os.path.join(get_package_share_directory('launch_utils'), 'src')
 from launch_utils import common, tf_converter
 
 
+class NodeAction:
+    '''
+    Reads a launch config action block as a ros node configuration, and
+    provides helper functions for extracting options/formatting a launchable
+    object.
+    '''
+    NODE_OPTIONS_TAG = 'pragma:node_options'
+
+    @staticmethod
+    def remove_node_options(config: dict):
+        if NodeAction.NODE_OPTIONS_TAG in config:
+            del config[NodeAction.NODE_OPTIONS_TAG]
+
+    def __init__(self, config: dict):
+        if NodeAction.NODE_OPTIONS_TAG in config:
+            self._options = config.pop(NodeAction.NODE_OPTIONS_TAG)
+        else:
+            self._options = {}
+        if 'remappings' in self._options:
+            self._remappings = self._options.pop('remappings')
+        else:
+            self._remappings = {}
+        self._config = config
+
+    @property
+    def options(self):
+        return self._options
+
+    @property
+    def remappings(self):
+        return self._remappings
+
+    @property
+    def config(self):
+        return self._config
+
+    def get_option(self, key, default = None):
+        return (self.options[key]
+                    if key in self.options and self.options[key]
+                    else default)
+
+    def get_flattened_params(self) -> dict:
+        return common.flatten_dict(self.config)
+
+    def format_node(self, package: str, executable: str, **kwargs) -> Node:
+        return Node(
+            package = package,
+            executable = executable,
+            remappings = self.remappings.items(),
+            parameters = [self.get_flattened_params()],
+            **{**kwargs, **self.options}
+        )
+
+
+
+
 def get_fg_bridge_action(config):
     return Node(
         name = 'fg_bridge',
