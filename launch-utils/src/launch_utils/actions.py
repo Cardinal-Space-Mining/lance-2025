@@ -103,7 +103,7 @@ def get_xdg_fg_gui_action(connection):
         output = 'screen'
     )
 def get_fg_gui_action(config):
-    connection = config.get('connection', 'localhost')
+    connection = config.get('connection', 'localhost:8765')
     if config.get('use_xdg', False):
         return get_xdg_fg_gui_action(connection)
     else:
