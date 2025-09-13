@@ -7,14 +7,11 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.actions import OpaqueFunction
 
-try:
-    sys.path.append(os.path.join(get_package_share_directory('launch_utils'), 'src'))
-    from launch_utils.preprocess import preprocess_launch_json
-    from launch_utils.actions import NodeAction, get_util_actions
-    from launch_utils.common import try_load_json_from_args, parse_launch_args, get_local_ips, get_matched_local_ip
-    HAVE_LAUNCH_UTILS = True
-except Exception as e:
-    HAVE_LAUNCH_UTILS = False
+sys.path.append(os.path.join(get_package_share_directory('launch_utils'), 'src'))
+from launch_utils.preprocess import preprocess_launch_json
+from launch_utils.actions import NodeAction, get_util_actions
+from launch_utils.common import try_load_json_from_args, parse_launch_args, get_local_ips, get_matched_local_ip
+
 try:
     sys.path.append(os.path.join(get_package_share_directory('cardinal_perception'), 'launch'))
     from perception_launch_utils import get_perception_actions
@@ -85,18 +82,15 @@ def get_robot_actions(config, launch_args = {}):
 def launch(context, *args, **kwargs):
     actions = []
 
-    if HAVE_LAUNCH_UTILS:
-        launch_args = parse_launch_args(context.argv)
-        json_data = try_load_json_from_args(launch_args, DEFAULT_JSON_PATH)
-        config = preprocess_launch_json(json_data, launch_args)
-        actions.extend(get_util_actions(config, launch_args))
-        actions.extend(get_robot_actions(config, launch_args))
-        if HAVE_PERCEPTION_UTILS:
-            actions.extend(get_perception_actions(config))
-        else:
-            print("Failed to load 'Cardinal Perception' launch utils!")
+    launch_args = parse_launch_args(context.argv)
+    json_data = try_load_json_from_args(launch_args, DEFAULT_JSON_PATH)
+    config = preprocess_launch_json(json_data, launch_args)
+    actions.extend(get_util_actions(config, launch_args))
+    actions.extend(get_robot_actions(config, launch_args))
+    if HAVE_PERCEPTION_UTILS:
+        actions.extend(get_perception_actions(config))
     else:
-        raise RuntimeError("Failed to load 'launch_utils'!")
+        print("Failed to load 'Cardinal Perception' launch utils!")
 
     return actions
 
