@@ -1,9 +1,39 @@
 {
     "pragma:enable_preproc": true,
 
+    "preset":
+    {
+        "pragma:default": null,
+        "client":
+        {
+            "pragma:action_overrides":
+            {
+                "joy_node": "xbox",
+                "robot_status": "enabled",
+                "foxglove_bridge": "test",
+                "foxglove_gui": "local"
+            }
+        },
+        "mocha":
+        {
+            "pragma:action_overrides":
+            {
+                "teleop_control": "enabled",
+                "phoenix6_driver": "enabled"
+            }
+        },
+        "frappe":
+        {
+            "pragma:action_overrides":
+            {
+                "phoenix5_driver": "enabled"
+            }
+        }
+    },
+
     "perception":
     {
-        "pragma:default": "test",
+        "pragma:default": null,
         "live":
         {
             "pragma:action_overrides":
@@ -424,7 +454,7 @@
 
     "foxglove_bridge":
     {
-        "pragma:default": "live",
+        "pragma:default": null,
         "test":
         {
             "port": 8765,
@@ -520,7 +550,7 @@
     },
     "robot_tf":
     {
-        "pragma:default": "lance",
+        "pragma:default": null,
         "lance":
         {
             "robot_description":
