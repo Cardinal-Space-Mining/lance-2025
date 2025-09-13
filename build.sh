@@ -13,7 +13,7 @@ if [[ "$1" == "--frappe-only" ]]; then
         --symlink-install \
         --executor parallel \
         --event-handlers console_direct+ \
-        --packages-select phoenix_ros_driver \
+        --packages-select phoenix_ros_driver launch_utils lance \
         --cmake-args=-DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=ON
 else
     colcon build \

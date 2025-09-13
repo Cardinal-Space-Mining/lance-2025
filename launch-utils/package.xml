@@ -10,6 +10,7 @@
   <depend>foxglove_bridge</depend>
   <depend>robot_state_publisher</depend>
   <depend>rosbag2</depend>
+  <depend>joy</depend>
 
   <export>
     <build_type>ament_cmake</build_type>
