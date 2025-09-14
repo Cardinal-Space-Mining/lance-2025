@@ -1,8 +1,8 @@
-# PhoenixMotorInterface
+# Phoenix Drivers
 Phoenix 5/6 drivers for ROS2. Note that currently these are hard-configured for the LANCE-1.5 motor setup.
 
 # Dependencies
-1. Ensure you have patchelf installed. Without it some build commands will silently fail and the `phx5_driver` will exit with a linking error.
+1. Ensure you have patchelf installed. Without it some build commands will silently fail and the `ph5_driver` will exit with a linking error.
     - Run:
         ```
         sudo apt update

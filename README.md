@@ -8,7 +8,7 @@ mkdir ws && cd ws
 ```
 Clone this branch into the `src` directory.
 ```bash
-git clone --recurse-submodules -b robot https://github.com/Cardinal-Space-Mining/lance-2025 src
+git clone --recurse-submodules -b main https://github.com/Cardinal-Space-Mining/lance-2025 src
 ```
 If you forgot to clone recursively:
 ```bash
@@ -30,10 +30,15 @@ git submodule update --init --recursive
         ```
 
 3. Install submodule dependencies.
+    - Common: Install apt packages:
+        ```bash
+        sudo apt update
+        sudo apt install python3-netifaces
+        ```
     - Cardinal-Perception: Install PCL and OpenCV
         ```bash
         sudo apt update
-        sudo apt-get install libpcl-dev libopencv-dev
+        sudo apt install libpcl-dev libopencv-dev
         ```
     - Motor-control: [Install CTRE Phoenix 6](https://v6.docs.ctr-electronics.com/en/stable/docs/installation/installation-nonfrc.html)
         ```bash
@@ -117,4 +122,4 @@ The build script exports compile commands which can help VSCode's C/C++ extensio
     "version": 4
 }
 ```
-__*Last updated: 5/20/25*__
+__*Last updated: 9/13/25*__
