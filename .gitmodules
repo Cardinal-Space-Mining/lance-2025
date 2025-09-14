@@ -10,3 +10,6 @@
 [submodule "phoenix-driver/libs/Phoenix5-Linux-Example"]
 	path = phoenix-driver/libs/Phoenix5-Linux-Example
 	url = https://github.com/CrossTheRoadElec/Phoenix5-Linux-Example
+[submodule "launch-utils"]
+	path = launch-utils
+	url = https://github.com/Cardinal-Space-Mining/launch-utils
