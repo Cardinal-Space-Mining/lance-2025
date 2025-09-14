@@ -39,7 +39,7 @@ git submodule update --init --recursive
     - Install apt packages:
         ```bash
         sudo apt update
-        sudo apt install libpcl-dev libopencv-dev python3-netifaces phoenix6
+        sudo apt install libpcl-dev libopencv-dev python3-netifaces phoenix6 patchelf
         ```
 
 ## Building
