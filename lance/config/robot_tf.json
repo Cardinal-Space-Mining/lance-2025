@@ -1,0 +1,254 @@
+{
+  "robot": {
+    "name": "lance",
+
+    "structure": {
+      "links": [
+        "base_link",
+        "frame_link",
+        "left_track_link",
+        "right_track_link",
+        "collection_link",
+        "lidar_link",
+        "lidar_link_inv_rotated",
+        "fwd_cam_link",
+        "rght_cam_link",
+        "left_cam_link"
+      ],
+      "joints": {
+        "frame_joint": {
+          "type": "fixed",
+          "parent": "base_link",
+          "child": "frame_link",
+          "origin": { "xyz": [0, 0, 0.13103567] }
+        },
+        "left_track_joint": {
+          "type": "fixed",
+          "parent": "frame_link",
+          "child": "left_track_link",
+          "origin": { "xyz": [0.20318559, 0.289888, 0.00242022] }
+        },
+        "right_track_joint": {
+          "type": "fixed",
+          "parent": "frame_link",
+          "child": "right_track_link",
+          "origin": { "xyz": [0.20318559, -0.289888, 0.00242022] }
+        },
+        "dump_joint": {
+          "type": "revolute",
+          "parent": "frame_link",
+          "child": "collection_link",
+          "origin": {
+            "xyz": [-0.45721441, 0, 0.18580822],
+            "rpy": [0, -0.2617994, 0]
+          },
+          "axis": [0, 1, 0],
+          "limit": {
+            "upper": 0.2617994,
+            "lower": -0.2617994,
+            "effort": 100,
+            "velocity": 100
+          },
+          "dynamics": { "damping": 0.0, "friction": 0.0 }
+        },
+        "lidar_joint": {
+          "type": "fixed",
+          "parent": "frame_link",
+          "child": "lidar_link",
+          "origin": {
+            "xyz": [0.64957717, 0, 0.42478867],
+            "rpy": [2.836255, -0.171851, -2.067879]
+          }
+        },
+        "lidar_joint_inv_rotated": {
+          "type": "fixed",
+          "parent": "lidar_link",
+          "child": "lidar_link_inv_rotated",
+          "origin": {
+            "xyz": [0, 0, 0],
+            "rpy": [0, 0, 2.09439510239]
+          }
+        },
+        "fwd_cam_joint": {
+          "type": "fixed",
+          "parent": "frame_link",
+          "child": "fwd_cam_link",
+          "origin": {
+            "xyz": [0.72468246, 0, 0.51148737],
+            "rpy": [-1.74532925199, 0, -1.57079632679]
+          }
+        },
+        "rght_cam_joint": {
+          "type": "fixed",
+          "parent": "frame_link",
+          "child": "rght_cam_link",
+          "origin": {
+            "xyz": [-0.06416965, -0.284488, 0.22203322],
+            "rpy": [-1.57079632679, 0, 3.1415926]
+          }
+        },
+        "left_cam_joint": {
+          "type": "fixed",
+          "parent": "frame_link",
+          "child": "left_cam_link",
+          "origin": {
+            "xyz": [-0.06416965, 0.284488, 0.22203322],
+            "rpy": [-1.57079632679, 0, 0]
+          }
+        }
+      }
+    },
+
+    "assets": {
+      "base_link": {
+        "visual": {
+          "geometry": {
+            "type": "mesh",
+            "filename": "file://$(find csm_sim)/description/lance/meshes/lance-2024-body-tags.dae"
+          }
+        }
+      },
+
+      "frame_link": {
+        "inertial": {
+          "origin": { "xyz": [0.101, 0.001, 0.214] },
+          "mass": 9.773,
+          "inertia": {
+            "ixx": 1.358, "ixy": -0.001, "ixz": -0.418,
+            "iyy": 1.677, "iyz": 0.0, "izz": 1.579
+          }
+        },
+        "visual": [
+          {
+            "geometry": {
+              "type": "mesh",
+              "filename": "file://$(find csm_sim)/description/lance/meshes/lance-2024-frame.dae"
+            }
+          },
+          {
+            "geometry": {
+              "type": "mesh",
+              "filename": "file://$(find csm_sim)/description/lance/meshes/lance-2024-frame-push-plate.dae"
+            }
+          }
+        ],
+        "collision": [
+          {
+            "geometry": {
+              "type": "mesh",
+              "filename": "file://$(find csm_sim)/description/lance/meshes/lance-2024-frame-collision.stl"
+            }
+          },
+          {
+            "geometry": {
+              "type": "mesh",
+              "filename": "file://$(find csm_sim)/description/lance/meshes/lance-2024-frame-push-plate.dae"
+            }
+          }
+        ]
+      },
+
+      "left_track_link": {
+        "inertial": {
+          "origin": { "xyz": [-0.162, 0.015, 0.021] },
+          "mass": 7.888,
+          "inertia": {
+            "ixx": 0.103, "ixy": -0.014, "ixz": -0.049,
+            "iyy": 0.403, "iyz": 0.014, "izz": 0.331
+          }
+        },
+        "visual": {
+          "geometry": {
+            "type": "mesh",
+            "filename": "file://$(find csm_sim)/description/lance/meshes/lance-2024-left-track.dae"
+          }
+        },
+        "collision": {
+          "geometry": {
+            "type": "mesh",
+            "filename": "file://$(find csm_sim)/description/lance/meshes/lance-2024-left-track-collision.stl"
+          }
+        }
+      },
+
+      "right_track_link": {
+        "inertial": {
+          "origin": { "xyz": [-0.162, -0.015, 0.021] },
+          "mass": 7.888,
+          "inertia": {
+            "ixx": 0.103, "ixy": -0.014, "ixz": -0.049,
+            "iyy": 0.403, "iyz": -0.014, "izz": 0.331
+          }
+        },
+        "visual": {
+          "geometry": {
+            "type": "mesh",
+            "filename": "file://$(find csm_sim)/description/lance/meshes/lance-2024-right-track.dae"
+          }
+        },
+        "collision": {
+          "geometry": {
+            "type": "mesh",
+            "filename": "file://$(find csm_sim)/description/lance/meshes/lance-2024-right-track-collision.stl"
+          }
+        }
+      },
+
+      "collection_link": {
+        "inertial": {
+          "origin": { "xyz": [0.417, -0.02, 0.038] },
+          "mass": 20.499,
+          "inertia": {
+            "ixx": 1.005, "ixy": -0.122, "ixz": -0.283,
+            "iyy": 2.472, "iyz": 0.027, "izz": 2.445
+          }
+        },
+        "visual": [
+          {
+            "geometry": {
+              "type": "mesh",
+              "filename": "file://$(find csm_sim)/description/lance/meshes/lance-2024-hopper.dae"
+            }
+          },
+          {
+            "geometry": {
+              "type": "mesh",
+              "filename": "file://$(find csm_sim)/description/lance/meshes/lance-2024-collection.dae"
+            }
+          }
+        ],
+        "collision": {
+          "geometry": {
+            "type": "mesh",
+            "filename": "file://$(find csm_sim)/description/lance/meshes/lance-2024-upper-collision.stl"
+          }
+        }
+      },
+
+      "lidar_link": {
+        "inertial": {
+          "origin": { "xyz": [1.97e-5, -0.001, -0.009] },
+          "mass": 0.7,
+          "inertia": {
+            "ixx": 0.001, "ixy": 2e-8, "ixz": 4e-7,
+            "iyy": 0.001, "iyz": -3e-5, "izz": 0.001
+          }
+        },
+        "visual": {
+          "geometry": {
+            "type": "mesh",
+            "filename": "file://$(find csm_sim)/description/lance/meshes/lance-2024-multiscan.dae"
+          }
+        },
+        "collision": {
+          "origin": { "xyz": [0, 0, -0.006] },
+          "geometry": {
+            "type": "cylinder",
+            "radius": 0.048,
+            "length": 0.098
+          }
+        }
+      }
+    }
+  }
+}

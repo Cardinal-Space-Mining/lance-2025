@@ -1,0 +1,3 @@
+[submodule "libs/Phoenix5-Linux-Example"]
+	path = libs/Phoenix5-Linux-Example
+	url = https://github.com/CrossTheRoadElec/Phoenix5-Linux-Example

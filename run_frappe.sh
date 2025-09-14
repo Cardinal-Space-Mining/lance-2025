@@ -1,29 +1,19 @@
 #!/bin/bash
 
-LIDAR_LOGGING=false
-MOTOR_LOGGING=true
-
 SCRIPT=$(readlink -f "$0")
 SCRIPTPATH=$(dirname "$SCRIPT")
 
 source $SCRIPTPATH/../install/setup.bash
 
-if [[ "$1" == "--full" ]]; then
-    $SCRIPTPATH/motor-control/scripts/can_bringup.sh
+$SCRIPTPATH/phoenix-driver/scripts/can_bringup.sh
 
-    # source install/setup.bash
-    ros2 launch lance robot.launch.py \
-        foxglove:=false \
-        foxglove_mode:=live \
-        perception:=false \
-        record_lidar:=$LIDAR_LOGGING \
-        record_motor:=$MOTOR_LOGGING \
-        disable_state_pub:=true \
-        phoenix_driver:=5 \
-        controller:=false \
-        force_lidar_driver:=false
+BASE_CMD=(
+    ros2
+    launch
+    lance
+    lance.launch.py
+    preset:=frappe
+)
+"${BASE_CMD[@]}" "$@"
 
-    $SCRIPTPATH/motor-control/scripts/can_shutdown.sh
-else
-    $SCRIPTPATH/motor-control/scripts/launch_phoenix5_standalone.sh
-fi
+$SCRIPTPATH/phoenix-driver/scripts/can_shutdown.sh

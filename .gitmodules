@@ -4,12 +4,12 @@
 [submodule "multiscan-driver"]
 	path = multiscan-driver
 	url = https://github.com/Cardinal-Space-Mining/multiscan-driver
-[submodule "csm-sim"]
-	path = csm-sim
-	url = https://gitlab.com/csm2.0/csm-sim.git
-[submodule "motor-control"]
-	path = motor-control
-	url = https://github.com/Cardinal-Space-Mining/PhoenixMotorInterface
 [submodule "csm-metrics"]
 	path = csm-metrics
 	url = https://github.com/Cardinal-Space-Mining/csm-metrics.git
+[submodule "phoenix-driver/libs/Phoenix5-Linux-Example"]
+	path = phoenix-driver/libs/Phoenix5-Linux-Example
+	url = https://github.com/CrossTheRoadElec/Phoenix5-Linux-Example
+[submodule "launch-utils"]
+	path = launch-utils
+	url = https://github.com/Cardinal-Space-Mining/launch-utils
