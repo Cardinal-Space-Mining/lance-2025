@@ -47,7 +47,8 @@ BASE_CMD=(
     lance
     lance.launch.py
     preset:=mocha
+    arduino_device:=$ARDUINO_DEVICE
 )
 "${BASE_CMD[@]}" "$@"
 
-$SCRIPTPATH/motor-control/scripts/can_shutdown.sh
+$SCRIPTPATH/phoenix-driver/scripts/can_shutdown.sh
