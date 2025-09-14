@@ -397,11 +397,13 @@ void Phoenix6Driver::pub_motor_fault_cb()
     constexpr uint32_t SUPPLY_CURRENT_FAULT_MASK = 0x100;
     constexpr uint32_t STATOR_CURRENT_FAULT_MASK = 0x200;
     constexpr uint32_t OVERVOLTAGE_FAULT_MASK = 0x40000;
+    constexpr uint32_t BRIDGE_BROWNOUT_FAULT_MASK = 0x800000;
 
     constexpr uint32_t FAULTS_IGNORE_MASK = (
         SUPPLY_CURRENT_FAULT_MASK |
         STATOR_CURRENT_FAULT_MASK |
-        OVERVOLTAGE_FAULT_MASK);
+        OVERVOLTAGE_FAULT_MASK |
+        BRIDGE_BROWNOUT_FAULT_MASK);
 
     bool any_faults = false;
     for(size_t i = 0; i < 4; i++)
