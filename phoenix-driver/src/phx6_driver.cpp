@@ -69,9 +69,9 @@ namespace TalonStaticConfig
         CURRENT_LIMIT_CONFIG =
             phx6::configs::CurrentLimitsConfigs{}
                 .WithStatorCurrentLimitEnable(true)
-                .WithStatorCurrentLimit(100_A)
-                .WithSupplyCurrentLowerLimit(50_A)
-                .WithSupplyCurrentLowerTime(5_s);
+                .WithStatorCurrentLimit(10_A)
+                .WithSupplyCurrentLimitEnable(true)
+                .WithSupplyCurrentLimit(12_A);
 }
 namespace TalonRuntimeConfig
 {
@@ -356,13 +356,8 @@ void Phoenix6Driver::configure_motors_cb()
         phx6::configs::TalonFXConfiguration{}
             .WithSlot0(TalonStaticConfig::SLOT0_CONFIG)
             .WithMotorOutput(TalonStaticConfig::MOTOR_OUTPUT_CONFIG)
-            .WithFeedback(TalonStaticConfig::FEEDBACK_CONFIGS);
-            // .WithCurrentLimits(TalonStaticConfig::CURRENT_LIMIT_CONFIG);
-    
-    config.CurrentLimits.StatorCurrentLimit = units::current::ampere_t(10);
-    config.CurrentLimits.StatorCurrentLimitEnable = true;
-    config.CurrentLimits.SupplyCurrentLimit = units::current::ampere_t(12);
-    config.CurrentLimits.SupplyCurrentLimitEnable = true;
+            .WithFeedback(TalonStaticConfig::FEEDBACK_CONFIGS)
+            .WithCurrentLimits(TalonStaticConfig::CURRENT_LIMIT_CONFIG);
 
     config.MotorOutput.Inverted = phx6::signals::InvertedValue::Clockwise_Positive;     // trencher positive should result in digging
     trencher.GetConfigurator().Apply(config);
@@ -402,6 +397,7 @@ void Phoenix6Driver::pub_motor_fault_cb()
     constexpr uint32_t SUPPLY_CURRENT_FAULT_MASK = 0x100;
     constexpr uint32_t STATOR_CURRENT_FAULT_MASK = 0x200;
     constexpr uint32_t OVERVOLTAGE_FAULT_MASK = 0x40000;
+
     constexpr uint32_t FAULTS_IGNORE_MASK = (
         SUPPLY_CURRENT_FAULT_MASK |
         STATOR_CURRENT_FAULT_MASK |
