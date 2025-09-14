@@ -358,8 +358,11 @@ void Phoenix6Driver::configure_motors_cb()
             .WithMotorOutput(TalonStaticConfig::MOTOR_OUTPUT_CONFIG)
             .WithFeedback(TalonStaticConfig::FEEDBACK_CONFIGS);
             // .WithCurrentLimits(TalonStaticConfig::CURRENT_LIMIT_CONFIG);
-    config.CurrentLimits.StatorCurrentLimitEnable = false;
-    config.CurrentLimits.SupplyCurrentLimitEnable = false;
+    
+    config.CurrentLimits.StatorCurrentLimit = units::current::ampere_t(10);
+    config.CurrentLimits.StatorCurrentLimitEnable = true;
+    config.CurrentLimits.SupplyCurrentLimit = units::current::ampere_t(12);
+    config.CurrentLimits.SupplyCurrentLimitEnable = true;
 
     config.MotorOutput.Inverted = phx6::signals::InvertedValue::Clockwise_Positive;     // trencher positive should result in digging
     trencher.GetConfigurator().Apply(config);
@@ -403,12 +406,12 @@ void Phoenix6Driver::pub_motor_fault_cb()
         any_faults |= talon_faults_msg.faults;
     }
 
-    if(any_faults)
-    {
-        this->sendSerialPowerDown();
-        std::this_thread::sleep_for(TALONFX_POWER_CYCLE_DELAY);
-        this->sendSerialPowerUp();
-    }
+    // if(any_faults)
+    // {
+    //     this->sendSerialPowerDown();
+    //     std::this_thread::sleep_for(TALONFX_POWER_CYCLE_DELAY);
+    //     this->sendSerialPowerUp();
+    // }
 }
 
 void Phoenix6Driver::execute_ctrl_cb(TalonFX &motor, const TalonCtrl &msg)
