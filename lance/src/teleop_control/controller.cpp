@@ -754,11 +754,11 @@ void RobotControl::periodic_handle_teleop_input()
 
         // set drive velocities
         this->motor_commands.track_right
-            .set__mode(TalonCtrl::PERCENT_OUTPUT)
-            .set__value(this->state.driving_speed_scalar * track_speeds[0]);
+            .set__mode(TalonCtrl::VELOCITY)
+            .set__value(scaling_speed * track_speeds[0]);
         this->motor_commands.track_left
-            .set__mode(TalonCtrl::PERCENT_OUTPUT)
-            .set__value(this->state.driving_speed_scalar * track_speeds[1]);
+            .set__mode(TalonCtrl::VELOCITY)
+            .set__value(scaling_speed * track_speeds[1]);
     }
     // ------------ TRENCHER CONTROL -------------
     {
@@ -771,8 +771,8 @@ void RobotControl::periodic_handle_teleop_input()
 
         // set trencher velocity
         this->motor_commands.trencher
-            .set__mode(TalonCtrl::PERCENT_OUTPUT)
-            .set__value(trencher_speed);
+            .set__mode(TalonCtrl::VELOCITY)
+            .set__value(RobotControl::TRENCHER_MAX_VELO * trencher_speed);
     }
     // ------------- HOPPER CONTROL --------------
     {
@@ -785,8 +785,8 @@ void RobotControl::periodic_handle_teleop_input()
 
         // set hopper belt
         this->motor_commands.hopper_belt
-            .set__mode(TalonCtrl::PERCENT_OUTPUT)
-            .set__value(hopper_belt_speed);
+            .set__mode(TalonCtrl::VELOCITY)
+            .set__value(RobotControl::HOPPER_BELT_MAX_VELO * hopper_belt_speed);
         // set actutor power
         this->motor_commands.hopper_actuator
             .set__mode(TalonCtrl::PERCENT_OUTPUT)

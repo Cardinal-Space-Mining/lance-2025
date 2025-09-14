@@ -661,12 +661,11 @@
         "pragma:default": null,
         "all":
         {
-            "start_paused": true,
-            "loop": false
+            "output_prefix": "bag_recordings/lance_raw_data"
         },
         "sensor_data":
         {
-            "pragam:derived": "all",
+            "output_prefix": "bag_recordings/lance_sensor_data",
             "topics": [
                 "/multiscan/lidar_scan",
                 "/multiscan/imu",
@@ -676,7 +675,7 @@
         },
         "telemetry":
         {
-            "pragma:derived": "all",
+            "output_prefix": "bag_recordings/lance_telemetry",
             "topics": [
                 "/joy",
                 "/lance/watchdog_status",
