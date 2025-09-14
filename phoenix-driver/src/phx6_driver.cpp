@@ -358,6 +358,8 @@ void Phoenix6Driver::configure_motors_cb()
             .WithMotorOutput(TalonStaticConfig::MOTOR_OUTPUT_CONFIG)
             .WithFeedback(TalonStaticConfig::FEEDBACK_CONFIGS);
             // .WithCurrentLimits(TalonStaticConfig::CURRENT_LIMIT_CONFIG);
+    config.CurrentLimits.StatorCurrentLimitEnable = false;
+    config.CurrentLimits.SupplyCurrentLimitEnable = false;
 
     config.MotorOutput.Inverted = phx6::signals::InvertedValue::Clockwise_Positive;     // trencher positive should result in digging
     trencher.GetConfigurator().Apply(config);
