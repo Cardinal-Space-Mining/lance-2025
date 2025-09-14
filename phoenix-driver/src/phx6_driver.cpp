@@ -399,19 +399,27 @@ void Phoenix6Driver::pub_motor_fault_cb()
     TalonFaults talon_faults_msg{};
     talon_faults_msg.header.stamp = this->get_clock()->now();
 
+    constexpr uint32_t SUPPLY_CURRENT_FAULT_MASK = 0x100;
+    constexpr uint32_t STATOR_CURRENT_FAULT_MASK = 0x200;
+    constexpr uint32_t OVERVOLTAGE_FAULT_MASK = 0x40000;
+    constexpr uint32_t FAULTS_IGNORE_MASK = (
+        SUPPLY_CURRENT_FAULT_MASK |
+        STATOR_CURRENT_FAULT_MASK |
+        OVERVOLTAGE_FAULT_MASK);
+
     bool any_faults = false;
     for(size_t i = 0; i < 4; i++)
     {
         this->motor_pub_subs[i].get().faults_pub->publish( (talon_faults_msg << this->motors[i]) );
-        any_faults |= talon_faults_msg.faults;
+        any_faults |= (talon_faults_msg.faults & (~FAULTS_IGNORE_MASK));
     }
 
-    // if(any_faults)
-    // {
-    //     this->sendSerialPowerDown();
-    //     std::this_thread::sleep_for(TALONFX_POWER_CYCLE_DELAY);
-    //     this->sendSerialPowerUp();
-    // }
+    if(any_faults)
+    {
+        this->sendSerialPowerDown();
+        std::this_thread::sleep_for(TALONFX_POWER_CYCLE_DELAY);
+        this->sendSerialPowerUp();
+    }
 }
 
 void Phoenix6Driver::execute_ctrl_cb(TalonFX &motor, const TalonCtrl &msg)
