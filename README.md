@@ -4,7 +4,7 @@ This repo houses all client and robot code used for running LANCE "1.5" (2025). 
 ## Workspace Setup
 Create a new workspace directory
 ```
-mkdir ws && cd ws
+mkdir lance-ws && cd lance-ws
 ```
 Clone this branch into the `src` directory.
 ```bash
@@ -30,25 +30,16 @@ git submodule update --init --recursive
         ```
 
 3. Install submodule dependencies.
-    - Common: Install apt packages:
-        ```bash
-        sudo apt update
-        sudo apt install python3-netifaces
-        ```
-    - Cardinal-Perception: Install PCL and OpenCV
-        ```bash
-        sudo apt update
-        sudo apt install libpcl-dev libopencv-dev
-        ```
-    - Motor-control: [Install CTRE Phoenix 6](https://v6.docs.ctr-electronics.com/en/stable/docs/installation/installation-nonfrc.html)
+    - Add phoenix6 apt sources:
         ```bash
         YEAR=2025
         sudo curl -s --compressed -o /usr/share/keyrings/ctr-pubkey.gpg "https://deb.ctr-electronics.com/ctr-pubkey.gpg"
         sudo curl -s --compressed -o /etc/apt/sources.list.d/ctr${YEAR}.list "https://deb.ctr-electronics.com/ctr${YEAR}.list"
         ```
+    - Install apt packages:
         ```bash
         sudo apt update
-        sudo apt install phoenix6
+        sudo apt install libpcl-dev libopencv-dev python3-netifaces phoenix6
         ```
 
 ## Building

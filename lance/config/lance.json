@@ -22,6 +22,15 @@
                 "phoenix6_driver": "enabled"
             }
         },
+        "mocha-perception":
+        {
+            "pragma:derived": "mocha",
+            "pragma:action_overrides":
+            {
+                "perception": "live",
+                "multiscan_driver": "robot"
+            }
+        },
         "frappe":
         {
             "pragma:action_overrides":
