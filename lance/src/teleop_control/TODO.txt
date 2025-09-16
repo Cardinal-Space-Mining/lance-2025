@@ -1,3 +1,1 @@
-1. auto-mode preset commands do not trigger
-2. auto-dump soft-cancel does not register
-3. move this package out to LANCE repo
+1. auto-mode preset commands do not trigger (?)

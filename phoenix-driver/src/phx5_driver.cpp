@@ -7,7 +7,7 @@
 #include <std_msgs/msg/int8.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 
-#define Phoenix_No_WPI // remove WPI dependencies
+#define Phoenix_No_WPI  // remove WPI dependencies
 #include <ctre/Phoenix.h>
 #include <ctre/phoenix/cci/Unmanaged_CCI.h>
 #include <ctre/phoenix/platform/Platform.hpp>
@@ -28,67 +28,76 @@ using ctre::phoenix::motorcontrol::can::TalonSRX;
 
 namespace TalonStaticConfig
 {
-    struct Gains
-    {
-        double P, I, D, F;
-    };
+struct Gains
+{
+    double P, I, D, F;
+};
 
-    static constexpr char const* INTERFACE = "can0";
-    static constexpr Gains DEFAULT_GAINS{ 0.0, 0.0, 0.0, 0.2 };
-    static constexpr Gains DefaultRobotGains{
-        0.11,
-        0.5,
-        0.0001,
-        0.12,
-    };
-}
+static constexpr char const* INTERFACE = "can0";
+static constexpr Gains DEFAULT_GAINS{0.0, 0.0, 0.0, 0.2};
+static constexpr Gains DefaultRobotGains{
+    0.11,
+    0.5,
+    0.0001,
+    0.12,
+};
+}  // namespace TalonStaticConfig
 
 #define ROBOT_TOPIC(subtopic) "/lance/" subtopic
-#define TALON_CTRL_SUB_QOS 10
-#define ROBOT_CTRL_SUB_QOS 10
+#define TALON_CTRL_SUB_QOS    10
+#define ROBOT_CTRL_SUB_QOS    10
 
 
-class Phoenix5Driver :
-    public rclcpp::Node
+class Phoenix5Driver : public rclcpp::Node
 {
 public:
     Phoenix5Driver() :
-        Node{ "phoenix5_driver" },
+        Node{"phoenix5_driver"},
 
-        hopper_actuator{ 4, TalonStaticConfig::INTERFACE },
-        hopper_info_pub{ this->create_publisher<TalonInfo>(ROBOT_TOPIC("hopper_act/info"), rclcpp::SensorDataQoS{}) },
-        hopper_faults_pub{ this->create_publisher<TalonFaults>(ROBOT_TOPIC("hopper_act/faults"), rclcpp::SensorDataQoS{}) },
-        hopper_ctrl_sub
-        {
-            this->create_subscription<TalonCtrl>(
-                ROBOT_TOPIC("hopper_act/ctrl"),
-                TALON_CTRL_SUB_QOS,
-                [this](const TalonCtrl &msg){ this->execute_ctrl(this->hopper_actuator, msg); } )
-        },
-        hopper_joint_pub{ this->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10) },
-        watchdog_status_sub
-        {
-            this->create_subscription<std_msgs::msg::Int32>(
-                ROBOT_TOPIC("watchdog_status"),
-                rclcpp::SensorDataQoS{},
-                [this](const std_msgs::msg::Int32& msg){ this->feed_watchdog_status(msg.data); } )
-        },
-        info_pub_timer{ this->create_wall_timer(100ms, [this](){ this->pub_motor_info_cb(); }) },
-        fault_pub_timer{ this->create_wall_timer(250ms, [this](){ this->pub_motor_fault_cb(); }) }
+        hopper_actuator{4, TalonStaticConfig::INTERFACE},
+        hopper_info_pub{this->create_publisher<TalonInfo>(
+            ROBOT_TOPIC("hopper_act/info"),
+            rclcpp::SensorDataQoS{})},
+        hopper_faults_pub{this->create_publisher<TalonFaults>(
+            ROBOT_TOPIC("hopper_act/faults"),
+            rclcpp::SensorDataQoS{})},
+        hopper_ctrl_sub{this->create_subscription<TalonCtrl>(
+            ROBOT_TOPIC("hopper_act/ctrl"),
+            TALON_CTRL_SUB_QOS,
+            [this](const TalonCtrl& msg)
+            { this->execute_ctrl(this->hopper_actuator, msg); })},
+        hopper_joint_pub{this->create_publisher<sensor_msgs::msg::JointState>(
+            "joint_states",
+            10)},
+        watchdog_status_sub{this->create_subscription<std_msgs::msg::Int32>(
+            ROBOT_TOPIC("watchdog_status"),
+            rclcpp::SensorDataQoS{},
+            [this](const std_msgs::msg::Int32& msg)
+            { this->feed_watchdog_status(msg.data); })},
+        info_pub_timer{this->create_wall_timer(
+            100ms,
+            [this]() { this->pub_motor_info_cb(); })},
+        fault_pub_timer{this->create_wall_timer(
+            250ms,
+            [this]() { this->pub_motor_fault_cb(); })}
     {
         this->hopper_actuator.ConfigFactoryDefault();
         this->hopper_actuator.Config_kP(0, TalonStaticConfig::DEFAULT_GAINS.P);
         this->hopper_actuator.Config_kI(0, TalonStaticConfig::DEFAULT_GAINS.I);
         this->hopper_actuator.Config_kD(0, TalonStaticConfig::DEFAULT_GAINS.D);
         this->hopper_actuator.Config_kF(0, TalonStaticConfig::DEFAULT_GAINS.F);
-        this->hopper_actuator.ConfigSelectedFeedbackSensor(TalonSRXFeedbackDevice::Analog);
+        this->hopper_actuator.ConfigSelectedFeedbackSensor(
+            TalonSRXFeedbackDevice::Analog);
         this->hopper_actuator.SetInverted(true);
         this->hopper_actuator.SetNeutralMode(NeutralMode::Brake);
         this->hopper_actuator.ConfigNeutralDeadband(5.);
-	this->hopper_actuator.ConfigSelectedFeedbackSensor(TalonSRXFeedbackDevice::Analog);
+        this->hopper_actuator.ConfigSelectedFeedbackSensor(
+            TalonSRXFeedbackDevice::Analog);
         this->hopper_actuator.ClearStickyFaults();
 
-        RCLCPP_DEBUG(this->get_logger(), "Completed Phoenix5 Driver Node Initialization");
+        RCLCPP_DEBUG(
+            this->get_logger(),
+            "Completed Phoenix5 Driver Node Initialization");
     }
 
 private:
@@ -97,45 +106,37 @@ private:
     void pub_motor_info_cb();
     void pub_motor_fault_cb();
 
-    void execute_ctrl(TalonSRX &motor, const TalonCtrl &msg);
+    void execute_ctrl(TalonSRX& motor, const TalonCtrl& msg);
 
 private:
     TalonSRX hopper_actuator;
 
-    rclcpp::Publisher<TalonInfo>::SharedPtr
-        hopper_info_pub;
-    rclcpp::Publisher<TalonFaults>::SharedPtr
-        hopper_faults_pub;
-    rclcpp::Subscription<TalonCtrl>::SharedPtr
-        hopper_ctrl_sub;
-        
-    rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr
-        hopper_joint_pub;
-    rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr
-        watchdog_status_sub;
-    rclcpp::TimerBase::SharedPtr
-        info_pub_timer,
-        fault_pub_timer;
+    rclcpp::Publisher<TalonInfo>::SharedPtr hopper_info_pub;
+    rclcpp::Publisher<TalonFaults>::SharedPtr hopper_faults_pub;
+    rclcpp::Subscription<TalonCtrl>::SharedPtr hopper_ctrl_sub;
+
+    rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr hopper_joint_pub;
+    rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr watchdog_status_sub;
+    rclcpp::TimerBase::SharedPtr info_pub_timer, fault_pub_timer;
 
     bool is_disabled = false;
-
 };
 
 
 TalonInfo& operator<<(TalonInfo& info, TalonSRX& m)
 {
-    info.position       = -m.GetSelectedSensorPosition();
-    info.velocity       = m.GetSelectedSensorVelocity();
+    info.position = -m.GetSelectedSensorPosition();
+    info.velocity = m.GetSelectedSensorVelocity();
 
-    info.device_temp    = m.GetTemperature();
-    info.bus_voltage    = m.GetBusVoltage();
+    info.device_temp = m.GetTemperature();
+    info.bus_voltage = m.GetBusVoltage();
     info.supply_current = m.GetSupplyCurrent();
 
     info.output_percent = m.GetMotorOutputPercent();
     info.output_voltage = m.GetMotorOutputVoltage();
     info.output_current = m.GetOutputCurrent();
 
-    info.control_mode   = static_cast<uint8_t>(m.GetControlMode());
+    info.control_mode = static_cast<uint8_t>(m.GetControlMode());
 
     return info;
 }
@@ -174,7 +175,7 @@ void Phoenix5Driver::feed_watchdog_status(int32_t status)
      * POSTIVE feed time --> enabled
      * ZERO feed time --> disabled
      * NEGATIVE feed time --> autonomous */
-    if(!status)
+    if (!status)
     {
         this->hopper_actuator.Set(ControlMode::Disabled, 0.);
         this->is_disabled = true;
@@ -192,12 +193,13 @@ void Phoenix5Driver::pub_motor_info_cb()
     info_msg.header.stamp = this->get_clock()->now();
     info_msg.enabled = !this->is_disabled;
 
-    this->hopper_info_pub->publish( (info_msg << this->hopper_actuator) );
+    this->hopper_info_pub->publish((info_msg << this->hopper_actuator));
 
     sensor_msgs::msg::JointState joint_msg{};
     joint_msg.header.stamp = info_msg.header.stamp;
     joint_msg.name.push_back("dump_joint");
-    joint_msg.position.push_back((M_PI / 180.) * (15. + info_msg.position / (-1000. / 30.)));
+    joint_msg.position.push_back(
+        (M_PI / 180.) * (15. + info_msg.position / (-1000. / 30.)));
     this->hopper_joint_pub->publish(joint_msg);
 }
 
@@ -206,18 +208,18 @@ void Phoenix5Driver::pub_motor_fault_cb()
     TalonFaults faults_msg{};
     faults_msg.header.stamp = this->get_clock()->now();
 
-    this->hopper_faults_pub->publish( (faults_msg << this->hopper_actuator) );
+    this->hopper_faults_pub->publish((faults_msg << this->hopper_actuator));
 }
 
-void Phoenix5Driver::execute_ctrl(TalonSRX &motor, const TalonCtrl &msg)
+void Phoenix5Driver::execute_ctrl(TalonSRX& motor, const TalonCtrl& msg)
 {
-    if(this->is_disabled)
+    if (this->is_disabled)
     {
         motor.Set(ControlMode::Disabled, 0.);
     }
     else
     {
-        switch(msg.mode)
+        switch (msg.mode)
         {
             case TalonCtrl::PERCENT_OUTPUT:
             {
@@ -276,13 +278,17 @@ void Phoenix5Driver::execute_ctrl(TalonSRX &motor, const TalonCtrl &msg)
             }
         }
 
-        RCLCPP_DEBUG(this->get_logger(), "Set motor mode to %d and output to: %f", static_cast<int>(msg.mode), msg.value);
+        RCLCPP_DEBUG(
+            this->get_logger(),
+            "Set motor mode to %d and output to: %f",
+            static_cast<int>(msg.mode),
+            msg.value);
     }
 }
 
 
 
-int main(int argc, char ** argv)
+int main(int argc, char** argv)
 {
     ctre::phoenix::unmanaged::Unmanaged::LoadPhoenix();
     std::cout << "Loaded Phoenix 5 Unmanaged" << std::endl;

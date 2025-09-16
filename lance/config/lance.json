@@ -11,7 +11,8 @@
                 "joy_node": "xbox",
                 "robot_status": "enabled",
                 "foxglove_bridge": "test",
-                "foxglove_gui": "local"
+                "foxglove_gui": "local",
+                "bag_record": "telemetry"
             }
         },
         "mocha":
@@ -19,7 +20,9 @@
             "pragma:action_overrides":
             {
                 "teleop_control": "enabled",
-                "phoenix6_driver": "enabled"
+                "phoenix6_driver": "enabled",
+                "robot_tf": "lance",
+                "bag_record": "telemetry"
             }
         },
         "mocha-perception":
@@ -28,14 +31,16 @@
             "pragma:action_overrides":
             {
                 "perception": "live",
-                "multiscan_driver": "robot"
+                "multiscan_driver": "robot",
+                "bag_record": "sensor_data"
             }
         },
         "frappe":
         {
             "pragma:action_overrides":
             {
-                "phoenix5_driver": "enabled"
+                "phoenix5_driver": "enabled",
+                "bag_record": "telemetry"
             }
         }
     },
@@ -217,7 +222,7 @@
                 "prefix": ["xterm -e gdb -ex run --args"]
             }
         },
-        "lidar":
+        "lidar-only":
         {
             "pragma:derived": "test",
             "base_frame_id": "lidar_link",
@@ -565,7 +570,8 @@
             "robot_description":
             {
                 "name": "lance",
-                "structure": {
+                "structure":
+                {
                     "links": [
                         "base_link",
                         "frame_link",
@@ -575,55 +581,75 @@
                         "lidar_link",
                         "lidar_link_inv_rotated"
                     ],
-                    "joints": {
-                        "frame_joint": {
+                    "joints":
+                    {
+                        "frame_joint":
+                        {
                             "type": "fixed",
                             "parent": "base_link",
                             "child": "frame_link",
-                            "origin": { "xyz": [0, 0, 0.13103567] }
+                            "origin":
+                            {
+                                "xyz": [0, 0, 0.13103567]
+                            }
                         },
-                        "left_track_joint": {
+                        "left_track_joint":
+                        {
                             "type": "fixed",
                             "parent": "frame_link",
                             "child": "left_track_link",
-                            "origin": { "xyz": [0.20318559, 0.289888, 0.00242022] }
+                            "origin":
+                            {
+                                "xyz": [0.20318559, 0.289888, 0.00242022]
+                            }
                         },
-                        "right_track_joint": {
+                        "right_track_joint":
+                        {
                             "type": "fixed",
                             "parent": "frame_link",
                             "child": "right_track_link",
-                            "origin": { "xyz": [0.20318559, -0.289888, 0.00242022] }
+                            "origin":
+                            {
+                                "xyz": [0.20318559, -0.289888, 0.00242022]
+                            }
                         },
-                        "dump_joint": {
+                        "dump_joint":
+                        {
                             "type": "revolute",
                             "parent": "frame_link",
                             "child": "collection_link",
-                            "origin": {
+                            "origin":
+                            {
                                 "xyz": [-0.45721441, 0, 0.18580822],
                                 "rpy": [0, -0.2617994, 0]
                             },
                             "axis": [0, 1, 0],
-                            "limit": {
+                            "limit":
+                            {
                                 "upper": 0.2617994,
                                 "lower": -0.2617994,
                                 "effort": 100,
                                 "velocity": 100
                             }
                         },
-                        "lidar_joint": {
+                        "lidar_joint":
+                        {
                             "type": "fixed",
                             "parent": "frame_link",
                             "child": "lidar_link",
-                            "origin": {
+                            "origin":
+                            {
                                 "xyz": [0.64957717, 0, 0.42478867],
                                 "rpy": [2.836255, -0.171851, -2.067879]
                             }
                         },
-                        "lidar_joint_inv_rotated": {
+                        "lidar_joint_inv_rotated":
+                        {
                             "type": "fixed",
                             "parent": "lidar_link",
                             "child": "lidar_link_inv_rotated",
-                            "origin": {
+                            "origin":
+                            {
                                 "xyz": [0, 0, 0],
                                 "rpy": [0, 0, 2.09439510239]
                             }
@@ -661,12 +687,11 @@
         "pragma:default": null,
         "all":
         {
-            "start_paused": true,
-            "loop": false
+            "output_prefix": "bag_recordings/lance_raw_data"
         },
         "sensor_data":
         {
-            "pragam:derived": "all",
+            "output_prefix": "bag_recordings/lance_sensor_data",
             "topics": [
                 "/multiscan/lidar_scan",
                 "/multiscan/imu",
@@ -676,7 +701,7 @@
         },
         "telemetry":
         {
-            "pragma:derived": "all",
+            "output_prefix": "bag_recordings/lance_telemetry",
             "topics": [
                 "/joy",
                 "/lance/watchdog_status",

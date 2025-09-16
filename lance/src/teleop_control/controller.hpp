@@ -14,21 +14,6 @@ using JoyMsg = sensor_msgs::msg::Joy;
 
 class RobotControl
 {
-    using system_time = std::chrono::system_clock;
-    using system_time_point = system_time::time_point;
-
-    enum RobotMode
-    {
-        DISABLED,
-        ENABLED,
-        AUTONOMOUS
-    };
-
-    inline static RobotMode getMode(int32_t status)
-    {
-        return status > 0 ? RobotMode::ENABLED : (status < 0 ? RobotMode::AUTONOMOUS : RobotMode::DISABLED);
-    }
-
 public:
     inline RobotControl() { this->stop_all(); }
     ~RobotControl() = default;
@@ -38,24 +23,23 @@ public:
     RobotMotorCommands& update(
         int32_t robot_status,
         const JoyMsg& joystick_values,
-        const RobotMotorStatus& motor_status );
+        const RobotMotorStatus& motor_status);
 
     void getStatusStrings(
         std::string& control_level,
         std::string& mining_status,
-        std::string& offload_status );
+        std::string& offload_status);
 
-private:
-    JoyMsg
-        prev_joystick_values,
-        curr_joystick_values;
-    RobotMode
-        prev_robot_mode{ RobotMode::DISABLED },
-        curr_robot_mode{ RobotMode::DISABLED };
-    RobotMotorStatus
-        curr_motor_states;
-    RobotMotorCommands
-        motor_commands;
+protected:
+    using system_time = std::chrono::system_clock;
+    using system_time_point = system_time::time_point;
+
+    enum RobotMode
+    {
+        DISABLED,
+        ENABLED,
+        AUTONOMOUS
+    };
 
     class State
     {
@@ -88,15 +72,13 @@ private:
     public:
         double driving_speed_scalar = RobotControl::DRIVING_MEDIUM_SPEED_SCALAR;
 
-        ControlLevel
-            control_level = ControlLevel::ASSISTED_MANUAL,
-            last_manual_control_level = control_level;
+        ControlLevel control_level = ControlLevel::MANUAL;
+        ControlLevel last_manual_control_level = control_level;
 
         struct  // MINING ROUTINE VARS
         {
-            bool
-                enabled = false,
-                cancelled = false;
+            bool enabled = false;
+            bool cancelled = false;
 
             MiningStage stage = MiningStage::FINISHED;
 
@@ -104,26 +86,25 @@ private:
 
             double target_mining_time = RobotControl::MINING_RUN_TIME_SECONDS;
 
-        }
-        mining;
+        } mining;
 
         struct  // OFFLOAD ROUTINE VARS
         {
-            bool
-                enabled = false,
-                cancelled = false;
+            bool enabled = false;
+            bool cancelled = false;
 
             OffloadingStage stage = OffloadingStage::FINISHED;
 
-            system_time_point start_time, dump_start_time;
+            system_time_point start_time;
+            system_time_point dump_start_time;
 
-            double
-                tele_target_backup_time = RobotControl::TELE_OFFLOAD_BACKUP_TIME_SECONDS,
-                auto_target_backup_time = RobotControl::AUTO_OFFLOAD_BACKUP_TIME_SECONDS,
-                target_dump_time = RobotControl::OFFLOAD_DUMP_TIME;
+            double tele_target_backup_time =
+                RobotControl::TELE_OFFLOAD_BACKUP_TIME_SECONDS;
+            double auto_target_backup_time =
+                RobotControl::AUTO_OFFLOAD_BACKUP_TIME_SECONDS;
+            double target_dump_time = RobotControl::OFFLOAD_DUMP_TIME;
 
-        }
-        offload;
+        } offload;
 
     public:
         void reset_auto_states();
@@ -131,12 +112,18 @@ private:
         bool mining_is_soft_shutdown();
         bool offload_is_soft_shutdown();
 
-        void handle_change_control_level(RobotControl::State::ControlLevel new_level);
-
-    }
-    state;
+        void handle_change_control_level(
+            RobotControl::State::ControlLevel new_level);
+    };
 
 protected:
+    inline static RobotMode getMode(int32_t status)
+    {
+        return status > 0
+                   ? RobotMode::ENABLED
+                   : (status < 0 ? RobotMode::AUTONOMOUS : RobotMode::DISABLED);
+    }
+
     void disable_motors();
     inline void stop_all()
     {
@@ -155,7 +142,8 @@ protected:
     }
     inline bool getButtonPressed(int id)
     {
-        return !this->prev_joystick_values.buttons[id] && this->curr_joystick_values.buttons[id];
+        return !this->prev_joystick_values.buttons[id] &&
+               this->curr_joystick_values.buttons[id];
     }
     inline float getRawAxis(int id)
     {
@@ -177,8 +165,17 @@ protected:
     void periodic_handle_offload();
     void periodic_handle_teleop_input();
 
+private:
+    JoyMsg prev_joystick_values;
+    JoyMsg curr_joystick_values;
+    RobotMode prev_robot_mode{RobotMode::DISABLED};
+    RobotMode curr_robot_mode{RobotMode::DISABLED};
+    RobotMotorStatus curr_motor_states;
+    RobotMotorCommands motor_commands;
+    State state;
 
 public:
+    // clang-format off
     static constexpr double
     // motor physical speed targets
         TRENCHER_MAX_VELO = 80,                         // maximum mining speed -- TURNS PER SECOND
@@ -195,10 +192,10 @@ public:
 
     static constexpr double
     // motor constants
-        GENERIC_MOTOR_kP = 0.11,	// An error of 1 rotation per second results in 2V output
-        GENERIC_MOTOR_kI = 0.5,		// An error of 1 rotation per second increases output by 0.5V every second
-        GENERIC_MOTOR_kD = 0.0001,	// A change of 1 rotation per second squared results in 0.0001 volts output
-        GENERIC_MOTOR_kV = 0.12,	// Falcon 500 is a 500kV motor, 500rpm per V = 8.333 rps per V, 1/8.33 = 0.12 volts / Rotation per second
+        GENERIC_MOTOR_kP = 0.11,    // An error of 1 rotation per second results in 2V output
+        GENERIC_MOTOR_kI = 0.5,     // An error of 1 rotation per second increases output by 0.5V every second
+        GENERIC_MOTOR_kD = 0.0001,  // A change of 1 rotation per second squared results in 0.0001 volts output
+        GENERIC_MOTOR_kV = 0.12,    // Falcon 500 is a 500kV motor, 500rpm per V = 8.333 rps per V, 1/8.33 = 0.12 volts / Rotation per second
     // driving
         DRIVING_MAGNITUDE_DEADZONE_SCALAR = 0.1,
         DRIVING_LOW_SPEED_SCALAR = 0.3,
@@ -208,17 +205,17 @@ public:
     // hopper
         HOPPER_ACTUATOR_PLUNGE_SPEED = 0.40,
         HOPPER_ACTUATOR_EXTRACT_SPEED = 0.80,
-        HOPPER_ACUTATOR_MOVE_SPEED = 1.0,	// all other movement (ie. dumping)
+        HOPPER_ACUTATOR_MOVE_SPEED = 1.0,       // all other movement (ie. dumping)
     // actuator potentiometer target values
-        OFFLOAD_POT_VALUE = 0.95,				// dump height
-        TRAVERSAL_POT_VALUE = 0.60,				// traversal height
-        AUTO_TRANSPORT_POT_VALUE = 0.55,		// height for transporting regolith
-        MINING_DEPTH_NOMINAL_POT_VALUE = 0.21,	// nominal mining depth from which manual adjustments can be made
-        MINING_DEPTH_LIMIT_POT_VALUE = 0.03,	// lowest depth we ever want to go
+        OFFLOAD_POT_VALUE = 0.95,               // dump height
+        TRAVERSAL_POT_VALUE = 0.60,             // traversal height
+        AUTO_TRANSPORT_POT_VALUE = 0.55,        // height for transporting regolith
+        MINING_DEPTH_NOMINAL_POT_VALUE = 0.21,  // nominal mining depth from which manual adjustments can be made
+        MINING_DEPTH_LIMIT_POT_VALUE = 0.03,    // lowest depth we ever want to go
         HOPPER_POT_TARGETING_EPSILON = 0.01,
     // timed operations
-        MINING_RUN_TIME_SECONDS = 1.0,				// teleauto mining run time
-        TELE_OFFLOAD_BACKUP_TIME_SECONDS = 3.0,		// teleauto offload duration
+        MINING_RUN_TIME_SECONDS = 1.0,              // teleauto mining run time
+        TELE_OFFLOAD_BACKUP_TIME_SECONDS = 3.0,     // teleauto offload duration
         AUTO_OFFLOAD_BACKUP_TIME_SECONDS = 2.0,
         OFFLOAD_DUMP_TIME = 6.0,
     // auto belt duty cycle
@@ -255,5 +252,5 @@ public:
         TELEAUTO_MINING_STOP_POV_VAL = LogitechMapping::Axes::DPAD_K::DPAD_DOWN,
         TELEAUTO_OFFLOAD_INIT_POV_VAL = LogitechMapping::Axes::DPAD_K::DPAD_RIGHT,
         TELEAUTO_OFFLOAD_STOP_POV_VAL = LogitechMapping::Axes::DPAD_K::DPAD_LEFT;
-
+    // clang-format on
 };
