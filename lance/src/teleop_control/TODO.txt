@@ -1,2 +1,1 @@
-1. auto-mode preset commands do not trigger
-2. auto-dump soft-cancel does not register
+1. auto-mode preset commands do not trigger (?)

@@ -222,7 +222,7 @@
                 "prefix": ["xterm -e gdb -ex run --args"]
             }
         },
-        "lidar":
+        "lidar-only":
         {
             "pragma:derived": "test",
             "base_frame_id": "lidar_link",

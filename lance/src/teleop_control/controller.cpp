@@ -68,7 +68,7 @@ RobotMotorCommands& RobotControl::update(
     this->curr_joystick_values = joystick_values;
 
     this->curr_motor_states = motor_status;
-    this->disable_motors();  // reset all command values
+    this->disable_motors();  // This resets all the command states to be disabled! (gets overwritten by any other actions!)
 
     // handle robot mode transitions
     {
@@ -307,11 +307,13 @@ void RobotControl::cancel_mining()
             case RobotControl::State::ControlLevel::TELEAUTO_OP:
             default:
             {
+                this->state.handle_change_control_level(
+                    RobotControl::State::ControlLevel::MANUAL);
                 this->stop_all();  // hard stop... and reset all states
 
-                this->state.mining.enabled = false;
-                this->state.mining.stage =
-                    RobotControl::State::MiningStage::FINISHED;
+                // this->state.mining.enabled = false;
+                // this->state.mining.stage =
+                //     RobotControl::State::MiningStage::FINISHED;
             }
         }
     }
@@ -348,11 +350,13 @@ void RobotControl::cancel_offload()
             case RobotControl::State::ControlLevel::TELEAUTO_OP:
             default:
             {
+                this->state.handle_change_control_level(
+                    RobotControl::State::ControlLevel::MANUAL);
                 this->stop_all();  // hard stop... and reset all states
 
-                this->state.offload.enabled = false;
-                this->state.offload.stage =
-                    RobotControl::State::OffloadingStage::FINISHED;
+                // this->state.offload.enabled = false;
+                // this->state.offload.stage =
+                //     RobotControl::State::OffloadingStage::FINISHED;
             }
         }
     }
@@ -830,7 +834,7 @@ void RobotControl::periodic_handle_teleop_input()
                 RobotControl::TELEAUTO_OFFLOAD_STOP_POV_ID,
                 RobotControl::TELEAUTO_OFFLOAD_STOP_POV_VAL))  // dpad left
         {
-            this->cancel_mining();
+            this->cancel_offload();
         }
     }
 
@@ -934,51 +938,3 @@ void RobotControl::periodic_handle_teleop_input()
                     RobotControl::GENERIC_DEADZONE_SCALAR));
     }
 }
-
-
-
-
-
-// -------------- TimedRobot Overrides --------------
-
-// void RobotControl::RobotPeriodic()
-// {
-//     // run periodic control
-//     this->periodic_handle_mining();
-//     this->periodic_handle_offload();
-
-//     // this->telemetry_sender.updateValues();
-// }
-
-
-// void RobotControl::AutonomousInit()
-// {
-//     this->stop_all();
-//     this->serial.enabled = true;
-//     this->state.control_level = RobotControl::State::ControlLevel::FULL_AUTO;
-// }
-
-
-// void RobotControl::TeleopInit()
-// {
-//     this->stop_all();
-//     // this->disable_serial();
-//     this->state.control_level = this->state.last_manual_control_level;
-// }
-
-// void RobotControl::TeleopPeriodic()
-// {
-//     this->periodic_handle_teleop_input();
-// }
-
-// void RobotControl::TeleopExit()
-// {
-//     this->state.last_manual_control_level = this->state.control_level;
-// }
-
-
-// void RobotControl::DisabledInit()
-// {
-//     this->stop_all();
-//     // this->disable_serial();
-// }
