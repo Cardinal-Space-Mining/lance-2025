@@ -86,6 +86,15 @@ ament_target_dependencies(talon_twist_driver
     rclcpp
     geometry_msgs)
 
+# --- Falcon Test Node ---------------------------------------------------------
+add_executable(falcon_test src/falcon_test.cpp)
+target_link_libraries(falcon_test
+    ${phoenix_ros_driver_custom_types})
+ament_target_dependencies(falcon_test
+    rclcpp
+    sensor_msgs
+    phoenix6)
+
 # --- Export -------------------------------------------------------------------
 ament_export_dependencies(
     rclcpp
@@ -99,6 +108,7 @@ install(TARGETS
     phx5_driver
     phx6_driver
     talon_twist_driver
+    falcon_test
     DESTINATION lib/${PROJECT_NAME} )
 install(DIRECTORY
     launch

@@ -91,8 +91,6 @@ public:
         this->hopper_actuator.SetInverted(true);
         this->hopper_actuator.SetNeutralMode(NeutralMode::Brake);
         this->hopper_actuator.ConfigNeutralDeadband(5.);
-        this->hopper_actuator.ConfigSelectedFeedbackSensor(
-            TalonSRXFeedbackDevice::Analog);
         this->hopper_actuator.ClearStickyFaults();
 
         RCLCPP_DEBUG(

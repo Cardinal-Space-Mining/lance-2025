@@ -66,7 +66,7 @@ static const phx6::configs::CurrentLimitsConfigs  // TODO -- analysis
                                .WithStatorCurrentLimit(10_A)
                                .WithSupplyCurrentLimitEnable(true)
                                .WithSupplyCurrentLimit(12_A);
-}  // namespace TalonStaticConfig
+};  // namespace TalonStaticConfig
 namespace TalonRuntimeConfig
 {
 static constexpr auto MOTOR_VELOCITY_SETPOINT_ACC = 5_tr_per_s_sq;
@@ -373,13 +373,15 @@ void Phoenix6Driver::configure_motors_cb()
             .WithFeedback(TalonStaticConfig::FEEDBACK_CONFIGS)
             .WithCurrentLimits(TalonStaticConfig::CURRENT_LIMIT_CONFIG);
 
-    config.MotorOutput.Inverted = phx6::signals::InvertedValue::
-        Clockwise_Positive;  // trencher positive should result in digging
+    // trencher positive should result in digging
+    config.MotorOutput.Inverted =
+        phx6::signals::InvertedValue::Clockwise_Positive;
     trencher.GetConfigurator().Apply(config);
     trencher.ClearStickyFaults();
 
-    config.MotorOutput.Inverted = phx6::signals::InvertedValue::
-        Clockwise_Positive;  // hopper positive should result in dumping
+    // hopper positive should result in dumping
+    config.MotorOutput.Inverted =
+        phx6::signals::InvertedValue::Clockwise_Positive;
     hopper_belt.GetConfigurator().Apply(config);
     hopper_belt.ClearStickyFaults();
 
