@@ -1,5 +1,6 @@
 #include <rclcpp/rclcpp.hpp>
 
+#include <std_msgs/msg/float64.hpp>
 #include <sensor_msgs/msg/joy.hpp>
 
 #define Phoenix_No_WPI
@@ -12,6 +13,7 @@
 
 using namespace std::chrono_literals;
 
+using Float64Msg = std_msgs::msg::Float64;
 using JoyMsg = sensor_msgs::msg::Joy;
 
 #define phx6 ctre::phoenix6
@@ -108,6 +110,7 @@ protected:
 
     rclcpp::Publisher<TalonInfo>::SharedPtr info_pub;
     rclcpp::Publisher<TalonFaults>::SharedPtr faults_pub;
+    rclcpp::Publisher<Float64Msg>::SharedPtr target_pub;
 
     rclcpp::Subscription<JoyMsg>::SharedPtr joy_sub;
 };
@@ -123,6 +126,9 @@ FalconTestNode::FalconTestNode() :
     faults_pub{this->create_publisher<TalonFaults>(
         "/test_falcon/faults",
         rclcpp::SensorDataQoS{})},
+    target_pub{this->create_publisher<Float64Msg>(
+        "/test_falcon/target",
+        rclcpp::SensorDataQoS{})},
     joy_sub{this->create_subscription<JoyMsg>(
         "/joy",
         rclcpp::SensorDataQoS{},
@@ -133,10 +139,10 @@ FalconTestNode::FalconTestNode() :
 
 void FalconTestNode::config_motor()
 {
-    static constexpr double kP = 0.11;
-    static constexpr double kI = 0.5;
+    static constexpr double kP = 0.5;
+    static constexpr double kI = 0.2;
     static constexpr double kD = 0.0001;
-    static constexpr double kV = 0.12;
+    static constexpr double kV = 0.115;
 
     static constexpr double DUTY_CYCLE_DEADBAND = 0.05;
     static constexpr int NEUTRAL_MODE =
@@ -176,11 +182,13 @@ void FalconTestNode::joy_cb(const JoyMsg& msg)
 {
     ctre::phoenix::unmanaged::FeedEnable(100);
 
-    double target_rps = 10. * msg.axes[1];
+    double target_rps = 20. * msg.axes[1] * ((1. - msg.axes[2]) * 2. + 1.);
 
     this->motor.SetControl(
         phx6::controls::VelocityVoltage{
             units::angular_velocity::turns_per_second_t{target_rps}});
+
+    this->target_pub->publish(Float64Msg{}.set__data(target_rps));
 
     TalonInfo info_msg{};
     this->info_pub->publish((info_msg << this->motor));

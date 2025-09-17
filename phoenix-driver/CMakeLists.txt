@@ -92,6 +92,7 @@ target_link_libraries(falcon_test
     ${phoenix_ros_driver_custom_types})
 ament_target_dependencies(falcon_test
     rclcpp
+    std_msgs
     sensor_msgs
     phoenix6)
 
