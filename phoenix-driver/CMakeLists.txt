@@ -96,6 +96,15 @@ ament_target_dependencies(falcon_test
     sensor_msgs
     phoenix6)
 
+# --- Motor Sim Node -----------------------------------------------------------
+add_executable(motor_sim src/motor_sim.cpp)
+target_link_libraries(motor_sim
+    ${phoenix_ros_driver_custom_types})
+ament_target_dependencies(motor_sim
+    rclcpp
+    std_msgs
+    sensor_msgs)
+
 # --- Export -------------------------------------------------------------------
 ament_export_dependencies(
     rclcpp
@@ -110,6 +119,7 @@ install(TARGETS
     phx6_driver
     talon_twist_driver
     falcon_test
+    motor_sim
     DESTINATION lib/${PROJECT_NAME} )
 install(DIRECTORY
     launch

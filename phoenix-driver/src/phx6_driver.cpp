@@ -23,192 +23,25 @@
 #include <phoenix_ros_driver/msg/talon_faults.hpp>
 
 
-#define HARD_ENABLE 0
-
 #define phx6 ctre::phoenix6
 using namespace std::chrono_literals;
 
 using phoenix_ros_driver::msg::TalonCtrl;
 using phoenix_ros_driver::msg::TalonInfo;
 using phoenix_ros_driver::msg::TalonFaults;
+
 using phx6::hardware::TalonFX;
+using phx6::configs::TalonFXConfiguration;
+using phx6::configs::Slot0Configs;
+using phx6::configs::MotorOutputConfigs;
+using phx6::configs::FeedbackConfigs;
+using phx6::configs::CurrentLimitsConfigs;
+using phx6::signals::NeutralModeValue;
+using phx6::signals::InvertedValue;
+using phx6::signals::FeedbackSensorSourceValue;
 
 
-namespace TalonStaticConfig
-{
-static constexpr char const* INTERFACE = "can0";
-
-static constexpr double kP = 0.11;
-static constexpr double kI = 0.5;
-static constexpr double kD = 0.0001;
-static constexpr double kV = 0.12;
-
-static constexpr double DUTY_CYCLE_DEADBAND = 0.05;
-static constexpr int NEUTRAL_MODE =
-    ctre::phoenix6::signals::NeutralModeValue::Coast;
-
-static constexpr phx6::configs::Slot0Configs SLOT0_CONFIG =
-    phx6::configs::Slot0Configs{}.WithKP(kP).WithKI(kI).WithKD(kD).WithKV(kV);
-
-static constexpr phx6::configs::MotorOutputConfigs MOTOR_OUTPUT_CONFIG =
-    phx6::configs::MotorOutputConfigs{}
-        .WithDutyCycleNeutralDeadband(
-            DUTY_CYCLE_DEADBAND)  // <-- deadband which applies neutral mode!
-        .WithNeutralMode(NEUTRAL_MODE);
-
-static constexpr phx6::configs::FeedbackConfigs FEEDBACK_CONFIGS =
-    phx6::configs::FeedbackConfigs{}.WithFeedbackSensorSource(
-        phx6::signals::FeedbackSensorSourceValue::RotorSensor);
-
-static const phx6::configs::CurrentLimitsConfigs  // TODO -- analysis
-    CURRENT_LIMIT_CONFIG = phx6::configs::CurrentLimitsConfigs{}
-                               .WithStatorCurrentLimitEnable(true)
-                               .WithStatorCurrentLimit(10_A)
-                               .WithSupplyCurrentLimitEnable(true)
-                               .WithSupplyCurrentLimit(12_A);
-};  // namespace TalonStaticConfig
-namespace TalonRuntimeConfig
-{
-static constexpr auto MOTOR_VELOCITY_SETPOINT_ACC = 5_tr_per_s_sq;
-};
-
-#define ROBOT_TOPIC(subtopic) "/lance/" subtopic
-#define TALON_CTRL_SUB_QOS    10
-#define ROBOT_CTRL_SUB_QOS    10
-
-#define MOTOR_STATUS_PUB_DT       50ms
-#define TALONFX_BOOTUP_DELAY      3s
-#define TALONFX_POWER_CYCLE_DELAY 1s
-
-
-class Phoenix6Driver : public rclcpp::Node
-{
-protected:
-    struct TalonFXPubSub
-    {
-        rclcpp::Publisher<TalonInfo>::SharedPtr info_pub;
-        rclcpp::Publisher<TalonFaults>::SharedPtr faults_pub;
-
-        rclcpp::Subscription<TalonCtrl>::SharedPtr ctrl_sub;
-    };
-
-public:
-#define INIT_TALON_PUB_SUB(device)                          \
-    device##_pub_sub{                                       \
-        this->create_publisher<TalonInfo>(                  \
-            ROBOT_TOPIC(#device "/info"),                   \
-            rclcpp::SensorDataQoS{}),                       \
-        this->create_publisher<TalonFaults>(                \
-            ROBOT_TOPIC(#device "/faults"),                 \
-            rclcpp::SensorDataQoS{}),                       \
-        this->create_subscription<TalonCtrl>(               \
-            ROBOT_TOPIC(#device "/ctrl"),                   \
-            TALON_CTRL_SUB_QOS,                             \
-            [this](const TalonCtrl& msg)                    \
-            { this->execute_ctrl_cb(this->device, msg); })}
-
-    Phoenix6Driver() :
-        Node{"phoenix6_driver"},
-
-        track_right{0, TalonStaticConfig::INTERFACE},
-        track_left{1, TalonStaticConfig::INTERFACE},
-        trencher{2, TalonStaticConfig::INTERFACE},
-        hopper_belt{3, TalonStaticConfig::INTERFACE},
-
-        INIT_TALON_PUB_SUB(track_right),
-        INIT_TALON_PUB_SUB(track_left),
-        INIT_TALON_PUB_SUB(trencher),
-        INIT_TALON_PUB_SUB(hopper_belt),
-
-        watchdog_status_sub{this->create_subscription<std_msgs::msg::Int32>(
-            ROBOT_TOPIC("watchdog_status"),
-            rclcpp::SensorDataQoS{},
-            [this](const std_msgs::msg::Int32& msg)
-            { this->feed_watchdog_status(msg.data); })},
-        info_pub_timer{this->create_wall_timer(
-            MOTOR_STATUS_PUB_DT,
-            [this]()
-            {
-                this->pub_motor_info_cb();
-#if HARD_ENABLE
-                this->feed_watchdog_status(250);
-#endif
-            })},
-        fault_pub_timer{this->create_wall_timer(
-            250ms,
-            [this]() { this->pub_motor_fault_cb(); })}
-    {
-        std::string arduino_device;
-        this->declare_parameter("arduino_device", "/dev/ttyACM0");
-        this->get_parameter("arduino_device", arduino_device);
-
-        RCLCPP_INFO(
-            this->get_logger(),
-            "Using arduino device path : %s",
-            arduino_device.c_str());
-
-        this->initSerial(arduino_device.c_str());
-        this->sendSerialPowerUp();
-
-        RCLCPP_DEBUG(
-            this->get_logger(),
-            "Completed Phoenix6 Driver Node Initialization");
-    }
-
-    inline ~Phoenix6Driver()
-    {
-        this->sendSerialPowerDown();
-        // maybe need to pause here?
-        this->closeSerial();
-    }
-
-#undef INIT_TALON_PUB_SUB
-
-private:
-    inline void neutralAll()
-    {
-        for (TalonFX& m : this->motors)
-        {
-            m.SetControl(phx6::controls::NeutralOut{});
-        }
-    }
-
-    void initSerial(const char*);
-    void sendSerialPowerDown();
-    void sendSerialPowerUp();
-    inline void closeSerial() { close(this->serial_port); }
-
-    void feed_watchdog_status(int32_t status);
-    // Function to setup motors for the robot
-    void configure_motors_cb();
-    // Periodic function for motor information updates
-    void pub_motor_info_cb();
-    void pub_motor_fault_cb();
-    // Function to execute control commands on a motor
-    void execute_ctrl_cb(TalonFX& motor, const TalonCtrl& msg);
-
-private:
-    TalonFX track_right, track_left, trencher, hopper_belt;
-
-    TalonFXPubSub track_right_pub_sub, track_left_pub_sub, trencher_pub_sub,
-        hopper_belt_pub_sub;
-
-    rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr watchdog_status_sub;
-    rclcpp::TimerBase::SharedPtr info_pub_timer, fault_pub_timer;
-
-    std::array<std::reference_wrapper<TalonFX>, 4> motors{
-        {track_right, track_left, trencher, hopper_belt}
-    };
-    std::array<std::reference_wrapper<TalonFXPubSub>, 4> motor_pub_subs{
-        {track_right_pub_sub,
-         track_left_pub_sub, trencher_pub_sub,
-         hopper_belt_pub_sub}
-    };
-
-    int serial_port;
-    bool is_disabled = true;
-};
-
+// --- Ros message serialization helpser ---------------------------------------
 
 TalonInfo& operator<<(TalonInfo& info, TalonFX& m)
 {
@@ -279,6 +112,282 @@ TalonFaults& operator<<(TalonFaults& faults, TalonFX& m)
 }
 
 
+// --- Motor configs -----------------------------------------------------------
+
+static constexpr double TFX_COMMON_KP = 0.5;
+static constexpr double TFX_COMMON_KI = 0.2;
+static constexpr double TFX_COMMON_KD = 0.0001;
+static constexpr double TFX_COMMON_KV = 0.12;
+
+static constexpr double TFX_COMMON_NETRUAL_DEADBAND = 0.05;
+
+static constexpr auto TFX_COMMON_STATOR_CURRENT_LIMIT = 20_A;
+static constexpr auto TFX_COMMON_SUPPLY_CURRENT_LIMIT = 12_A;
+
+static const TalonFXConfiguration LFET_TRACK_CONFIG =
+    TalonFXConfiguration{}
+        .WithSlot0(
+            Slot0Configs{}
+                .WithKP(TFX_COMMON_KP)
+                .WithKI(TFX_COMMON_KI)
+                .WithKD(TFX_COMMON_KD)
+                .WithKV(TFX_COMMON_KV))
+        .WithMotorOutput(
+            MotorOutputConfigs{}
+                .WithDutyCycleNeutralDeadband(TFX_COMMON_NETRUAL_DEADBAND)
+                .WithNeutralMode(NeutralModeValue::Coast)
+                .WithInverted(InvertedValue::CounterClockwise_Positive))
+        .WithFeedback(
+            FeedbackConfigs{}.WithFeedbackSensorSource(
+                FeedbackSensorSourceValue::RotorSensor))
+        .WithCurrentLimits(
+            CurrentLimitsConfigs{}
+                .WithStatorCurrentLimit(TFX_COMMON_STATOR_CURRENT_LIMIT)
+                .WithStatorCurrentLimitEnable(true)
+                .WithSupplyCurrentLimit(TFX_COMMON_SUPPLY_CURRENT_LIMIT)
+                .WithSupplyCurrentLimitEnable(true));
+
+static const TalonFXConfiguration RIGHT_TRACK_CONFIG =
+    TalonFXConfiguration{}
+        .WithSlot0(
+            Slot0Configs{}
+                .WithKP(TFX_COMMON_KP)
+                .WithKI(TFX_COMMON_KI)
+                .WithKD(TFX_COMMON_KD)
+                .WithKV(TFX_COMMON_KV))
+        .WithMotorOutput(
+            MotorOutputConfigs{}
+                .WithDutyCycleNeutralDeadband(TFX_COMMON_NETRUAL_DEADBAND)
+                .WithNeutralMode(NeutralModeValue::Coast)
+                .WithInverted(InvertedValue::Clockwise_Positive))
+        .WithFeedback(
+            FeedbackConfigs{}.WithFeedbackSensorSource(
+                FeedbackSensorSourceValue::RotorSensor))
+        .WithCurrentLimits(
+            CurrentLimitsConfigs{}
+                .WithStatorCurrentLimit(TFX_COMMON_STATOR_CURRENT_LIMIT)
+                .WithStatorCurrentLimitEnable(true)
+                .WithSupplyCurrentLimit(TFX_COMMON_SUPPLY_CURRENT_LIMIT)
+                .WithSupplyCurrentLimitEnable(true));
+
+static const TalonFXConfiguration TRENCHER_CONFIG =
+    TalonFXConfiguration{}
+        .WithSlot0(
+            Slot0Configs{}
+                .WithKP(TFX_COMMON_KP)
+                .WithKI(TFX_COMMON_KI)
+                .WithKD(TFX_COMMON_KD)
+                .WithKV(TFX_COMMON_KV))
+        .WithMotorOutput(
+            MotorOutputConfigs{}
+                .WithDutyCycleNeutralDeadband(TFX_COMMON_NETRUAL_DEADBAND)
+                .WithNeutralMode(NeutralModeValue::Coast)
+                .WithInverted(InvertedValue::Clockwise_Positive))
+                // ^ trencher positive direction should result in digging
+        .WithFeedback(
+            FeedbackConfigs{}.WithFeedbackSensorSource(
+                FeedbackSensorSourceValue::RotorSensor))
+        .WithCurrentLimits(
+            CurrentLimitsConfigs{}
+                .WithStatorCurrentLimit(TFX_COMMON_STATOR_CURRENT_LIMIT)
+                .WithStatorCurrentLimitEnable(true)
+                .WithSupplyCurrentLimit(TFX_COMMON_SUPPLY_CURRENT_LIMIT)
+                .WithSupplyCurrentLimitEnable(true));
+
+static const TalonFXConfiguration HOPPER_BELT_CONFIG =
+    TalonFXConfiguration{}
+        .WithSlot0(
+            Slot0Configs{}
+                .WithKP(TFX_COMMON_KP)
+                .WithKI(TFX_COMMON_KI)
+                .WithKD(TFX_COMMON_KD)
+                .WithKV(TFX_COMMON_KV))
+        .WithMotorOutput(
+            MotorOutputConfigs{}
+                .WithDutyCycleNeutralDeadband(TFX_COMMON_NETRUAL_DEADBAND)
+                .WithNeutralMode(NeutralModeValue::Coast)
+                .WithInverted(InvertedValue::Clockwise_Positive))
+                // ^ hopper belt positive direction should result in dumping
+        .WithFeedback(
+            FeedbackConfigs{}.WithFeedbackSensorSource(
+                FeedbackSensorSourceValue::RotorSensor))
+        .WithCurrentLimits(
+            CurrentLimitsConfigs{}
+                .WithStatorCurrentLimit(TFX_COMMON_STATOR_CURRENT_LIMIT)
+                .WithStatorCurrentLimitEnable(true)
+                .WithSupplyCurrentLimit(TFX_COMMON_SUPPLY_CURRENT_LIMIT)
+                .WithSupplyCurrentLimitEnable(true));
+
+
+// --- Program defaults --------------------------------------------------------
+
+#define DEFAULT_ARDUINO_DEVICE "/dev/ttyACM0"
+#define CAN_INTERFACE          "can0"
+#define RIGHT_TRACK_CANID      0
+#define LEFT_TRACK_CANID       1
+#define TRENCHER_CANID         2
+#define HOPPER_BELT_CANID      3
+
+#define ROBOT_TOPIC(subtopic) "/lance/" subtopic
+#define TALON_CTRL_SUB_QOS    10
+#define ROBOT_CTRL_SUB_QOS    10
+
+#define MOTOR_STATUS_PUB_DT       50ms
+#define TALONFX_BOOTUP_DELAY      3s
+#define TALONFX_POWER_CYCLE_DELAY 1s
+
+#define DISABLE_WATCHDOG 0
+
+
+// --- Driver node -------------------------------------------------------------
+
+class Phoenix6Driver : public rclcpp::Node
+{
+public:
+    Phoenix6Driver();
+    ~Phoenix6Driver();
+
+private:
+    inline void neutralAll()
+    {
+        for (TalonFX& m : this->motors)
+        {
+            m.SetControl(phx6::controls::NeutralOut{});
+        }
+    }
+
+    void initSerial(const char*);
+    void sendSerialPowerDown();
+    void sendSerialPowerUp();
+    inline void closeSerial() { close(this->serial_port); }
+
+    void feed_watchdog_status(int32_t status);
+    // Function to setup motors for the robot
+    void configure_motors_cb();
+    // Periodic function for motor information updates
+    void pub_motor_info_cb();
+    void pub_motor_fault_cb();
+    // Function to execute control commands on a motor
+    void execute_ctrl_cb(TalonFX& motor, const TalonCtrl& msg);
+
+private:
+    struct TalonFXPubSub
+    {
+        rclcpp::Publisher<TalonInfo>::SharedPtr info_pub;
+        rclcpp::Publisher<TalonFaults>::SharedPtr faults_pub;
+
+        rclcpp::Subscription<TalonCtrl>::SharedPtr ctrl_sub;
+    };
+
+private:
+    TalonFX track_right;
+    TalonFX track_left;
+    TalonFX trencher;
+    TalonFX hopper_belt;
+
+    TalonFXPubSub track_right_pub_sub;
+    TalonFXPubSub track_left_pub_sub;
+    TalonFXPubSub trencher_pub_sub;
+    TalonFXPubSub hopper_belt_pub_sub;
+
+    rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr watchdog_status_sub;
+
+    rclcpp::TimerBase::SharedPtr info_pub_timer;
+    rclcpp::TimerBase::SharedPtr fault_pub_timer;
+
+    std::array<std::reference_wrapper<TalonFX>, 4> motors{
+        {track_right, track_left, trencher, hopper_belt}
+    };
+    std::array<std::reference_wrapper<TalonFXPubSub>, 4> motor_pub_subs{
+        {track_right_pub_sub,
+         track_left_pub_sub, trencher_pub_sub,
+         hopper_belt_pub_sub}
+    };
+
+    int serial_port;
+    bool is_disabled = true;
+};
+
+
+
+// clang-format off
+#define INIT_TALON_PUB_SUB(device)                         \
+    device##_pub_sub                                       \
+    {                                                      \
+        this->create_publisher<TalonInfo>(                 \
+            ROBOT_TOPIC(#device "/info"),                  \
+            rclcpp::SensorDataQoS{}),                      \
+        this->create_publisher<TalonFaults>(               \
+            ROBOT_TOPIC(#device "/faults"),                \
+            rclcpp::SensorDataQoS{}),                      \
+        this->create_subscription<TalonCtrl>(              \
+            ROBOT_TOPIC(#device "/ctrl"),                  \
+            TALON_CTRL_SUB_QOS,                            \
+            [this](const TalonCtrl& msg)                   \
+            { this->execute_ctrl_cb(this->device, msg); }) \
+}
+// clang-format on
+
+Phoenix6Driver::Phoenix6Driver() :
+    Node{"phoenix6_driver"},
+
+    track_right{RIGHT_TRACK_CANID, CAN_INTERFACE},
+    track_left{LEFT_TRACK_CANID, CAN_INTERFACE},
+    trencher{TRENCHER_CANID, CAN_INTERFACE},
+    hopper_belt{HOPPER_BELT_CANID, CAN_INTERFACE},
+
+    INIT_TALON_PUB_SUB(track_right),
+    INIT_TALON_PUB_SUB(track_left),
+    INIT_TALON_PUB_SUB(trencher),
+    INIT_TALON_PUB_SUB(hopper_belt),
+
+#if !DISABLE_WATCHDOG
+    watchdog_status_sub{this->create_subscription<std_msgs::msg::Int32>(
+        ROBOT_TOPIC("watchdog_status"),
+        rclcpp::SensorDataQoS{},
+        [this](const std_msgs::msg::Int32& msg)
+        { this->feed_watchdog_status(msg.data); })},
+#endif
+    info_pub_timer{this->create_wall_timer(
+        MOTOR_STATUS_PUB_DT,
+        [this]()
+        {
+            this->pub_motor_info_cb();
+#if DISABLE_WATCHDOG
+            this->feed_watchdog_status(250);
+#endif
+        })},
+    fault_pub_timer{this->create_wall_timer(
+        250ms,
+        [this]() { this->pub_motor_fault_cb(); })}
+{
+    std::string arduino_device;
+    this->declare_parameter("arduino_device", DEFAULT_ARDUINO_DEVICE);
+    this->get_parameter("arduino_device", arduino_device);
+
+    RCLCPP_INFO(
+        this->get_logger(),
+        "Using arduino device path : %s",
+        arduino_device.c_str());
+
+    this->initSerial(arduino_device.c_str());
+    this->sendSerialPowerUp();
+
+    RCLCPP_DEBUG(
+        this->get_logger(),
+        "Completed Phoenix6 Driver Node Initialization");
+}
+
+#undef INIT_TALON_PUB_SUB
+
+Phoenix6Driver::~Phoenix6Driver()
+{
+    this->sendSerialPowerDown();
+    // maybe need to pause here?
+    this->closeSerial();
+}
+
+
 void Phoenix6Driver::initSerial(const char* port)
 {
     this->serial_port = open(port, O_RDWR | O_NOCTTY | O_SYNC);
@@ -335,6 +444,7 @@ void Phoenix6Driver::sendSerialPowerDown()
     RCLCPP_INFO(this->get_logger(), "Sending serial power down command...");
     write(this->serial_port, "0", 1);
 }
+
 void Phoenix6Driver::sendSerialPowerUp()
 {
     RCLCPP_INFO(this->get_logger(), "Sending serial power up command...");
@@ -366,33 +476,16 @@ void Phoenix6Driver::feed_watchdog_status(int32_t status)
 
 void Phoenix6Driver::configure_motors_cb()
 {
-    phx6::configs::TalonFXConfiguration config =
-        phx6::configs::TalonFXConfiguration{}
-            .WithSlot0(TalonStaticConfig::SLOT0_CONFIG)
-            .WithMotorOutput(TalonStaticConfig::MOTOR_OUTPUT_CONFIG)
-            .WithFeedback(TalonStaticConfig::FEEDBACK_CONFIGS)
-            .WithCurrentLimits(TalonStaticConfig::CURRENT_LIMIT_CONFIG);
-
-    // trencher positive should result in digging
-    config.MotorOutput.Inverted =
-        phx6::signals::InvertedValue::Clockwise_Positive;
-    trencher.GetConfigurator().Apply(config);
+    trencher.GetConfigurator().Apply(TRENCHER_CONFIG);
     trencher.ClearStickyFaults();
 
-    // hopper positive should result in dumping
-    config.MotorOutput.Inverted =
-        phx6::signals::InvertedValue::Clockwise_Positive;
-    hopper_belt.GetConfigurator().Apply(config);
+    hopper_belt.GetConfigurator().Apply(HOPPER_BELT_CONFIG);
     hopper_belt.ClearStickyFaults();
 
-    config.MotorOutput.Inverted =
-        phx6::signals::InvertedValue::Clockwise_Positive;
-    track_right.GetConfigurator().Apply(config);
+    track_right.GetConfigurator().Apply(RIGHT_TRACK_CONFIG);
     track_right.ClearStickyFaults();
 
-    config.MotorOutput.Inverted =
-        phx6::signals::InvertedValue::CounterClockwise_Positive;
-    track_left.GetConfigurator().Apply(config);
+    track_left.GetConfigurator().Apply(LFET_TRACK_CONFIG);
     track_left.ClearStickyFaults();
 
     RCLCPP_INFO(this->get_logger(), "Reconfigured motors.");
@@ -466,9 +559,8 @@ void Phoenix6Driver::execute_ctrl_cb(TalonFX& motor, const TalonCtrl& msg)
             {
                 motor.SetControl(
                     phx6::controls::VelocityVoltage{
-                        units::angular_velocity::turns_per_second_t{msg.value}}
-                        .WithAcceleration(
-                            TalonRuntimeConfig::MOTOR_VELOCITY_SETPOINT_ACC));
+                        units::angular_velocity::turns_per_second_t{
+                            msg.value}});
                 break;
             }
             case TalonCtrl::CURRENT:
