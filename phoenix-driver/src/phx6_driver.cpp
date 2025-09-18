@@ -231,6 +231,7 @@ static const TalonFXConfiguration HOPPER_BELT_CONFIG =
 #define LEFT_TRACK_CANID       1
 #define TRENCHER_CANID         2
 #define HOPPER_BELT_CANID      3
+#define NUM_MOTORS             4
 
 #define ROBOT_TOPIC(subtopic) "/lance/" subtopic
 #define TALON_CTRL_SUB_QOS    10
@@ -299,13 +300,17 @@ private:
     rclcpp::TimerBase::SharedPtr info_pub_timer;
     rclcpp::TimerBase::SharedPtr fault_pub_timer;
 
-    std::array<std::reference_wrapper<TalonFX>, 4> motors{
+    std::array<std::reference_wrapper<TalonFX>, NUM_MOTORS> motors{
         {track_right, track_left, trencher, hopper_belt}
     };
-    std::array<std::reference_wrapper<TalonFXPubSub>, 4> motor_pub_subs{
+    std::array<std::reference_wrapper<TalonFXPubSub>, NUM_MOTORS> motor_pub_subs{
         {track_right_pub_sub,
          track_left_pub_sub, trencher_pub_sub,
          hopper_belt_pub_sub}
+    };
+
+    std::array<units::angle::turn_t, NUM_MOTORS> cached_motor_positions{
+        {0_tr, 0_tr, 0_tr, 0_tr}
     };
 
     int serial_port;
@@ -445,14 +450,20 @@ void Phoenix6Driver::initSerial(const char* port)
 
 void Phoenix6Driver::sendSerialPowerDown()
 {
+    for (size_t i = 0; i < NUM_MOTORS; i++)
+    {
+        this->cached_motor_positions[i] =
+            this->motors[i].get().GetPosition().GetValue();
+    }
+
     RCLCPP_INFO(this->get_logger(), "Sending serial power down command...");
-    write(this->serial_port, "0", 1);
+    (void)write(this->serial_port, "0", 1);
 }
 
 void Phoenix6Driver::sendSerialPowerUp()
 {
     RCLCPP_INFO(this->get_logger(), "Sending serial power up command...");
-    write(this->serial_port, "1", 1);
+    (void)write(this->serial_port, "1", 1);
 
     std::this_thread::sleep_for(TALONFX_BOOTUP_DELAY);
 
@@ -492,6 +503,11 @@ void Phoenix6Driver::configure_motors_cb()
     track_left.GetConfigurator().Apply(LFET_TRACK_CONFIG);
     track_left.ClearStickyFaults();
 
+    for(size_t i = 0; i < NUM_MOTORS; i++)
+    {
+        this->motors[i].get().SetPosition(this->cached_motor_positions[i]);
+    }
+
     RCLCPP_INFO(this->get_logger(), "Reconfigured motors.");
 }
 
@@ -500,7 +516,7 @@ void Phoenix6Driver::pub_motor_info_cb()
     TalonInfo talon_info_msg{};
     talon_info_msg.header.stamp = this->get_clock()->now();
 
-    for (size_t i = 0; i < 4; i++)
+    for (size_t i = 0; i < NUM_MOTORS; i++)
     {
         this->motor_pub_subs[i].get().info_pub->publish(
             (talon_info_msg << this->motors[i]));
@@ -522,7 +538,7 @@ void Phoenix6Driver::pub_motor_fault_cb()
          OVERVOLTAGE_FAULT_MASK | BRIDGE_BROWNOUT_FAULT_MASK);
 
     bool any_faults = false;
-    for (size_t i = 0; i < 4; i++)
+    for (size_t i = 0; i < NUM_MOTORS; i++)
     {
         this->motor_pub_subs[i].get().faults_pub->publish(
             (talon_faults_msg << this->motors[i]));

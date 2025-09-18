@@ -122,14 +122,14 @@ Phoenix5Driver::Phoenix5Driver() :
     hopper_faults_pub{this->create_publisher<TalonFaults>(
         ROBOT_TOPIC("hopper_act/faults"),
         rclcpp::SensorDataQoS{})},
+    hopper_joint_pub{this->create_publisher<sensor_msgs::msg::JointState>(
+        "joint_states",
+        10)},
     hopper_ctrl_sub{this->create_subscription<TalonCtrl>(
         ROBOT_TOPIC("hopper_act/ctrl"),
         TALON_CTRL_SUB_QOS,
         [this](const TalonCtrl& msg)
         { this->execute_ctrl(this->hopper_actuator, msg); })},
-    hopper_joint_pub{this->create_publisher<sensor_msgs::msg::JointState>(
-        "joint_states",
-        10)},
     watchdog_status_sub{this->create_subscription<std_msgs::msg::Int32>(
         ROBOT_TOPIC("watchdog_status"),
         rclcpp::SensorDataQoS{},
