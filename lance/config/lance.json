@@ -42,6 +42,19 @@
                 "phoenix5_driver": "enabled",
                 "bag_record": "telemetry"
             }
+        },
+
+        "motor-dev":
+        {
+            "pragma:action_overrides":
+            {
+                "joy_node": "xbox",
+                "robot_status": "enabled",
+                "teleop_control": "enabled",
+                "phoenix_motor_sim": "enabled",
+                "robot_tf": "lance",
+                "foxglove_bridge": "test"
+            }
         }
     },
 
@@ -454,6 +467,11 @@
         "enabled": {}
     },
     "phoenix6_driver":
+    {
+        "pragma:default": null,
+        "enabled": {}
+    },
+    "phoenix_motor_sim":
     {
         "pragma:default": null,
         "enabled": {}
