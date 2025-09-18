@@ -136,22 +136,37 @@ protected:
         return this->curr_motor_states.hopper_actuator.position / 1000.;
     }
 
+    inline bool hasButtonIdx(size_t id)
+    {
+        return this->curr_joystick_values.buttons.size() > id;
+    }
+    inline bool prevHasButtonIdx(size_t id)
+    {
+        return this->prev_joystick_values.buttons.size() > id;
+    }
+    inline bool hasAxisIdx(size_t id)
+    {
+        return this->curr_joystick_values.axes.size() > id;
+    }
+
     inline bool getRawButton(int id)
     {
-        return this->curr_joystick_values.buttons[id];
+        return this->hasButtonIdx(id) && this->curr_joystick_values.buttons[id];
     }
     inline bool getButtonPressed(int id)
     {
-        return !this->prev_joystick_values.buttons[id] &&
+        return this->prevHasButtonIdx(id) &&
+               !this->prev_joystick_values.buttons[id] &&
                this->curr_joystick_values.buttons[id];
     }
     inline float getRawAxis(int id)
     {
-        return this->curr_joystick_values.axes[id];
+        return this->hasAxisIdx(id) ? this->curr_joystick_values.axes[id] : 0.f;
     }
     inline bool getPov(int id, float val)
     {
-        return this->curr_joystick_values.axes[id] == val;
+        return this->hasAxisIdx(id) &&
+               this->curr_joystick_values.axes[id] == val;
     }
 
 protected:
@@ -187,15 +202,7 @@ public:
         TRACKS_MAX_ADDITIONAL_MINING_VEL = 6,           // TURNS PER SECOND
         TRACKS_OFFLOAD_VELO = TRACKS_MAX_VELO * 0.25;   // TURNS PER SECOND
 
-    static constexpr auto
-        MOTOR_SETPOINT_ACC = 5;     // TURNS PER SECOND SQUARED
-
     static constexpr double
-    // motor constants
-        GENERIC_MOTOR_kP = 0.11,    // An error of 1 rotation per second results in 2V output
-        GENERIC_MOTOR_kI = 0.5,     // An error of 1 rotation per second increases output by 0.5V every second
-        GENERIC_MOTOR_kD = 0.0001,  // A change of 1 rotation per second squared results in 0.0001 volts output
-        GENERIC_MOTOR_kV = 0.12,    // Falcon 500 is a 500kV motor, 500rpm per V = 8.333 rps per V, 1/8.33 = 0.12 volts / Rotation per second
     // driving
         DRIVING_MAGNITUDE_DEADZONE_SCALAR = 0.1,
         DRIVING_LOW_SPEED_SCALAR = 0.3,

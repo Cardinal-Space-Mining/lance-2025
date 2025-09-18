@@ -209,7 +209,7 @@ class LinearActuatorSim
 public:
     LinearActuatorSim(
         const std::string& name,
-        double max_speed = 200.0)  // counts/s
+        double max_speed = 150.0)  // counts/s
         :
         name_(name),
         position_(0.0),
@@ -251,7 +251,7 @@ public:
         }
 
         position_ += velocity_ * dt;
-        position_ = clamp_double(position_, 0.0, 1024.0);  // clamp travel
+        position_ = clamp_double(position_, 0.0, 1000.0);  // clamp travel
     }
 
     void fill_talon_info(TalonInfo& info, double bus_voltage)

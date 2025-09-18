@@ -115,9 +115,13 @@ TalonFaults& operator<<(TalonFaults& faults, TalonFX& m)
 // --- Motor configs -----------------------------------------------------------
 
 static constexpr double TFX_COMMON_KP = 0.5;
+// ^ 0.5 volts added for every turn per second error
 static constexpr double TFX_COMMON_KI = 0.2;
+// ^ 0.2 volts added for every rotation integrated error
 static constexpr double TFX_COMMON_KD = 0.0001;
+// ^ 0.0001 volts added for every rotation per second^2 change in error [per second]
 static constexpr double TFX_COMMON_KV = 0.12;
+// ^ Falcon 500 is a 500kV motor, 500rpm / 1V = 8.333 rps / 1V --> 1/8.33 = 0.12 volts / rps
 
 static constexpr double TFX_COMMON_NETRUAL_DEADBAND = 0.05;
 
@@ -183,7 +187,7 @@ static const TalonFXConfiguration TRENCHER_CONFIG =
                 .WithDutyCycleNeutralDeadband(TFX_COMMON_NETRUAL_DEADBAND)
                 .WithNeutralMode(NeutralModeValue::Coast)
                 .WithInverted(InvertedValue::Clockwise_Positive))
-                // ^ trencher positive direction should result in digging
+        // ^ trencher positive direction should result in digging
         .WithFeedback(
             FeedbackConfigs{}.WithFeedbackSensorSource(
                 FeedbackSensorSourceValue::RotorSensor))
@@ -207,7 +211,7 @@ static const TalonFXConfiguration HOPPER_BELT_CONFIG =
                 .WithDutyCycleNeutralDeadband(TFX_COMMON_NETRUAL_DEADBAND)
                 .WithNeutralMode(NeutralModeValue::Coast)
                 .WithInverted(InvertedValue::Clockwise_Positive))
-                // ^ hopper belt positive direction should result in dumping
+        // ^ hopper belt positive direction should result in dumping
         .WithFeedback(
             FeedbackConfigs{}.WithFeedbackSensorSource(
                 FeedbackSensorSourceValue::RotorSensor))

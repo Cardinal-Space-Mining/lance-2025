@@ -1,1 +1,8 @@
-1. auto-mode preset commands do not trigger (?)
+1. export control params to launch system
+2. improve assisted mining (upgrade to use belt position feedback):
+    a. determine # motor rotations <--> hopper full
+    b. improve f(track speed, trencher depth, trencher speed) -> belt duty cycle
+    c. position-based belt duty cycle
+    d. hopper full notification based on belt position
+3. use # belt rotations for assisted offload
+3. separate robot control public interface from internal state interface (wrapper + impl)
