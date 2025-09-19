@@ -131,7 +131,31 @@ protected:
         this->disable_motors();
     }
 
-    inline double get_hopper_pot()
+    inline void set_hopper_act_percent(double percent)
+    {
+        this->motor_commands.hopper_actuator
+            .set__mode(TalonCtrl::PERCENT_OUTPUT)
+            .set__value(percent);
+    }
+    inline void set_hopper_belt_velocity(double rps)
+    {
+        this->motor_commands.hopper_belt.set__mode(TalonCtrl::VELOCITY)
+            .set__value(rps);
+    }
+    inline void set_trencher_velocity(double rps)
+    {
+        this->motor_commands.trencher.set__mode(TalonCtrl::VELOCITY)
+            .set__value(rps);
+    }
+    inline void set_tracks_velocity(double left_rps, double right_rps)
+    {
+        this->motor_commands.track_left.set__mode(TalonCtrl::VELOCITY)
+            .set__value(left_rps);
+        this->motor_commands.track_right.set__mode(TalonCtrl::VELOCITY)
+            .set__value(right_rps);
+    }
+
+    inline double get_hopper_normalized()
     {
         return this->curr_motor_states.hopper_actuator.position / 1000.;
     }
