@@ -8,6 +8,7 @@
 
 #include "motor_interface.hpp"
 #include "logitech_map.hpp"
+#include "collection_status.hpp"
 
 
 using JoyMsg = sensor_msgs::msg::Joy;
@@ -251,7 +252,7 @@ public:
         OFFLOAD_DUMP_TIME = 6.0,
     // auto belt duty cycle
         HOPPER_BELT_TIME_ON_SECONDS = 1.0,
-        HOPPER_BELT_TIME_OFF_SECONDS = 2.5;
+        HOPPER_BELT_TIME_OFF_SECONDS = 5.0;
 
     static constexpr int
         DISABLE_ALL_ACTIONS_BUTTON_IDX = LogitechMapping::Buttons::A,
