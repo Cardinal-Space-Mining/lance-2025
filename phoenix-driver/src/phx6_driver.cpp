@@ -114,9 +114,9 @@ TalonFaults& operator<<(TalonFaults& faults, TalonFX& m)
 
 // --- Motor configs -----------------------------------------------------------
 
-static constexpr double TFX_COMMON_KP = 2.0;
+static constexpr double TFX_COMMON_KP = 0.5;
 // ^ 0.5 volts added for every turn per second error
-static constexpr double TFX_COMMON_KI = 0.2;
+static constexpr double TFX_COMMON_KI = 0.;
 // ^ 0.2 volts added for every rotation integrated error
 static constexpr double TFX_COMMON_KD = 0.0001;
 // ^ 0.0001 volts added for every rotation per second^2 change in error [per second]
@@ -125,8 +125,8 @@ static constexpr double TFX_COMMON_KV = 0.12;
 
 static constexpr double TFX_COMMON_NETRUAL_DEADBAND = 0.05;
 
-static constexpr auto TFX_COMMON_STATOR_CURRENT_LIMIT = 30_A;
-static constexpr auto TFX_COMMON_SUPPLY_CURRENT_LIMIT = 12_A;
+static constexpr auto TFX_COMMON_STATOR_CURRENT_LIMIT = 20_A;
+static constexpr auto TFX_COMMON_SUPPLY_CURRENT_LIMIT = 15_A;
 
 static const TalonFXConfiguration LFET_TRACK_CONFIG =
     TalonFXConfiguration{}
