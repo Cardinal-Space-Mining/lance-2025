@@ -747,7 +747,15 @@
                 "/lance/hopper_act/faults",
                 "/lance/hopper_act/info",
 
-                "/collection_status/**",
+                "/collection_status/is_full_volume",
+                "/collection_status/is_full_occ",
+                "/collection_status/volume",
+                "/collection_status/mining_target",
+                "/collection_status/offload_target",
+                "/collection_status/belt_pos_m",
+                "/collection_status/high_pos_m",
+                "/collection_status/low_pos_m",
+                "/collection_status/belt_usage_m",
 
                 "/rosout"
             ]
