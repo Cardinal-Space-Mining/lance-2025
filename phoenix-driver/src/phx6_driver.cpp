@@ -128,7 +128,7 @@ static constexpr double TFX_COMMON_NETRUAL_DEADBAND = 0.05;
 
 static constexpr auto TFX_COMMON_STATOR_CURRENT_LIMIT = 10_A;
 static constexpr auto TFX_COMMON_SUPPLY_CURRENT_LIMIT = 10_A;
-static constexpr auto TFX_COMMON_PEAK_VOLTAGE = 16_V;
+static constexpr auto TFX_COMMON_PEAK_VOLTAGE = 12_V;
 
 static const TalonFXConfiguration LFET_TRACK_CONFIG =
     TalonFXConfiguration{}
