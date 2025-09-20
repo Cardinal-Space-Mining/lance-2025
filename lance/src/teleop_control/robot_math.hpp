@@ -10,7 +10,7 @@ static constexpr double TRENCHER_GEARING = 32.;
 static constexpr double TRENCHER_LITERS_PER_OUTPUT_ROTATION = (0.04096766 * 6.);
 static constexpr double TRENCHER_IMPACT_EFFECTIVE_RADIUS = 0.09270911;
 
-static constexpr double HOPPER_BELT_GEARING = 10.;
+static constexpr double HOPPER_BELT_GEARING = 100.;
 static constexpr double HOPPER_BELT_EFFECTIVE_OUTPUT_RADIUS_M = 0.0508;
 static constexpr double HOPPER_BELT_CONTAINER_LENGTH_M = 0.6;
 static constexpr double HOPPER_BELT_SAFE_OFFLOAD_DIST_M = 0.7;
@@ -148,7 +148,7 @@ template<typename T>
 constexpr inline T hopper_belt_motor_rps_to_belt_mps(const T& motor_rps)
 {
     return motor_rps * ((1. / HOPPER_BELT_GEARING) *
-                        HOPPER_BELT_EFFECTIVE_OUTPUT_RADIUS_M * 2 * M_PI);
+                        (HOPPER_BELT_EFFECTIVE_OUTPUT_RADIUS_M * 2 * M_PI));
 }
 template<typename T>
 constexpr inline T hopper_belt_mps_to_motor_rps(const T& belt_mps)
