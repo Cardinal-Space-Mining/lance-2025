@@ -118,15 +118,15 @@ static constexpr double TFX_COMMON_KP = 0.2;
 // ^ 0.5 volts added for every turn per second error
 static constexpr double TFX_COMMON_KI = 0.;
 // ^ 0.2 volts added for every rotation integrated error
-static constexpr double TFX_COMMON_KD = 0.005;
+static constexpr double TFX_COMMON_KD = 0.0001;
 // ^ 0.0001 volts added for every rotation per second^2 change in error [per second]
 static constexpr double TFX_COMMON_KV = 0.12;
 // ^ Falcon 500 is a 500kV motor, 500rpm / 1V = 8.333 rps / 1V --> 1/8.33 = 0.12 volts / rps
 
 static constexpr double TFX_COMMON_NETRUAL_DEADBAND = 0.05;
 
-static constexpr auto TFX_COMMON_STATOR_CURRENT_LIMIT = 20_A;
-static constexpr auto TFX_COMMON_SUPPLY_CURRENT_LIMIT = 20_A;
+static constexpr auto TFX_COMMON_STATOR_CURRENT_LIMIT = 60_A;
+static constexpr auto TFX_COMMON_SUPPLY_CURRENT_LIMIT = 60_A;
 
 static const TalonFXConfiguration LFET_TRACK_CONFIG =
     TalonFXConfiguration{}
@@ -214,13 +214,13 @@ static const TalonFXConfiguration HOPPER_BELT_CONFIG =
         // ^ hopper belt positive direction should result in dumping
         .WithFeedback(
             FeedbackConfigs{}.WithFeedbackSensorSource(
-                FeedbackSensorSourceValue::RotorSensor));
-        // .WithCurrentLimits(
-        //     CurrentLimitsConfigs{}
-        //         .WithStatorCurrentLimit(TFX_COMMON_STATOR_CURRENT_LIMIT)
-        //         .WithStatorCurrentLimitEnable(false)
-        //         .WithSupplyCurrentLimit(TFX_COMMON_SUPPLY_CURRENT_LIMIT)
-        //         .WithSupplyCurrentLimitEnable(false));
+                FeedbackSensorSourceValue::RotorSensor))
+        .WithCurrentLimits(
+            CurrentLimitsConfigs{}
+                .WithStatorCurrentLimit(TFX_COMMON_STATOR_CURRENT_LIMIT)
+                .WithStatorCurrentLimitEnable(true)
+                .WithSupplyCurrentLimit(TFX_COMMON_SUPPLY_CURRENT_LIMIT)
+                .WithSupplyCurrentLimitEnable(true));
 
 
 // --- Program defaults --------------------------------------------------------
