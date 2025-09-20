@@ -36,6 +36,7 @@ using phx6::configs::Slot0Configs;
 using phx6::configs::MotorOutputConfigs;
 using phx6::configs::FeedbackConfigs;
 using phx6::configs::CurrentLimitsConfigs;
+using phx6::configs::VoltageConfigs;
 using phx6::signals::NeutralModeValue;
 using phx6::signals::InvertedValue;
 using phx6::signals::FeedbackSensorSourceValue;
@@ -127,100 +128,117 @@ static constexpr double TFX_COMMON_NETRUAL_DEADBAND = 0.05;
 
 static constexpr auto TFX_COMMON_STATOR_CURRENT_LIMIT = 60_A;
 static constexpr auto TFX_COMMON_SUPPLY_CURRENT_LIMIT = 60_A;
+static constexpr auto TFX_COMMON_PEAK_VOLTAGE = 16_V;
 
 static const TalonFXConfiguration LFET_TRACK_CONFIG =
-    TalonFXConfiguration{}
-        .WithSlot0(
-            Slot0Configs{}
-                .WithKP(TFX_COMMON_KP)
-                .WithKI(TFX_COMMON_KI)
-                .WithKD(TFX_COMMON_KD)
-                .WithKV(TFX_COMMON_KV))
-        .WithMotorOutput(
-            MotorOutputConfigs{}
-                .WithDutyCycleNeutralDeadband(TFX_COMMON_NETRUAL_DEADBAND)
-                .WithNeutralMode(NeutralModeValue::Coast)
-                .WithInverted(InvertedValue::CounterClockwise_Positive))
-        .WithFeedback(
-            FeedbackConfigs{}.WithFeedbackSensorSource(
-                FeedbackSensorSourceValue::RotorSensor))
-        .WithCurrentLimits(
-            CurrentLimitsConfigs{}
-                .WithStatorCurrentLimit(TFX_COMMON_STATOR_CURRENT_LIMIT)
-                .WithStatorCurrentLimitEnable(true)
-                .WithSupplyCurrentLimit(TFX_COMMON_SUPPLY_CURRENT_LIMIT)
-                .WithSupplyCurrentLimitEnable(true));
+    TalonFXConfiguration{};
+        // .WithSlot0(
+        //     Slot0Configs{}
+        //         .WithKP(TFX_COMMON_KP)
+        //         .WithKI(TFX_COMMON_KI)
+        //         .WithKD(TFX_COMMON_KD)
+        //         .WithKV(TFX_COMMON_KV))
+        // .WithMotorOutput(
+        //     MotorOutputConfigs{}
+        //         .WithDutyCycleNeutralDeadband(TFX_COMMON_NETRUAL_DEADBAND)
+        //         .WithNeutralMode(NeutralModeValue::Coast)
+        //         .WithInverted(InvertedValue::CounterClockwise_Positive))
+        // .WithFeedback(
+        //     FeedbackConfigs{}.WithFeedbackSensorSource(
+        //         FeedbackSensorSourceValue::RotorSensor))
+        // .WithCurrentLimits(
+        //     CurrentLimitsConfigs{}
+        //         .WithStatorCurrentLimit(TFX_COMMON_STATOR_CURRENT_LIMIT)
+        //         .WithStatorCurrentLimitEnable(true)
+        //         .WithSupplyCurrentLimit(TFX_COMMON_SUPPLY_CURRENT_LIMIT)
+        //         .WithSupplyCurrentLimitEnable(true))
+        // .WithVoltage(
+        //     VoltageConfigs{}
+        //         .WithPeakForwardVoltage(TFX_COMMON_PEAK_VOLTAGE)
+        //         .WithPeakReverseVoltage(-TFX_COMMON_PEAK_VOLTAGE));
 
 static const TalonFXConfiguration RIGHT_TRACK_CONFIG =
-    TalonFXConfiguration{}
-        .WithSlot0(
-            Slot0Configs{}
-                .WithKP(TFX_COMMON_KP)
-                .WithKI(TFX_COMMON_KI)
-                .WithKD(TFX_COMMON_KD)
-                .WithKV(TFX_COMMON_KV))
-        .WithMotorOutput(
-            MotorOutputConfigs{}
-                .WithDutyCycleNeutralDeadband(TFX_COMMON_NETRUAL_DEADBAND)
-                .WithNeutralMode(NeutralModeValue::Coast)
-                .WithInverted(InvertedValue::Clockwise_Positive))
-        .WithFeedback(
-            FeedbackConfigs{}.WithFeedbackSensorSource(
-                FeedbackSensorSourceValue::RotorSensor))
-        .WithCurrentLimits(
-            CurrentLimitsConfigs{}
-                .WithStatorCurrentLimit(TFX_COMMON_STATOR_CURRENT_LIMIT)
-                .WithStatorCurrentLimitEnable(true)
-                .WithSupplyCurrentLimit(TFX_COMMON_SUPPLY_CURRENT_LIMIT)
-                .WithSupplyCurrentLimitEnable(true));
+    TalonFXConfiguration{};
+        // .WithSlot0(
+        //     Slot0Configs{}
+        //         .WithKP(TFX_COMMON_KP)
+        //         .WithKI(TFX_COMMON_KI)
+        //         .WithKD(TFX_COMMON_KD)
+        //         .WithKV(TFX_COMMON_KV))
+        // .WithMotorOutput(
+        //     MotorOutputConfigs{}
+        //         .WithDutyCycleNeutralDeadband(TFX_COMMON_NETRUAL_DEADBAND)
+        //         .WithNeutralMode(NeutralModeValue::Coast)
+        //         .WithInverted(InvertedValue::Clockwise_Positive))
+        // .WithFeedback(
+        //     FeedbackConfigs{}.WithFeedbackSensorSource(
+        //         FeedbackSensorSourceValue::RotorSensor))
+        // .WithCurrentLimits(
+        //     CurrentLimitsConfigs{}
+        //         .WithStatorCurrentLimit(TFX_COMMON_STATOR_CURRENT_LIMIT)
+        //         .WithStatorCurrentLimitEnable(true)
+        //         .WithSupplyCurrentLimit(TFX_COMMON_SUPPLY_CURRENT_LIMIT)
+        //         .WithSupplyCurrentLimitEnable(true))
+        // .WithVoltage(
+        //     VoltageConfigs{}
+        //         .WithPeakForwardVoltage(TFX_COMMON_PEAK_VOLTAGE)
+        //         .WithPeakReverseVoltage(-TFX_COMMON_PEAK_VOLTAGE));
 
 static const TalonFXConfiguration TRENCHER_CONFIG =
-    TalonFXConfiguration{}
-        .WithSlot0(
-            Slot0Configs{}
-                .WithKP(TFX_COMMON_KP)
-                .WithKI(TFX_COMMON_KI)
-                .WithKD(TFX_COMMON_KD)
-                .WithKV(TFX_COMMON_KV))
-        .WithMotorOutput(
-            MotorOutputConfigs{}
-                .WithDutyCycleNeutralDeadband(TFX_COMMON_NETRUAL_DEADBAND)
-                .WithNeutralMode(NeutralModeValue::Coast)
-                .WithInverted(InvertedValue::Clockwise_Positive))
-        // ^ trencher positive direction should result in digging
-        .WithFeedback(
-            FeedbackConfigs{}.WithFeedbackSensorSource(
-                FeedbackSensorSourceValue::RotorSensor))
-        .WithCurrentLimits(
-            CurrentLimitsConfigs{}
-                .WithStatorCurrentLimit(TFX_COMMON_STATOR_CURRENT_LIMIT)
-                .WithStatorCurrentLimitEnable(true)
-                .WithSupplyCurrentLimit(TFX_COMMON_SUPPLY_CURRENT_LIMIT)
-                .WithSupplyCurrentLimitEnable(true));
+    TalonFXConfiguration{};
+        // .WithSlot0(
+        //     Slot0Configs{}
+        //         .WithKP(TFX_COMMON_KP)
+        //         .WithKI(TFX_COMMON_KI)
+        //         .WithKD(TFX_COMMON_KD)
+        //         .WithKV(TFX_COMMON_KV))
+        // .WithMotorOutput(
+        //     MotorOutputConfigs{}
+        //         .WithDutyCycleNeutralDeadband(TFX_COMMON_NETRUAL_DEADBAND)
+        //         .WithNeutralMode(NeutralModeValue::Coast)
+        //         .WithInverted(InvertedValue::Clockwise_Positive))
+        // // ^ trencher positive direction should result in digging
+        // .WithFeedback(
+        //     FeedbackConfigs{}.WithFeedbackSensorSource(
+        //         FeedbackSensorSourceValue::RotorSensor))
+        // .WithCurrentLimits(
+        //     CurrentLimitsConfigs{}
+        //         .WithStatorCurrentLimit(TFX_COMMON_STATOR_CURRENT_LIMIT)
+        //         .WithStatorCurrentLimitEnable(true)
+        //         .WithSupplyCurrentLimit(TFX_COMMON_SUPPLY_CURRENT_LIMIT)
+        //         .WithSupplyCurrentLimitEnable(true))
+        // .WithVoltage(
+        //     VoltageConfigs{}
+        //         .WithPeakForwardVoltage(TFX_COMMON_PEAK_VOLTAGE)
+        //         .WithPeakReverseVoltage(-TFX_COMMON_PEAK_VOLTAGE));
 
 static const TalonFXConfiguration HOPPER_BELT_CONFIG =
-    TalonFXConfiguration{}
-        .WithSlot0(
-            Slot0Configs{}
-                .WithKP(TFX_COMMON_KP)
-                .WithKI(TFX_COMMON_KI)
-                .WithKD(TFX_COMMON_KD)
-                .WithKV(TFX_COMMON_KV))
-        .WithMotorOutput(
-            MotorOutputConfigs{}
-                .WithDutyCycleNeutralDeadband(TFX_COMMON_NETRUAL_DEADBAND)
-                .WithNeutralMode(NeutralModeValue::Coast)
-                .WithInverted(InvertedValue::Clockwise_Positive))
-        // ^ hopper belt positive direction should result in dumping
-        .WithFeedback(
-            FeedbackConfigs{}.WithFeedbackSensorSource(
-                FeedbackSensorSourceValue::RotorSensor))
-        .WithCurrentLimits(
-            CurrentLimitsConfigs{}
-                .WithStatorCurrentLimit(TFX_COMMON_STATOR_CURRENT_LIMIT)
-                .WithStatorCurrentLimitEnable(true)
-                .WithSupplyCurrentLimit(TFX_COMMON_SUPPLY_CURRENT_LIMIT)
-                .WithSupplyCurrentLimitEnable(true));
+    TalonFXConfiguration{};
+        // .WithSlot0(
+        //     Slot0Configs{}
+        //         .WithKP(TFX_COMMON_KP)
+        //         .WithKI(TFX_COMMON_KI)
+        //         .WithKD(TFX_COMMON_KD)
+        //         .WithKV(TFX_COMMON_KV))
+        // .WithMotorOutput(
+        //     MotorOutputConfigs{}
+        //         .WithDutyCycleNeutralDeadband(TFX_COMMON_NETRUAL_DEADBAND)
+        //         .WithNeutralMode(NeutralModeValue::Coast)
+        //         .WithInverted(InvertedValue::Clockwise_Positive))
+        // // ^ hopper belt positive direction should result in dumping
+        // .WithFeedback(
+        //     FeedbackConfigs{}.WithFeedbackSensorSource(
+        //         FeedbackSensorSourceValue::RotorSensor))
+        // .WithCurrentLimits(
+        //     CurrentLimitsConfigs{}
+        //         .WithStatorCurrentLimit(TFX_COMMON_STATOR_CURRENT_LIMIT)
+        //         .WithStatorCurrentLimitEnable(true)
+        //         .WithSupplyCurrentLimit(TFX_COMMON_SUPPLY_CURRENT_LIMIT)
+        //         .WithSupplyCurrentLimitEnable(true))
+        // .WithVoltage(
+        //     VoltageConfigs{}
+        //         .WithPeakForwardVoltage(TFX_COMMON_PEAK_VOLTAGE)
+        //         .WithPeakReverseVoltage(-TFX_COMMON_PEAK_VOLTAGE));
 
 
 // --- Program defaults --------------------------------------------------------
