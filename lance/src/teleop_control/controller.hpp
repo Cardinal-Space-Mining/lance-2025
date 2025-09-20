@@ -8,7 +8,7 @@
 
 #include "motor_interface.hpp"
 #include "logitech_map.hpp"
-#include "collection_status.hpp"
+#include "collection_state.hpp"
 
 
 using JoyMsg = sensor_msgs::msg::Joy;

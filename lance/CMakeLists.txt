@@ -35,7 +35,8 @@ rosidl_get_typesupport_target(lance_custom_types
 # --- Executables --------------------------------------------------------------
 add_executable(teleop_control
     src/teleop_control/main.cpp
-    src/teleop_control/controller.cpp)
+    src/teleop_control/controller.cpp
+    src/teleop_control/collection_state.cpp)
 ament_target_dependencies(teleop_control
     rclcpp
     sensor_msgs

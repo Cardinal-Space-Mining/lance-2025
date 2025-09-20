@@ -747,6 +747,8 @@
                 "/lance/hopper_act/faults",
                 "/lance/hopper_act/info",
 
+                "/collection_status/**",
+
                 "/rosout"
             ]
         }
