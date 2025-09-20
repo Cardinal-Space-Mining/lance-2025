@@ -114,7 +114,7 @@ TalonFaults& operator<<(TalonFaults& faults, TalonFX& m)
 
 // --- Motor configs -----------------------------------------------------------
 
-static constexpr double TFX_COMMON_KP = 0.5;
+static constexpr double TFX_COMMON_KP = 1.0;
 // ^ 0.5 volts added for every turn per second error
 static constexpr double TFX_COMMON_KI = 0.;
 // ^ 0.2 volts added for every rotation integrated error
@@ -126,7 +126,7 @@ static constexpr double TFX_COMMON_KV = 0.12;
 static constexpr double TFX_COMMON_NETRUAL_DEADBAND = 0.05;
 
 static constexpr auto TFX_COMMON_STATOR_CURRENT_LIMIT = 20_A;
-static constexpr auto TFX_COMMON_SUPPLY_CURRENT_LIMIT = 15_A;
+static constexpr auto TFX_COMMON_SUPPLY_CURRENT_LIMIT = 20_A;
 
 static const TalonFXConfiguration LFET_TRACK_CONFIG =
     TalonFXConfiguration{}
@@ -218,9 +218,9 @@ static const TalonFXConfiguration HOPPER_BELT_CONFIG =
         .WithCurrentLimits(
             CurrentLimitsConfigs{}
                 .WithStatorCurrentLimit(TFX_COMMON_STATOR_CURRENT_LIMIT)
-                .WithStatorCurrentLimitEnable(true)
+                .WithStatorCurrentLimitEnable(false)
                 .WithSupplyCurrentLimit(TFX_COMMON_SUPPLY_CURRENT_LIMIT)
-                .WithSupplyCurrentLimitEnable(true));
+                .WithSupplyCurrentLimitEnable(false));
 
 
 // --- Program defaults --------------------------------------------------------
