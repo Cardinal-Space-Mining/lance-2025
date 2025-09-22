@@ -76,8 +76,8 @@ public:
                     this->watchdog_status,
                     this->joystick_values,
                     this->robot_motor_status);
-                this->collection_state.update(this->robot_motor_status);
-                this->collection_state_pub.publish(this->collection_state);
+                this->robot_controller.publishCollectionState(
+                    this->collection_state_pub);
 
                 this->track_right_pub_sub.ctrl_pub->publish(mc.track_right);
                 this->track_left_pub_sub.ctrl_pub->publish(mc.track_left);
@@ -98,9 +98,8 @@ public:
                 this->mining_status_pub->publish(mining_status_msg);
                 this->offload_status_pub->publish(offload_status_msg);
             })},
-        collection_state_pub{ *this }
+        collection_state_pub{*this}
     {
-        this->collection_state.setParams(5., 25., 0.2, 0.6, 0.7);
     }
 
 private:
@@ -115,7 +114,6 @@ private:
 
     RobotControl robot_controller;
 
-    CollectionState collection_state;
     CollectionStatePublisher collection_state_pub;
 
     RobotMotorStatus robot_motor_status;

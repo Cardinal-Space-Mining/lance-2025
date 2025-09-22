@@ -55,6 +55,13 @@ std::array<double, 2>
 
 
 
+RobotControl::RobotControl()
+{
+    this->stop_all();
+    this->collection_state.setParams(5., 25., 0.2, 0.6, 0.7);
+}
+
+
 RobotMotorCommands& RobotControl::update(
     int32_t robot_status,
     const JoyMsg& joystick_values,
@@ -68,6 +75,8 @@ RobotMotorCommands& RobotControl::update(
 
     this->curr_motor_states = motor_status;
     this->disable_motors();  // This resets all the command states to be disabled! (gets overwritten by any other actions!)
+
+    this->collection_state.update(motor_status);
 
     // handle robot mode transitions
     {
@@ -190,6 +199,11 @@ void RobotControl::getStatusStrings(
         : this->state.offload.enabled ? OFFLOAD_STAGE_NAMES[static_cast<size_t>(
                                             this->state.offload.stage)]
                                       : "Disabled");
+}
+
+void RobotControl::publishCollectionState(CollectionStatePublisher& pub) const
+{
+    pub.publish(this->collection_state);
 }
 
 
@@ -474,7 +488,8 @@ void RobotControl::periodic_handle_mining()
                             }
 
                             // servo based on target
-                            const double pot_val = this->get_hopper_normalized();
+                            const double pot_val =
+                                this->get_hopper_normalized();
                             if (std::abs(target_depth - pot_val) <
                                 RobotControl::
                                     HOPPER_POT_TARGETING_EPSILON)  // in range
@@ -661,8 +676,8 @@ void RobotControl::periodic_handle_offload()
             }
             case RobotControl::State::OffloadingStage::RAISING_HOPPER:
             {
-                if (!cancelled &&
-                    this->get_hopper_normalized() < RobotControl::OFFLOAD_POT_VALUE)
+                if (!cancelled && this->get_hopper_normalized() <
+                                      RobotControl::OFFLOAD_POT_VALUE)
                 {
                     // dump
                     this->set_hopper_act_percent(
@@ -699,7 +714,8 @@ void RobotControl::periodic_handle_offload()
             }
             case RobotControl::State::OffloadingStage::LOWERING_HOPPER:
             {
-                if (this->get_hopper_normalized() > RobotControl::TRAVERSAL_POT_VALUE)
+                if (this->get_hopper_normalized() >
+                    RobotControl::TRAVERSAL_POT_VALUE)
                 {
                     this->set_hopper_act_percent(
                         -RobotControl::HOPPER_ACUTATOR_MOVE_SPEED);

@@ -16,7 +16,7 @@ using JoyMsg = sensor_msgs::msg::Joy;
 class RobotControl
 {
 public:
-    inline RobotControl() { this->stop_all(); }
+    RobotControl();
     ~RobotControl() = default;
 
 public:
@@ -30,6 +30,8 @@ public:
         std::string& control_level,
         std::string& mining_status,
         std::string& offload_status);
+
+    void publishCollectionState(CollectionStatePublisher& pub) const;
 
 protected:
     using system_time = std::chrono::system_clock;
@@ -213,6 +215,7 @@ private:
     RobotMotorStatus curr_motor_states;
     RobotMotorCommands motor_commands;
     State state;
+    CollectionState collection_state;
 
 public:
     // clang-format off
