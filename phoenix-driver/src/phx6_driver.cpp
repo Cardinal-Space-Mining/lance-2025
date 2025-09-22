@@ -126,8 +126,8 @@ static constexpr double TFX_COMMON_KV = 0.12;
 
 static constexpr double TFX_COMMON_NEUTRAL_DEADBAND = 0.05;
 
-static constexpr auto TFX_COMMON_STATOR_CURRENT_LIMIT = 10_A;
-static constexpr auto TFX_COMMON_SUPPLY_CURRENT_LIMIT = 10_A;
+static constexpr auto TFX_COMMON_STATOR_CURRENT_LIMIT = 30_A;
+static constexpr auto TFX_COMMON_SUPPLY_CURRENT_LIMIT = 20_A;
 static constexpr auto TFX_COMMON_PEAK_VOLTAGE = 12_V;
 
 static const TalonFXConfiguration LFET_TRACK_CONFIG =
@@ -522,6 +522,8 @@ void Phoenix6Driver::feed_watchdog_status(int32_t status)
         if (this->is_disabled)
         {
             this->last_enable_beg_time = std::chrono::system_clock::now();
+            std::cout << "Applied new last enabled state change time "
+                      << this->last_enable_beg_time.time_since_epoch().count();
         }
         ctre::phoenix::unmanaged::FeedEnable(std::abs(status));
         this->is_disabled = false;
@@ -567,10 +569,14 @@ void Phoenix6Driver::pub_motor_info_cb()
         (std::chrono::system_clock::now() - this->last_enable_beg_time) >
             MOTOR_RESTART_DT_THRESH)
     {
-        this->is_disabled = true;
+        std::cout << "Restarting motors... (now: "
+            << std::chrono::system_clock::now().time_since_epoch().count() << ", last: "
+            << this->last_enable_beg_time.time_since_epoch().count() << ")" << std::endl;
+
         this->sendSerialPowerDown();
         std::this_thread::sleep_for(TALONFX_POWER_CYCLE_DELAY);
         this->sendSerialPowerUp();
+        this->is_disabled = true;
     }
 }
 
