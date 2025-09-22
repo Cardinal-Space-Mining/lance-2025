@@ -1,14 +1,4 @@
 1. export control params to launch system
-2. improve assisted mining (upgrade to use belt position feedback):
-    a. determine # motor rotations <--> hopper full
-    b. improve f(track speed, trencher depth, trencher speed) -> belt duty cycle
-    c. position-based belt duty cycle
-    d. hopper full notification based on belt position
-3. use # belt rotations for assisted offload
+2. use material collection model for automatic belt incrementation
 3. separate robot control public interface from internal state interface (wrapper + impl)
-
-notes ---
-* approx hopper length is 0.6m
-* approx squirrel cage radius is 0.05m
-* belt motor is geared 30:1 according to 2024 PDR
-* current code commands 45 tps max, 10 tps assisted duty cycle motor speed
+4. export phx6 motor configs to ros params

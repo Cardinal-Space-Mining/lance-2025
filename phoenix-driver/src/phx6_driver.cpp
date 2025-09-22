@@ -124,7 +124,7 @@ static constexpr double TFX_COMMON_KD = 0.0001;
 static constexpr double TFX_COMMON_KV = 0.12;
 // ^ Falcon 500 is a 500kV motor, 500rpm / 1V = 8.333 rps / 1V --> 1/8.33 = 0.12 volts / rps
 
-static constexpr double TFX_COMMON_NETRUAL_DEADBAND = 0.05;
+static constexpr double TFX_COMMON_NEUTRAL_DEADBAND = 0.05;
 
 static constexpr auto TFX_COMMON_STATOR_CURRENT_LIMIT = 10_A;
 static constexpr auto TFX_COMMON_SUPPLY_CURRENT_LIMIT = 10_A;
@@ -140,7 +140,7 @@ static const TalonFXConfiguration LFET_TRACK_CONFIG =
                 .WithKV(TFX_COMMON_KV))
         .WithMotorOutput(
             MotorOutputConfigs{}
-                .WithDutyCycleNeutralDeadband(TFX_COMMON_NETRUAL_DEADBAND)
+                .WithDutyCycleNeutralDeadband(TFX_COMMON_NEUTRAL_DEADBAND)
                 .WithNeutralMode(NeutralModeValue::Coast)
                 .WithInverted(InvertedValue::CounterClockwise_Positive))
         .WithFeedback(
@@ -167,7 +167,7 @@ static const TalonFXConfiguration RIGHT_TRACK_CONFIG =
                 .WithKV(TFX_COMMON_KV))
         .WithMotorOutput(
             MotorOutputConfigs{}
-                .WithDutyCycleNeutralDeadband(TFX_COMMON_NETRUAL_DEADBAND)
+                .WithDutyCycleNeutralDeadband(TFX_COMMON_NEUTRAL_DEADBAND)
                 .WithNeutralMode(NeutralModeValue::Coast)
                 .WithInverted(InvertedValue::Clockwise_Positive))
         .WithFeedback(
@@ -194,7 +194,7 @@ static const TalonFXConfiguration TRENCHER_CONFIG =
                 .WithKV(TFX_COMMON_KV))
         .WithMotorOutput(
             MotorOutputConfigs{}
-                .WithDutyCycleNeutralDeadband(TFX_COMMON_NETRUAL_DEADBAND)
+                .WithDutyCycleNeutralDeadband(TFX_COMMON_NEUTRAL_DEADBAND)
                 .WithNeutralMode(NeutralModeValue::Coast)
                 .WithInverted(InvertedValue::Clockwise_Positive))
         // ^ trencher positive direction should result in digging
@@ -222,7 +222,7 @@ static const TalonFXConfiguration HOPPER_BELT_CONFIG =
                 .WithKV(TFX_COMMON_KV))
         .WithMotorOutput(
             MotorOutputConfigs{}
-                .WithDutyCycleNeutralDeadband(TFX_COMMON_NETRUAL_DEADBAND)
+                .WithDutyCycleNeutralDeadband(TFX_COMMON_NEUTRAL_DEADBAND)
                 .WithNeutralMode(NeutralModeValue::Coast)
                 .WithInverted(InvertedValue::Clockwise_Positive))
         // ^ hopper belt positive direction should result in dumping
@@ -256,10 +256,20 @@ static const TalonFXConfiguration HOPPER_BELT_CONFIG =
 #define ROBOT_CTRL_SUB_QOS    10
 
 #define MOTOR_STATUS_PUB_DT       50ms
-#define TALONFX_BOOTUP_DELAY      3s
-#define TALONFX_POWER_CYCLE_DELAY 1s
+#define TALONFX_MAX_BOOTUP_DELAY  3s
+#define TALONFX_POWER_CYCLE_DELAY 0.5s
+#define MOTOR_RESTART_DT_THRESH   1s
 
 #define DISABLE_WATCHDOG 0
+
+#define SUPPLY_CURRENT_FAULT_MASK  0x100
+#define STATOR_CURRENT_FAULT_MASK  0x200
+#define OVERVOLTAGE_FAULT_MASK     0x40000
+#define BRIDGE_BROWNOUT_FAULT_MASK 0x800000
+
+#define FAULTS_IGNORE_MASK                                   \
+    (SUPPLY_CURRENT_FAULT_MASK | STATOR_CURRENT_FAULT_MASK | \
+     OVERVOLTAGE_FAULT_MASK | BRIDGE_BROWNOUT_FAULT_MASK)
 
 
 // --- Driver node -------------------------------------------------------------
@@ -286,7 +296,7 @@ private:
 
     void feed_watchdog_status(int32_t status);
     // Function to setup motors for the robot
-    void configure_motors_cb();
+    void configure_motors_cb(units::time::second_t timeout = 0.1_s);
     // Periodic function for motor information updates
     void pub_motor_info_cb();
     void pub_motor_fault_cb();
@@ -313,6 +323,7 @@ private:
     TalonFXPubSub trencher_pub_sub;
     TalonFXPubSub hopper_belt_pub_sub;
 
+    rclcpp::Publisher<std_msgs::msg::Int8>::SharedPtr relay_state_pub;
     rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr watchdog_status_sub;
 
     rclcpp::TimerBase::SharedPtr info_pub_timer;
@@ -321,10 +332,11 @@ private:
     std::array<std::reference_wrapper<TalonFX>, NUM_MOTORS> motors{
         {track_right, track_left, trencher, hopper_belt}
     };
-    std::array<std::reference_wrapper<TalonFXPubSub>, NUM_MOTORS> motor_pub_subs{
-        {track_right_pub_sub,
-         track_left_pub_sub, trencher_pub_sub,
-         hopper_belt_pub_sub}
+    std::array<std::reference_wrapper<TalonFXPubSub>, NUM_MOTORS>
+        motor_pub_subs{
+            {track_right_pub_sub,
+             track_left_pub_sub, trencher_pub_sub,
+             hopper_belt_pub_sub}
     };
 
     std::array<units::angle::turn_t, NUM_MOTORS> cached_motor_positions{
@@ -333,6 +345,7 @@ private:
 
     int serial_port;
     bool is_disabled = true;
+    std::chrono::system_clock::time_point last_enable_beg_time;
 };
 
 
@@ -368,6 +381,9 @@ Phoenix6Driver::Phoenix6Driver() :
     INIT_TALON_PUB_SUB(trencher),
     INIT_TALON_PUB_SUB(hopper_belt),
 
+    relay_state_pub{this->create_publisher<std_msgs::msg::Int8>(
+        ROBOT_TOPIC("relay_status"),
+        rclcpp::SensorDataQoS{})},
 #if !DISABLE_WATCHDOG
     watchdog_status_sub{this->create_subscription<std_msgs::msg::Int32>(
         ROBOT_TOPIC("watchdog_status"),
@@ -470,22 +486,23 @@ void Phoenix6Driver::sendSerialPowerDown()
 {
     for (size_t i = 0; i < NUM_MOTORS; i++)
     {
-        this->cached_motor_positions[i] =
-            this->motors[i].get().GetPosition().GetValue();
+        TalonFX& m = this->motors[i].get();
+        m.SetControl(phx6::controls::NeutralOut());
+        this->cached_motor_positions[i] = m.GetPosition().GetValue();
     }
 
     RCLCPP_INFO(this->get_logger(), "Sending serial power down command...");
     (void)write(this->serial_port, "0", 1);
+    this->relay_state_pub->publish(std_msgs::msg::Int8{}.set__data(0));
 }
 
 void Phoenix6Driver::sendSerialPowerUp()
 {
     RCLCPP_INFO(this->get_logger(), "Sending serial power up command...");
     (void)write(this->serial_port, "1", 1);
+    this->relay_state_pub->publish(std_msgs::msg::Int8{}.set__data(1));
 
-    std::this_thread::sleep_for(TALONFX_BOOTUP_DELAY);
-
-    this->configure_motors_cb();
+    this->configure_motors_cb(TALONFX_MAX_BOOTUP_DELAY);
     this->neutralAll();
 }
 
@@ -502,26 +519,30 @@ void Phoenix6Driver::feed_watchdog_status(int32_t status)
     }
     else
     {
+        if (this->is_disabled)
+        {
+            this->last_enable_beg_time = std::chrono::system_clock::now();
+        }
         ctre::phoenix::unmanaged::FeedEnable(std::abs(status));
         this->is_disabled = false;
     }
 }
 
-void Phoenix6Driver::configure_motors_cb()
+void Phoenix6Driver::configure_motors_cb(units::time::second_t timeout)
 {
-    trencher.GetConfigurator().Apply(TRENCHER_CONFIG);
+    trencher.GetConfigurator().Apply(TRENCHER_CONFIG, timeout);
     trencher.ClearStickyFaults();
 
-    hopper_belt.GetConfigurator().Apply(HOPPER_BELT_CONFIG);
+    hopper_belt.GetConfigurator().Apply(HOPPER_BELT_CONFIG, timeout);
     hopper_belt.ClearStickyFaults();
 
-    track_right.GetConfigurator().Apply(RIGHT_TRACK_CONFIG);
+    track_right.GetConfigurator().Apply(RIGHT_TRACK_CONFIG, timeout);
     track_right.ClearStickyFaults();
 
-    track_left.GetConfigurator().Apply(LFET_TRACK_CONFIG);
+    track_left.GetConfigurator().Apply(LFET_TRACK_CONFIG, timeout);
     track_left.ClearStickyFaults();
 
-    for(size_t i = 0; i < NUM_MOTORS; i++)
+    for (size_t i = 0; i < NUM_MOTORS; i++)
     {
         this->motors[i].get().SetPosition(this->cached_motor_positions[i]);
     }
@@ -534,10 +555,22 @@ void Phoenix6Driver::pub_motor_info_cb()
     TalonInfo talon_info_msg{};
     talon_info_msg.header.stamp = this->get_clock()->now();
 
+    bool any_disabled = false;
     for (size_t i = 0; i < NUM_MOTORS; i++)
     {
         this->motor_pub_subs[i].get().info_pub->publish(
             (talon_info_msg << this->motors[i]));
+        any_disabled |= !talon_info_msg.enabled;
+    }
+
+    if (any_disabled && !this->is_disabled &&
+        (std::chrono::system_clock::now() - this->last_enable_beg_time) >
+            MOTOR_RESTART_DT_THRESH)
+    {
+        this->is_disabled = true;
+        this->sendSerialPowerDown();
+        std::this_thread::sleep_for(TALONFX_POWER_CYCLE_DELAY);
+        this->sendSerialPowerUp();
     }
 }
 
@@ -546,28 +579,10 @@ void Phoenix6Driver::pub_motor_fault_cb()
     TalonFaults talon_faults_msg{};
     talon_faults_msg.header.stamp = this->get_clock()->now();
 
-    constexpr uint32_t SUPPLY_CURRENT_FAULT_MASK = 0x100;
-    constexpr uint32_t STATOR_CURRENT_FAULT_MASK = 0x200;
-    constexpr uint32_t OVERVOLTAGE_FAULT_MASK = 0x40000;
-    constexpr uint32_t BRIDGE_BROWNOUT_FAULT_MASK = 0x800000;
-
-    constexpr uint32_t FAULTS_IGNORE_MASK =
-        (SUPPLY_CURRENT_FAULT_MASK | STATOR_CURRENT_FAULT_MASK |
-         OVERVOLTAGE_FAULT_MASK | BRIDGE_BROWNOUT_FAULT_MASK);
-
-    bool any_faults = false;
     for (size_t i = 0; i < NUM_MOTORS; i++)
     {
         this->motor_pub_subs[i].get().faults_pub->publish(
             (talon_faults_msg << this->motors[i]));
-        any_faults |= (talon_faults_msg.faults & (~FAULTS_IGNORE_MASK));
-    }
-
-    if (any_faults)
-    {
-        this->sendSerialPowerDown();
-        std::this_thread::sleep_for(TALONFX_POWER_CYCLE_DELAY);
-        this->sendSerialPowerUp();
     }
 }
 
@@ -603,7 +618,7 @@ void Phoenix6Driver::execute_ctrl_cb(TalonFX& motor, const TalonCtrl& msg)
             }
             case TalonCtrl::CURRENT:
             {
-                // torque/current control required phoenix pro
+                // torque/current control requires phoenix pro
                 break;
             }
             case TalonCtrl::VOLTAGE:

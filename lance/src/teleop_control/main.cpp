@@ -100,7 +100,7 @@ public:
             })},
         collection_state_pub{ *this }
     {
-        this->collection_state.setParams(12., 30., 0.2, 0.6, 0.7);
+        this->collection_state.setParams(5., 25., 0.2, 0.6, 0.7);
     }
 
 private:
