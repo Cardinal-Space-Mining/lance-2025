@@ -258,7 +258,7 @@ static const TalonFXConfiguration HOPPER_BELT_CONFIG =
 #define MOTOR_STATUS_PUB_DT       50ms
 #define TALONFX_MAX_BOOTUP_DELAY  3s
 #define TALONFX_POWER_CYCLE_DELAY 0.5s
-#define MOTOR_RESTART_DT_THRESH   1s
+#define MOTOR_RESTART_DT_THRESH   1.5s
 
 #define DISABLE_WATCHDOG 0
 
@@ -522,12 +522,13 @@ void Phoenix6Driver::feed_watchdog_status(int32_t status)
         if (this->is_disabled)
         {
             this->last_enable_beg_time = std::chrono::system_clock::now();
-            std::cout << "Applied new last enabled state change time "
-                      << this->last_enable_beg_time.time_since_epoch().count()
-                      << std::endl;
+            // std::cout << "Applied new last enabled state change time "
+            //           << this->last_enable_beg_time.time_since_epoch().count()
+            //           << std::endl;
         }
         ctre::phoenix::unmanaged::FeedEnable(std::abs(status));
         this->is_disabled = false;
+        // std::cout << "watchdog set disabled to false" << std::endl;
     }
 }
 
@@ -570,11 +571,12 @@ void Phoenix6Driver::pub_motor_info_cb()
         (std::chrono::system_clock::now() - this->last_enable_beg_time) >
             MOTOR_RESTART_DT_THRESH)
     {
-        std::cout << "Restarting motors... (now: "
-                  << std::chrono::system_clock::now().time_since_epoch().count()
-                  << ", last: "
-                  << this->last_enable_beg_time.time_since_epoch().count()
-                  << ")" << std::endl;
+        // std::cout << "Restarting motors... (dt: "
+        //           << std::chrono::duration<double>(
+        //                  std::chrono::system_clock::now() -
+        //                  this->last_enable_beg_time)
+        //                  .count()
+        //           << ")" << std::endl;
 
         this->sendSerialPowerDown();
         std::this_thread::sleep_for(TALONFX_POWER_CYCLE_DELAY);
