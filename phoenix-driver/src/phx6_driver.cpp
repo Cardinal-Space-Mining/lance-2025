@@ -244,7 +244,7 @@ static const TalonFXConfiguration HOPPER_BELT_CONFIG =
 // --- Program defaults --------------------------------------------------------
 
 #define DEFAULT_ARDUINO_DEVICE "/dev/ttyACM0"
-#define CAN_INTERFACE          "can0"
+#define CAN_INTERFACE          "can_phx6"
 #define RIGHT_TRACK_CANID      0
 #define LEFT_TRACK_CANID       1
 #define TRENCHER_CANID         2

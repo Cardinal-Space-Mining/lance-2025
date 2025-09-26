@@ -77,7 +77,7 @@ TalonFaults& operator<<(TalonFaults& faults, TalonSRX& m)
 #define TALON_CTRL_SUB_QOS    10
 #define ROBOT_CTRL_SUB_QOS    10
 
-#define CAN_INTERFACE "can0"
+#define CAN_INTERFACE "can_phx5"
 #define MOTOR_CAN_ID  4
 
 
@@ -281,6 +281,7 @@ void Phoenix5Driver::execute_ctrl(TalonSRX& motor, const TalonCtrl& msg)
 
 int main(int argc, char** argv)
 {
+    c_SetPhoenixDiagnosticsStartTime(-1);
     ctre::phoenix::unmanaged::Unmanaged::LoadPhoenix();
     std::cout << "Loaded Phoenix 5 Unmanaged" << std::endl;
 
@@ -290,7 +291,7 @@ int main(int argc, char** argv)
 
     rclcpp::spin(node);
 
-    RCLCPP_INFO(node->get_logger(), "Driver node (Phoenix6) shutting down...");
+    RCLCPP_INFO(node->get_logger(), "Driver node (Phoenix5) shutting down...");
     rclcpp::shutdown();
 
     return EXIT_SUCCESS;

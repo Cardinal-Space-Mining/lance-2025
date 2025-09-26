@@ -1,6 +1,19 @@
 #!/bin/bash
-echo "Shutting down the can device."
+set -euo pipefail
 
-sudo ip link set can0 down
-sudo pkill slcand
-sudo ip link delete can0
+echo "[INFO] Shutting down all slcand-managed CAN interfaces..."
+
+# Bring down all canX interfaces
+for IFACE in $(ip -o link show | awk -F': ' '{print $2}' | grep '^can'); do
+    echo " - Bringing down $IFACE"
+    sudo ip link set "$IFACE" down || true
+    sudo ip link delete "$IFACE" 2>/dev/null || true
+done
+
+# Kill any slcand processes
+if pgrep slcand > /dev/null; then
+    echo " - Killing slcand processes"
+    sudo pkill slcand
+fi
+
+echo "[OK] All CAN interfaces shut down."

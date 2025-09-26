@@ -1,52 +1,70 @@
 #!/bin/bash
+set -euo pipefail
 
-echo "Detecting CANable USB device..."
+echo "[INFO] Starting CANable bringup..."
 
 # Known CANable vendor:product ID
-CANABLE_ID="16d0:117e"
+CANABLE_VID="16d0"
+CANABLE_PID="117e"
 
-# Search all ttyACM devices for the correct ID
+# Each record: "serial:interface:bitrate"
+CAN_DEVICES=(
+    # TODO: replace or identify robot phx5 canable uid
+    "206531765230:can_phx5:1000000"     # testing only - this is actually the phx6 canable on the robot
+    "207B338D3630:can_phx6:1000000"
+)
+
+FOUND=0
+
 for DEV in /dev/ttyACM*; do
-    if [ ! -e "$DEV" ]; then
+    [ -e "$DEV" ] || continue
+
+    # Get USB device info
+    USB_PATH=$(udevadm info -q path -n "$DEV")
+    USB_INFO=$(udevadm info -q all -p "$USB_PATH")
+
+    VID=$(echo "$USB_INFO" | grep ID_VENDOR_ID | cut -d'=' -f2)
+    PID=$(echo "$USB_INFO" | grep ID_MODEL_ID | cut -d'=' -f2)
+    SERIAL=$(echo "$USB_INFO" | grep ID_SERIAL_SHORT= | cut -d'=' -f2)
+
+    # Skip non-CANable devices
+    if [[ "$VID" != "$CANABLE_VID" || "$PID" != "$CANABLE_PID" ]]; then
+        echo "[INFO] Skipping $DEV: not a known CANable device ($VID:$PID)"
         continue
     fi
 
-    # Extract the USB ID for the device
-    USB_PATH=$(udevadm info -q path -n "$DEV")
-    USB_ID=$(udevadm info -q all -p "$USB_PATH" | grep "ID_VENDOR_ID\|ID_MODEL_ID")
+    FOUND_DEVICE=false
+    for REC in "${CAN_DEVICES[@]}"; do
+        IFS=":" read -r REC_SERIAL IFACE BITRATE <<< "$REC"
+        if [[ "$SERIAL" == "$REC_SERIAL" ]]; then
+            FOUND_DEVICE=true
+            echo "[INFO] Found $DEV (serial $SERIAL) → $IFACE @ ${BITRATE}bps"
 
-    VID=$(echo "$USB_ID" | grep ID_VENDOR_ID | cut -d'=' -f2)
-    PID=$(echo "$USB_ID" | grep ID_MODEL_ID | cut -d'=' -f2)
+            # Clean up old interface
+            sudo pkill -f "slcand.*$IFACE" || true
+            sudo ip link delete "$IFACE" 2>/dev/null || true
 
-    DEVICE_ID="$VID:$PID"
+            # Start slcand
+            sudo slcand -o -c -s8 "$DEV" "$IFACE"
+            sleep 0.5
 
-    if [ "$DEVICE_ID" == "$CANABLE_ID" ]; then
-        DEVICE="$DEV"
-        break
+            # Set CAN bitrate and bring up interface
+            sudo ip link set "$IFACE" type can bitrate "$BITRATE"
+            sudo ip link set "$IFACE" up
+            sudo ip link set "$IFACE" txqueuelen 1000
+
+            echo "[OK] $IFACE is up and running."
+            FOUND=$((FOUND+1))
+            break
+        fi
+    done
+
+    if [ "$FOUND_DEVICE" = false ]; then
+        echo "[INFO] Found CANable $DEV with serial $SERIAL, no mapping configured."
     fi
 done
 
-if [ -z "$DEVICE" ]; then
-    echo "ERROR: No CANable device found. Please check the connection."
+if [ "$FOUND" -eq 0 ]; then
+    echo "[ERROR] No configured CANable devices found."
     exit 1
 fi
-
-echo "Found CANable device: $DEVICE"
-echo "Bringing up can0..."
-
-# Start slcand and bring up can0
-sudo slcand -o -c -s0 "$DEVICE" can0
-if [ $? -ne 0 ]; then
-    echo "ERROR: Failed to start slcand on $DEVICE"
-    echo "Shutting down the can device."
-
-    sudo ip link set can0 down
-    sudo pkill slcand
-    sudo ip link delete can0
-    exit 1
-fi
-sudo ip link set can0 type can bitrate 1000000
-sudo ip link set can0 up
-sudo ip link set can0 txqueuelen 1000
-
-echo "can0 is up and running."
