@@ -545,11 +545,15 @@
                 "/cardinal_perception/filtered_scan",
                 "/cardinal_perception/traversability_points",
                 "/cardinal_perception/trav_interp_points",
+
                 "/joy",
+
                 "/lance/watchdog_status",
                 "/lance/control_level",
                 "/lance/mining_status",
                 "/lance/offload_status",
+                "/lance/relay_status",
+
                 "/lance/track_left/ctrl",
                 "/lance/track_left/faults",
                 "/lance/track_left/info",
@@ -564,7 +568,17 @@
                 "/lance/hopper_belt/info",
                 "/lance/hopper_act/ctrl",
                 "/lance/hopper_act/faults",
-                "/lance/hopper_act/info"
+                "/lance/hopper_act/info",
+
+                "/collection_state/is_full_volume",
+                "/collection_state/is_full_occ",
+                "/collection_state/volume",
+                "/collection_state/mining_target",
+                "/collection_state/offload_target",
+                "/collection_state/belt_pos_m",
+                "/collection_state/high_pos_m",
+                "/collection_state/low_pos_m",
+                "/collection_state/belt_usage_m"
             ],
             "send_buffer_limit": 10000000,
             "capabilities": [
@@ -740,6 +754,7 @@
                 "/lance/control_level",
                 "/lance/mining_status",
                 "/lance/offload_status",
+                "/lance/relay_status",
 
                 "/lance/track_left/ctrl",
                 "/lance/track_left/faults",
