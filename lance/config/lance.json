@@ -42,6 +42,19 @@
                 "phoenix5_driver": "enabled",
                 "bag_record": "telemetry"
             }
+        },
+
+        "motor-dev":
+        {
+            "pragma:action_overrides":
+            {
+                "joy_node": "xbox",
+                "robot_status": "enabled",
+                "teleop_control": "enabled",
+                "phoenix_motor_sim": "enabled",
+                "robot_tf": "lance",
+                "foxglove_bridge": "test"
+            }
         }
     },
 
@@ -456,6 +469,25 @@
     "phoenix6_driver":
     {
         "pragma:default": null,
+        "enabled":
+        {
+            "common":
+            {
+                "kP": 0.2,
+                "kI": 0.05,
+                "kD": 0.0001,
+                "kV": 0.12,
+                "neutral_deadband": 0.05,
+                "neutral_brake": false,
+                "stator_current_limit": 30.0,
+                "supply_current_limit": 20.0,
+                "voltage_limit": 12.0
+            }
+        }
+    },
+    "phoenix_motor_sim":
+    {
+        "pragma:default": null,
         "enabled": {}
     },
     "robot_status":
@@ -728,6 +760,16 @@
                 "/lance/hopper_act/ctrl",
                 "/lance/hopper_act/faults",
                 "/lance/hopper_act/info",
+
+                "/collection_state/is_full_volume",
+                "/collection_state/is_full_occ",
+                "/collection_state/volume",
+                "/collection_state/mining_target",
+                "/collection_state/offload_target",
+                "/collection_state/belt_pos_m",
+                "/collection_state/high_pos_m",
+                "/collection_state/low_pos_m",
+                "/collection_state/belt_usage_m",
 
                 "/rosout"
             ]

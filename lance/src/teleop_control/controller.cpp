@@ -33,6 +33,7 @@ inline void disableMotor(TalonCtrl& info)
     info.set__value(0.);
 }
 
+// output order is left, right
 std::array<double, 2>
     computeWheelScalars(double x, double y, double mag_deadzone)
 {
@@ -45,15 +46,25 @@ std::array<double, 2>
         return {0.0, 0.0};
     }
 
+    // this is the same as cos("raw theta" - pi/4) like from the original code
     return {
-        magnitude * std::sin(augmented_angle),
-        magnitude *
-            std::cos(
-                augmented_angle)  // this is the same as cos("raw theta" - pi/4) like from the original code
-    };
+        magnitude * std::cos(augmented_angle),
+        magnitude * std::sin(augmented_angle)};
 }
 }  // namespace util
 
+
+
+RobotControl::RobotControl()
+{
+    this->stop_all();
+    this->collection_state.setParams(
+        COLLECTION_MODEL_INITIAL_VOLUME_L,
+        COLLECTION_MODEL_VOLUME_CAPACITY_L,
+        COLLECTION_MODEL_INITIAL_BELT_FOOTPRINT_M,
+        COLLECTION_MODEL_BELT_CAPACITY_M,
+        COLLECTION_MODEL_BELT_OFFLOAD_LEN_M);
+}
 
 
 RobotMotorCommands& RobotControl::update(
@@ -69,6 +80,8 @@ RobotMotorCommands& RobotControl::update(
 
     this->curr_motor_states = motor_status;
     this->disable_motors();  // This resets all the command states to be disabled! (gets overwritten by any other actions!)
+
+    this->collection_state.update(motor_status);
 
     // handle robot mode transitions
     {
@@ -191,6 +204,11 @@ void RobotControl::getStatusStrings(
         : this->state.offload.enabled ? OFFLOAD_STAGE_NAMES[static_cast<size_t>(
                                             this->state.offload.stage)]
                                       : "Disabled");
+}
+
+const HopperState& RobotControl::getHopperState() const
+{
+    return this->collection_state.getHopperState();
 }
 
 
@@ -384,36 +402,30 @@ void RobotControl::periodic_handle_mining()
             }
             case RobotControl::State::MiningStage::LOWERING_HOPPER:
             {
-                const double pot_val = this->get_hopper_pot();
+                const double hopper_height = this->get_hopper_normalized();
                 if (!cancelled &&
-                    pot_val > RobotControl::MINING_DEPTH_NOMINAL_POT_VALUE)
+                    hopper_height > RobotControl::HOPPER_HEIGHT_MINING)
                 {
                     // set trencher
-                    this->motor_commands.trencher.set__mode(TalonCtrl::VELOCITY)
-                        .set__value(RobotControl::TRENCHER_NOMINAL_MINING_VELO);
+                    this->set_trencher_velocity(
+                        RobotControl::TRENCHER_NOMINAL_MINING_VEL);
 
                     // set actuator
-                    if (pot_val > RobotControl::TRAVERSAL_POT_VALUE)
+                    if (hopper_height > RobotControl::HOPPER_HEIGHT_TRAVERSAL)
                     {
-                        this->motor_commands.hopper_actuator
-                            .set__mode(TalonCtrl::PERCENT_OUTPUT)
-                            .set__value(
-                                -RobotControl::HOPPER_ACUTATOR_MOVE_SPEED);
+                        this->set_hopper_act_percent(
+                            -RobotControl::HOPPER_ACUTATOR_MOVE_SPEED);
                     }
                     else
                     {
-                        this->motor_commands.hopper_actuator
-                            .set__mode(TalonCtrl::PERCENT_OUTPUT)
-                            .set__value(
-                                -RobotControl::HOPPER_ACTUATOR_PLUNGE_SPEED);
+                        this->set_hopper_act_percent(
+                            -RobotControl::HOPPER_ACTUATOR_PLUNGE_SPEED);
                     }
                     break;
                 }
                 else
                 {
                     util::disableMotor(this->motor_commands.hopper_actuator);
-                    this->state.mining.traversal_start_time =
-                        system_time::now();
                     this->state.mining.stage =
                         RobotControl::State::MiningStage::TRAVERSING;
                     // allow fallthrough bc we might as well start processing traversal
@@ -421,149 +433,152 @@ void RobotControl::periodic_handle_mining()
             }
             case RobotControl::State::MiningStage::TRAVERSING:
             {
-                if (!cancelled &&
-                    (this->state.control_level ==
-                         RobotControl::State::ControlLevel::ASSISTED_MANUAL ||
-                     util::seconds_since(
-                         this->state.mining.traversal_start_time) <
-                         this->state.mining.target_mining_time))
+                if (!cancelled && (!this->collection_state.getHopperState()
+                                        .isBeltCapacity() ||
+                                   !this->state.hopper_assist_enabled))
                 {
-                    double trencher_setpt =
-                        RobotControl::TRENCHER_NOMINAL_MINING_VELO;
-                    double tracks_setpt = RobotControl::TRACKS_MINING_VELO;
-                    // handle manual adjustments
-                    if (this->state.control_level ==
-                        RobotControl::State::ControlLevel::ASSISTED_MANUAL)
                     {
-                        // adjust trencher speed (slows down)
+                        double trencher_setpt =
+                            RobotControl::TRENCHER_NOMINAL_MINING_VEL;
+                        double tracks_setpt = RobotControl::TRACKS_MINING_VEL;
+                        // handle manual adjustments
+                        if (this->state.control_level ==
+                            RobotControl::State::ControlLevel::ASSISTED_MANUAL)
                         {
-                            const double adjustment_raw = util::apply_deadband(
-                                util::normalizeJoyTriggerAxis(this->getRawAxis(
+                            // adjust trencher speed (slows down)
+                            {
+                                const double adjustment_raw = util::apply_deadband(
+                                    util::normalizeJoyTriggerAxis(
+                                        this->getRawAxis(
+                                            RobotControl::
+                                                TELEOP_TRENCHER_SPEED_AXIS_IDX)),
+                                    RobotControl::GENERIC_DEADZONE_SCALAR);
+
+                                trencher_setpt =
+                                    RobotControl::TRENCHER_NOMINAL_MINING_VEL *
+                                    (1.0 - adjustment_raw);
+
+                                // set trencher
+                                this->set_trencher_velocity(trencher_setpt);
+                            }
+                            // adjust trencher depth with right stick -- WARNING: DEPENDS ON SENSOR
+                            {
+                                double target_depth =
+                                    RobotControl::HOPPER_HEIGHT_MINING;
+                                const double adjustment_raw =
+                                    util::apply_deadband(
+                                        this->getRawAxis(
+                                            RobotControl::
+                                                TELEOP_HOPPER_ACTUATE_AXIS_IDX),
+                                        RobotControl::GENERIC_DEADZONE_SCALAR);
+
+                                if (adjustment_raw > 0.0)
+                                {
+                                    target_depth +=
+                                        (RobotControl::HOPPER_HEIGHT_TRANSPORT -
+                                         RobotControl::HOPPER_HEIGHT_MINING) *
+                                        adjustment_raw;
+                                }
+                                if (adjustment_raw < 0.0)
+                                {
+                                    target_depth +=
+                                        (RobotControl::HOPPER_HEIGHT_MINING -
+                                         RobotControl::
+                                             HOPPER_MIN_HEIGHT_MINING) *
+                                        adjustment_raw;
+                                }
+
+                                // servo based on target
+                                const double hopper_height =
+                                    this->get_hopper_normalized();
+                                if (std::abs(target_depth - hopper_height) <
                                     RobotControl::
-                                        TELEOP_TRENCHER_SPEED_AXIS_IDX)),
-                                RobotControl::GENERIC_DEADZONE_SCALAR);
-
-                            trencher_setpt =
-                                RobotControl::TRENCHER_NOMINAL_MINING_VELO *
-                                (1.0 - adjustment_raw);
-
-                            // set trencher
-                            this->motor_commands.trencher
-                                .set__mode(TalonCtrl::VELOCITY)
-                                .set__value(trencher_setpt);
-                        }
-                        // adjust trencher depth with right stick -- WARNING: DEPENDS ON POTENTIOMENTER
-                        {
-                            double target_depth =
-                                RobotControl::MINING_DEPTH_NOMINAL_POT_VALUE;
-                            const double adjustment_raw = util::apply_deadband(
-                                this->getRawAxis(
-                                    RobotControl::
-                                        TELEOP_HOPPER_ACTUATE_AXIS_IDX),
-                                RobotControl::GENERIC_DEADZONE_SCALAR);
-
-                            if (adjustment_raw > 0.0)
-                            {
-                                target_depth +=
-                                    (RobotControl::AUTO_TRANSPORT_POT_VALUE -
-                                     RobotControl::
-                                         MINING_DEPTH_NOMINAL_POT_VALUE) *
-                                    adjustment_raw;
-                            }
-                            if (adjustment_raw < 0.0)
-                            {
-                                target_depth +=
-                                    (RobotControl::
-                                         MINING_DEPTH_NOMINAL_POT_VALUE -
-                                     RobotControl::
-                                         MINING_DEPTH_LIMIT_POT_VALUE) *
-                                    adjustment_raw;
-                            }
-
-                            // servo based on target
-                            const double pot_val = this->get_hopper_pot();
-                            if (std::abs(target_depth - pot_val) <
-                                RobotControl::
-                                    HOPPER_POT_TARGETING_EPSILON)  // in range
-                            {
-                                util::disableMotor(
-                                    this->motor_commands.hopper_actuator);
-                            }
-                            else if (pot_val < target_depth)
-                            {
-                                this->motor_commands.hopper_actuator
-                                    .set__mode(TalonCtrl::PERCENT_OUTPUT)
-                                    .set__value(
+                                        HOPPER_HEIGHT_TARGETTING_THRESH)  // in range
+                                {
+                                    util::disableMotor(
+                                        this->motor_commands.hopper_actuator);
+                                }
+                                else if (hopper_height < target_depth)
+                                {
+                                    this->set_hopper_act_percent(
                                         RobotControl::
                                             HOPPER_ACTUATOR_PLUNGE_SPEED);
-                            }
-                            else if (pot_val > target_depth)
-                            {
-                                this->motor_commands.hopper_actuator
-                                    .set__mode(TalonCtrl::PERCENT_OUTPUT)
-                                    .set__value(
+                                }
+                                else if (hopper_height > target_depth)
+                                {
+                                    this->set_hopper_act_percent(
                                         -RobotControl::
                                             HOPPER_ACTUATOR_PLUNGE_SPEED);
+                                }
+                            }
+                            // adjust tracks speed
+                            {
+                                const double adjustment_raw =
+                                    util::apply_deadband(
+                                        this->getRawAxis(
+                                            RobotControl::
+                                                TELEOP_DRIVE_Y_AXIS_IDX),
+                                        RobotControl::
+                                            DRIVING_MAGNITUDE_DEADZONE_SCALAR);
+
+                                if (adjustment_raw > 0.0)
+                                {
+                                    tracks_setpt +=
+                                        (RobotControl::
+                                             TRACKS_MAX_ADDITIONAL_MINING_VEL *
+                                         adjustment_raw);
+                                }
+                                if (adjustment_raw < 0.0)
+                                {
+                                    tracks_setpt +=
+                                        (RobotControl::TRACKS_MINING_VEL *
+                                         adjustment_raw);
+                                }
+                            }
+                            // hopper belt control (if assistance disabled)
+                            if (!this->state.hopper_assist_enabled)
+                            {
+                                this->set_hopper_belt_velocity(
+                                    RobotControl::HOPPER_BELT_MAX_MINING_VEL *
+                                    util::normalizeJoyTriggerAxis(
+                                        this->getRawAxis(
+                                            RobotControl::
+                                                TELEOP_HOPPER_SPEED_AXIS_IDX)));
                             }
                         }
-                        // adjust tracks speed
+
+                        if (this->state.hopper_assist_enabled)
                         {
-                            const double adjustment_raw = util::apply_deadband(
-                                this->getRawAxis(
-                                    RobotControl::TELEOP_DRIVE_Y_AXIS_IDX),
-                                RobotControl::
-                                    DRIVING_MAGNITUDE_DEADZONE_SCALAR);
-
-                            if (adjustment_raw > 0.0)
+                            if ((this->curr_motor_states.hopper_belt.position <
+                                 this->collection_state.getHopperState()
+                                     .miningTargetMotorPosition()) &&
+                                (util::seconds_since(
+                                     this->state.mining.prev_belt_stop_time) >=
+                                 RobotControl::
+                                     HOPPER_BELT_MINING_DUTY_CYCLE_OFF_TIME))
                             {
-                                tracks_setpt +=
-                                    (RobotControl::
-                                         TRACKS_MAX_ADDITIONAL_MINING_VEL *
-                                     adjustment_raw);
+                                this->set_hopper_belt_velocity(
+                                    RobotControl::HOPPER_BELT_MAX_MINING_VEL);
+                                this->state.mining.belt_was_stopped = false;
                             }
-                            if (adjustment_raw < 0.0)
+                            else
                             {
-                                tracks_setpt +=
-                                    (RobotControl::TRACKS_MINING_VELO *
-                                     adjustment_raw);
+                                util::disableMotor(
+                                    this->motor_commands.hopper_belt);
+                                if (!this->state.mining.belt_was_stopped)
+                                {
+                                    this->state.mining.prev_belt_stop_time =
+                                        system_time::now();
+                                    this->state.mining.belt_was_stopped = true;
+                                }
                             }
                         }
-                    }
 
-                    // handle hopper duty cycle -- scaled by trencher relative velocity --> did not work :(
-                    // const double trencher_percent = trencher_setpt / RobotControl::TRENCHER_NOMINAL_MINING_VELO;
-                    // if( trencher_percent != 0.0 && RobotControl::HOPPER_BELT_TIME_ON_SECONDS > std::abs(
-                    //      std::fmod( util::seconds_since(state.offload.start_time), (RobotControl::HOPPER_BELT_TIME_ON_SECONDS / trencher_percent) + RobotControl::HOPPER_BELT_TIME_OFF_SECONDS)) )
-                    if (RobotControl::HOPPER_BELT_TIME_ON_SECONDS *
-                            (trencher_setpt /
-                             RobotControl::TRENCHER_NOMINAL_MINING_VELO) *
-                            (tracks_setpt / RobotControl::TRACKS_MINING_VELO) >
-                        std::abs(
-                            std::fmod(
-                                util::seconds_since(state.offload.start_time),
-                                RobotControl::HOPPER_BELT_TIME_ON_SECONDS +
-                                    RobotControl::
-                                        HOPPER_BELT_TIME_OFF_SECONDS)))
-                    {
-                        this->motor_commands.hopper_belt
-                            .set__mode(TalonCtrl::VELOCITY)
-                            .set__value(
-                                RobotControl::HOPPER_BELT_MAX_MINING_VELO);
-                    }
-                    else
-                    {
-                        util::disableMotor(this->motor_commands.hopper_belt);
-                    }
+                        // set tracks
+                        this->set_tracks_velocity(tracks_setpt, tracks_setpt);
 
-                    // set tracks
-                    this->motor_commands.track_left
-                        .set__mode(TalonCtrl::VELOCITY)
-                        .set__value(tracks_setpt);
-                    this->motor_commands.track_right
-                        .set__mode(TalonCtrl::VELOCITY)
-                        .set__value(tracks_setpt);
-
-                    break;
+                        break;
+                    }
                 }
                 else
                 {
@@ -577,17 +592,13 @@ void RobotControl::periodic_handle_mining()
             }
             case RobotControl::State::MiningStage::RAISING_HOPPER:
             {
-                const double pot_val = this->get_hopper_pot();
-                if (pot_val < RobotControl::AUTO_TRANSPORT_POT_VALUE)
+                if (this->get_hopper_normalized() <
+                    RobotControl::HOPPER_HEIGHT_TRANSPORT)
                 {
-                    // set trencher
-                    this->motor_commands.trencher.set__mode(TalonCtrl::VELOCITY)
-                        .set__value(RobotControl::TRENCHER_NOMINAL_MINING_VELO);
-                    // set actuator
-                    this->motor_commands.hopper_actuator
-                        .set__mode(TalonCtrl::PERCENT_OUTPUT)
-                        .set__value(
-                            RobotControl::HOPPER_ACTUATOR_EXTRACT_SPEED);
+                    this->set_trencher_velocity(
+                        RobotControl::TRENCHER_NOMINAL_MINING_VEL);
+                    this->set_hopper_act_percent(
+                        RobotControl::HOPPER_ACTUATOR_EXTRACT_SPEED);
                     break;
                 }
                 else
@@ -603,8 +614,8 @@ void RobotControl::periodic_handle_mining()
                 this->stop_all();
                 this->state.mining.enabled = false;
                 this->state.handle_change_control_level(
-                    RobotControl::State::ControlLevel::
-                        MANUAL);  // TODO: needs to change for full auto?
+                    RobotControl::State::ControlLevel::MANUAL);
+                // ^ TODO: needs to change for full auto?
             }
             default:
             {
@@ -618,91 +629,57 @@ void RobotControl::periodic_handle_offload()
 {
     if (this->state.offload.enabled)
     {
-        const bool is_full_auto = this->state.control_level ==
-                                  RobotControl::State::ControlLevel::FULL_AUTO,
-                   is_assisted =
-                       this->state.control_level ==
-                       RobotControl::State::ControlLevel::ASSISTED_MANUAL,
-                   cancelled = this->state.offload_is_soft_shutdown();
+        const bool is_assisted =
+            this->state.control_level ==
+            RobotControl::State::ControlLevel::ASSISTED_MANUAL;
+        const bool cancelled = this->state.offload_is_soft_shutdown();
 
         // control the tracks manually if in auto assist
         if (is_assisted)
         {
             // control tracks
             const double vel_cmd =
-                (RobotControl::TRACKS_MAX_VELO *
-                 RobotControl::DRIVING_LOW_SPEED_SCALAR *
-                 this->state.driving_speed_scalar) *
+                (RobotControl::TRACKS_MAX_VEL *
+                 RobotControl::DRIVING_LOW_SPEED_SCALAR) *
                 util::apply_deadband(
                     this->getRawAxis(RobotControl::TELEOP_DRIVE_Y_AXIS_IDX),
                     RobotControl::DRIVING_MAGNITUDE_DEADZONE_SCALAR);
 
-            this->motor_commands.track_right.set__mode(TalonCtrl::VELOCITY)
-                .set__value(vel_cmd);
-            this->motor_commands.track_left.set__mode(TalonCtrl::VELOCITY)
-                .set__value(vel_cmd);
+            this->set_tracks_velocity(vel_cmd, vel_cmd);
         }
 
         switch (this->state.offload.stage)
         {
             case RobotControl::State::OffloadingStage::INITIALIZING:
             {
-                this->state.offload.start_time = system_time::now();
+                this->state.offload.calculated_end_pos =
+                    this->collection_state.getHopperState()
+                        .calcOffloadTargetMotorPosition(
+                            this->curr_motor_states.hopper_belt.position);
                 this->state.offload.stage =
                     RobotControl::State::OffloadingStage::BACKING_UP;
                 // fallthrough
             }
             case RobotControl::State::OffloadingStage::BACKING_UP:
             {
-                if (!is_assisted)
-                {
-                    const double duration =
-                        util::seconds_since(this->state.offload.start_time);
-                    if (!cancelled &&
-                        ((is_full_auto &&
-                          duration <
-                              this->state.offload.auto_target_backup_time) ||
-                         (!is_full_auto &&
-                          duration <
-                              this->state.offload
-                                  .tele_target_backup_time)))  // use serial_control state for this if deemed reliable enough
-                    {
-                        // drive backwards
-                        this->motor_commands.track_right
-                            .set__mode(TalonCtrl::VELOCITY)
-                            .set__value(-RobotControl::TRACKS_OFFLOAD_VELO);
-                        this->motor_commands.track_left
-                            .set__mode(TalonCtrl::VELOCITY)
-                            .set__value(-RobotControl::TRACKS_OFFLOAD_VELO);
-
-                        break;
-                    }
-                    else
-                    {
-                        util::disableMotor(this->motor_commands.track_left);
-                        util::disableMotor(this->motor_commands.track_right);
-                        // fallthrough to apply next stage
-                    }
-                }
+                // previously used for semi-auto routine
                 this->state.offload.stage =
                     RobotControl::State::OffloadingStage::RAISING_HOPPER;
                 // fallthrough and process the next stage
             }
             case RobotControl::State::OffloadingStage::RAISING_HOPPER:
             {
-                if (!cancelled &&
-                    this->get_hopper_pot() < RobotControl::OFFLOAD_POT_VALUE)
+                if (!cancelled && this->get_hopper_normalized() <
+                                      RobotControl::HOPPER_HEIGHT_OFFLOAD)
                 {
-                    this->motor_commands.hopper_actuator
-                        .set__mode(TalonCtrl::PERCENT_OUTPUT)
-                        .set__value(
-                            RobotControl::HOPPER_ACUTATOR_MOVE_SPEED);  // dump
+                    // dump
+                    this->set_hopper_act_percent(
+                        RobotControl::HOPPER_ACUTATOR_MOVE_SPEED);
                     break;
                 }
                 else
                 {
                     util::disableMotor(this->motor_commands.hopper_actuator);
-                    this->state.offload.dump_start_time = system_time::now();
                     this->state.offload.stage =
                         RobotControl::State::OffloadingStage::OFFLOADING;
                     // fallthrough
@@ -710,14 +687,18 @@ void RobotControl::periodic_handle_offload()
             }
             case RobotControl::State::OffloadingStage::OFFLOADING:
             {
-                if (!cancelled &&
-                    util::seconds_since(this->state.offload.dump_start_time) <
-                        this->state.offload.target_dump_time)
+                double target_belt_motor_pos =
+                    this->state.hopper_assist_enabled
+                        ? this->collection_state.getHopperState()
+                              .offloadTargetMotorPosition()
+                        : this->state.offload.calculated_end_pos;
+
+                if (!cancelled && this->curr_motor_states.hopper_belt.position <
+                                      target_belt_motor_pos)
                 {
                     // set hopper belt
-                    this->motor_commands.hopper_belt
-                        .set__mode(TalonCtrl::VELOCITY)
-                        .set__value(RobotControl::HOPPER_BELT_MAX_VELO);
+                    this->set_hopper_belt_velocity(
+                        RobotControl::HOPPER_BELT_MAX_VEL);
                     break;
                 }
                 else
@@ -730,11 +711,11 @@ void RobotControl::periodic_handle_offload()
             }
             case RobotControl::State::OffloadingStage::LOWERING_HOPPER:
             {
-                if (this->get_hopper_pot() > RobotControl::TRAVERSAL_POT_VALUE)
+                if (this->get_hopper_normalized() >
+                    RobotControl::HOPPER_HEIGHT_TRAVERSAL)
                 {
-                    this->motor_commands.hopper_actuator
-                        .set__mode(TalonCtrl::PERCENT_OUTPUT)
-                        .set__value(-RobotControl::HOPPER_ACUTATOR_MOVE_SPEED);
+                    this->set_hopper_act_percent(
+                        -RobotControl::HOPPER_ACUTATOR_MOVE_SPEED);
                     break;
                 }
                 else
@@ -765,7 +746,7 @@ void RobotControl::periodic_handle_offload()
 
 void RobotControl::periodic_handle_teleop_input()
 {
-    // speed changes -- these don't affect autos so we can run them during every loop to make it as intuitive as possible
+    // --- Persistent Inputs ---------------------------------------------------
     {
         if (this->getButtonPressed(RobotControl::TELEOP_LOW_SPEED_BUTTON_IDX))
         {
@@ -783,6 +764,17 @@ void RobotControl::periodic_handle_teleop_input()
             this->state.driving_speed_scalar =
                 RobotControl::DRIVING_HIGH_SPEED_SCALAR;
         }
+
+        if (this->getButtonPressed(
+                RobotControl::ASSISTED_HOPPER_ENABLE_BUTTON_IDX))
+        {
+            this->state.hopper_assist_enabled = true;
+        }
+        if (this->getButtonPressed(
+                RobotControl::ASSISTED_HOPPER_DISABLE_BUTTON_IDX))
+        {
+            this->state.hopper_assist_enabled = false;
+        }
     }
 
     // ------------ HARD RESET ------------
@@ -794,48 +786,6 @@ void RobotControl::periodic_handle_teleop_input()
         this->cancel_mining();
         this->cancel_offload();
         return;
-    }
-
-    const bool is_mining = this->state.mining.enabled,
-               is_offload = this->state.offload.enabled,
-               any_ops_running = (is_mining || is_offload),
-               is_teleauto =
-                   (this->state.control_level ==
-                    RobotControl::State::ControlLevel::TELEAUTO_OP);
-
-    // ---------- TELEAUTO CONTROl ----------
-    {
-        if (!any_ops_running &&
-            this->getPov(
-                RobotControl::TELEAUTO_MINING_INIT_POV_ID,
-                RobotControl::TELEAUTO_MINING_INIT_POV_VAL))  // dpad top
-        {
-            this->start_mining(RobotControl::State::ControlLevel::TELEAUTO_OP);
-        }
-        else if (
-            is_teleauto && is_mining &&
-            this->getPov(
-                RobotControl::TELEAUTO_MINING_STOP_POV_ID,
-                RobotControl::TELEAUTO_MINING_STOP_POV_VAL))  // dpad bottom
-        {
-            this->cancel_mining();
-        }
-        else if (
-            !any_ops_running &&
-            this->getPov(
-                RobotControl::TELEAUTO_OFFLOAD_INIT_POV_ID,
-                RobotControl::TELEAUTO_OFFLOAD_INIT_POV_VAL))  // dpad right
-        {
-            this->start_offload(RobotControl::State::ControlLevel::TELEAUTO_OP);
-        }
-        else if (
-            is_teleauto && is_offload &&
-            this->getPov(
-                RobotControl::TELEAUTO_OFFLOAD_STOP_POV_ID,
-                RobotControl::TELEAUTO_OFFLOAD_STOP_POV_VAL))  // dpad left
-        {
-            this->cancel_offload();
-        }
     }
 
     // -------------- ASSISTED CONTROL ------------
@@ -889,8 +839,8 @@ void RobotControl::periodic_handle_teleop_input()
                      stick_y = this->getRawAxis(
                          RobotControl::
                              TELEOP_DRIVE_Y_AXIS_IDX),  // forward y is positive
-            scaling_speed = RobotControl::TRACKS_MAX_VELO *
-                            this->state.driving_speed_scalar;
+            scaling_speed =
+                RobotControl::TRACKS_MAX_VEL * this->state.driving_speed_scalar;
 
         auto track_speeds = util::computeWheelScalars(
             stick_x,
@@ -898,10 +848,9 @@ void RobotControl::periodic_handle_teleop_input()
             RobotControl::DRIVING_MAGNITUDE_DEADZONE_SCALAR);
 
         // set drive velocities
-        this->motor_commands.track_right.set__mode(TalonCtrl::VELOCITY)
-            .set__value(scaling_speed * track_speeds[0]);
-        this->motor_commands.track_left.set__mode(TalonCtrl::VELOCITY)
-            .set__value(scaling_speed * track_speeds[1]);
+        this->set_tracks_velocity(
+            scaling_speed * track_speeds[0],
+            scaling_speed * track_speeds[1]);
     }
     // ------------ TRENCHER CONTROL -------------
     {
@@ -913,8 +862,8 @@ void RobotControl::periodic_handle_teleop_input()
         }
 
         // set trencher velocity
-        this->motor_commands.trencher.set__mode(TalonCtrl::VELOCITY)
-            .set__value(RobotControl::TRENCHER_MAX_VELO * trencher_speed);
+        this->set_trencher_velocity(
+            RobotControl::TRENCHER_MAX_VEL * trencher_speed);
     }
     // ------------- HOPPER CONTROL --------------
     {
@@ -926,15 +875,12 @@ void RobotControl::periodic_handle_teleop_input()
         }
 
         // set hopper belt
-        this->motor_commands.hopper_belt.set__mode(TalonCtrl::VELOCITY)
-            .set__value(RobotControl::HOPPER_BELT_MAX_VELO * hopper_belt_speed);
+        this->set_hopper_belt_velocity(
+            RobotControl::HOPPER_BELT_MAX_VEL * hopper_belt_speed);
         // set actutor power
-        this->motor_commands.hopper_actuator
-            .set__mode(TalonCtrl::PERCENT_OUTPUT)
-            .set__value(
-                util::apply_deadband(
-                    this->getRawAxis(
-                        RobotControl::TELEOP_HOPPER_ACTUATE_AXIS_IDX),
-                    RobotControl::GENERIC_DEADZONE_SCALAR));
+        this->set_hopper_act_percent(
+            util::apply_deadband(
+                this->getRawAxis(RobotControl::TELEOP_HOPPER_ACTUATE_AXIS_IDX),
+                RobotControl::GENERIC_DEADZONE_SCALAR));
     }
 }

@@ -78,13 +78,24 @@ ament_target_dependencies(phx6_driver
     std_msgs
     phoenix6)
 
-# --- Talon Twist Driver -------------------------------------------------------
-add_executable(talon_twist_driver src/talon_twist_driver.cpp)
-target_link_libraries(talon_twist_driver
+# --- Falcon Test Node ---------------------------------------------------------
+add_executable(falcon_test src/falcon_test.cpp)
+target_link_libraries(falcon_test
     ${phoenix_ros_driver_custom_types})
-ament_target_dependencies(talon_twist_driver
+ament_target_dependencies(falcon_test
     rclcpp
-    geometry_msgs)
+    std_msgs
+    sensor_msgs
+    phoenix6)
+
+# --- Motor Sim Node -----------------------------------------------------------
+add_executable(motor_sim src/motor_sim.cpp)
+target_link_libraries(motor_sim
+    ${phoenix_ros_driver_custom_types})
+ament_target_dependencies(motor_sim
+    rclcpp
+    std_msgs
+    sensor_msgs)
 
 # --- Export -------------------------------------------------------------------
 ament_export_dependencies(
@@ -98,7 +109,8 @@ ament_package()
 install(TARGETS
     phx5_driver
     phx6_driver
-    talon_twist_driver
+    falcon_test
+    motor_sim
     DESTINATION lib/${PROJECT_NAME} )
 install(DIRECTORY
     launch

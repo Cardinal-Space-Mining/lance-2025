@@ -50,6 +50,13 @@ def get_phx6_action(config, launch_args):
         output = 'screen'
     )
 
+def get_phx_sim_action(config):
+    return NodeAction(config).format_node(
+        package = 'phoenix_ros_driver',
+        executable = 'motor_sim',
+        output = 'screen'
+    )
+
 def get_teleop_control_action(config):
     return NodeAction(config).format_node(
         package = 'lance',
@@ -72,6 +79,8 @@ def get_robot_actions(config, launch_args = {}):
         a.append(get_phx5_action(config['phoenix5_driver']))
     if 'phoenix6_driver' in config:
         a.append(get_phx6_action(config['phoenix6_driver'], launch_args))
+    if 'phoenix_motor_sim' in config:
+        a.append(get_phx_sim_action(config['phoenix_motor_sim']))
     if 'teleop_control' in config:
         a.append(get_teleop_control_action(config['teleop_control']))
     if 'robot_status' in config:
