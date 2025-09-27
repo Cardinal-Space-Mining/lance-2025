@@ -31,7 +31,7 @@ public:
         std::string& mining_status,
         std::string& offload_status);
 
-    void publishCollectionState(CollectionStatePublisher& pub) const;
+    const HopperState& getHopperState() const;
 
 protected:
     using system_time = std::chrono::system_clock;
@@ -74,6 +74,7 @@ protected:
 
     public:
         double driving_speed_scalar = RobotControl::DRIVING_MEDIUM_SPEED_SCALAR;
+        bool hopper_assist_enabled = true;
 
         ControlLevel control_level = ControlLevel::MANUAL;
         ControlLevel last_manual_control_level = control_level;
@@ -85,9 +86,8 @@ protected:
 
             MiningStage stage = MiningStage::FINISHED;
 
-            system_time_point traversal_start_time;
-
-            double target_mining_time = RobotControl::MINING_RUN_TIME_SECONDS;
+            bool belt_was_stopped = false;
+            system_time_point prev_belt_stop_time;
 
         } mining;
 
@@ -98,14 +98,7 @@ protected:
 
             OffloadingStage stage = OffloadingStage::FINISHED;
 
-            system_time_point start_time;
-            system_time_point dump_start_time;
-
-            double tele_target_backup_time =
-                RobotControl::TELE_OFFLOAD_BACKUP_TIME_SECONDS;
-            double auto_target_backup_time =
-                RobotControl::AUTO_OFFLOAD_BACKUP_TIME_SECONDS;
-            double target_dump_time = RobotControl::OFFLOAD_DUMP_TIME;
+            double calculated_end_pos = 0.;
 
         } offload;
 
@@ -214,21 +207,21 @@ private:
     RobotMode curr_robot_mode{RobotMode::DISABLED};
     RobotMotorStatus curr_motor_states;
     RobotMotorCommands motor_commands;
-    State state;
     CollectionState collection_state;
+    State state;
 
 public:
     // clang-format off
     static constexpr double
     // motor physical speed targets
-        TRENCHER_MAX_VELO = 80,                         // maximum mining speed -- TURNS PER SECOND
-        TRENCHER_NOMINAL_MINING_VELO = 80,              // base trenching speed -- TURNS PER SECOND
-        HOPPER_BELT_MAX_VELO = 45,                      // TURNS PER SECOND
-        HOPPER_BELT_MAX_MINING_VELO = 10,               // TURNS PER SECOND
-        TRACKS_MAX_VELO = 125,                          // TURNS PER SECOND
-        TRACKS_MINING_VELO = 8,                         // TURNS PER SECOND
+        TRENCHER_MAX_VEL = 80,                          // maximum mining speed -- TURNS PER SECOND
+        TRENCHER_NOMINAL_MINING_VEL = 80,               // base trenching speed -- TURNS PER SECOND
+        HOPPER_BELT_MAX_VEL = 45,                       // TURNS PER SECOND
+        HOPPER_BELT_MAX_MINING_VEL = 10,                // TURNS PER SECOND
+        TRACKS_MAX_VEL = 125,                           // TURNS PER SECOND
+        TRACKS_MINING_VEL = 8,                          // TURNS PER SECOND
         TRACKS_MAX_ADDITIONAL_MINING_VEL = 6,           // TURNS PER SECOND
-        TRACKS_OFFLOAD_VELO = TRACKS_MAX_VELO * 0.25;   // TURNS PER SECOND
+        TRACKS_OFFLOAD_VEL = TRACKS_MAX_VEL * 0.25;     // TURNS PER SECOND
 
     static constexpr double
     // driving
@@ -242,20 +235,21 @@ public:
         HOPPER_ACTUATOR_EXTRACT_SPEED = 0.80,
         HOPPER_ACUTATOR_MOVE_SPEED = 1.0,       // all other movement (ie. dumping)
     // actuator potentiometer target values
-        OFFLOAD_POT_VALUE = 0.95,               // dump height
-        TRAVERSAL_POT_VALUE = 0.60,             // traversal height
-        AUTO_TRANSPORT_POT_VALUE = 0.55,        // height for transporting regolith
-        MINING_DEPTH_NOMINAL_POT_VALUE = 0.21,  // nominal mining depth from which manual adjustments can be made
-        MINING_DEPTH_LIMIT_POT_VALUE = 0.03,    // lowest depth we ever want to go
-        HOPPER_POT_TARGETING_EPSILON = 0.01,
-    // timed operations
-        MINING_RUN_TIME_SECONDS = 1.0,              // teleauto mining run time
-        TELE_OFFLOAD_BACKUP_TIME_SECONDS = 3.0,     // teleauto offload duration
-        AUTO_OFFLOAD_BACKUP_TIME_SECONDS = 2.0,
-        OFFLOAD_DUMP_TIME = 6.0,
-    // auto belt duty cycle
-        HOPPER_BELT_TIME_ON_SECONDS = 1.0,
-        HOPPER_BELT_TIME_OFF_SECONDS = 5.0;
+        HOPPER_HEIGHT_OFFLOAD = 0.95,           // dump height
+        HOPPER_HEIGHT_TRAVERSAL = 0.60,         // traversal height
+        HOPPER_HEIGHT_TRANSPORT = 0.55,         // height for transporting regolith
+        HOPPER_HEIGHT_MINING = 0.21,            // nominal mining depth from which manual adjustments can be made
+        HOPPER_MIN_HEIGHT_MINING = 0.03,        // lowest depth we ever want to go
+        HOPPER_HEIGHT_TARGETTING_THRESH = 0.01, // precision to use when targetting a hopper height
+    // time
+        HOPPER_BELT_MINING_DUTY_CYCLE_OFF_TIME = 1;     // seconds
+
+    static constexpr double
+        COLLECTION_MODEL_INITIAL_VOLUME_L = 5.,             // estimated volume of initial pile
+        COLLECTION_MODEL_VOLUME_CAPACITY_L = 25.,           // volume capacity of hopper
+        COLLECTION_MODEL_INITIAL_BELT_FOOTPRINT_M = 0.2,    // estimated portion of belt taken up by initial pile
+        COLLECTION_MODEL_BELT_CAPACITY_M = 0.6,             // how much the belt can increment before we lose material
+        COLLECTION_MODEL_BELT_OFFLOAD_LEN_M = 0.7;          // how much to increment the belt when offloading
 
     static constexpr int
         DISABLE_ALL_ACTIONS_BUTTON_IDX = LogitechMapping::Buttons::A,
@@ -273,9 +267,12 @@ public:
         TELEOP_HOPPER_SPEED_AXIS_IDX = LogitechMapping::Axes::L_TRIGGER,
         TELEOP_HOPPER_INVERT_BUTTON_IDX = LogitechMapping::Buttons::LB,
         TELEOP_HOPPER_ACTUATE_AXIS_IDX = LogitechMapping::Axes::RIGHTY,
-        
+
         ASSISTED_MINING_TOGGLE_BUTTON_IDX = LogitechMapping::Buttons::L_STICK,
         ASSISTED_OFFLOAD_TOGGLE_BUTTON_IDX = LogitechMapping::Buttons::R_STICK,
+
+        ASSISTED_HOPPER_ENABLE_BUTTON_IDX = LogitechMapping::Buttons::BACK,
+        ASSISTED_HOPPER_DISABLE_BUTTON_IDX = LogitechMapping::Buttons::START,
 
         TELEAUTO_MINING_INIT_POV_ID = LogitechMapping::Axes::DPAD_U_D,
         TELEAUTO_MINING_STOP_POV_ID = LogitechMapping::Axes::DPAD_U_D,

@@ -42,7 +42,21 @@ using phx6::signals::InvertedValue;
 using phx6::signals::FeedbackSensorSourceValue;
 
 
-// --- Ros message serialization helpser ---------------------------------------
+// --- util --------------------------------------------------------------------
+
+template<typename T>
+inline void declare_param(
+    rclcpp::Node* node,
+    const std::string param_name,
+    T& param,
+    const T& default_value)
+{
+    node->declare_parameter(param_name, default_value);
+    node->get_parameter(param_name, param);
+}
+
+
+// --- Ros message serialization helpers ---------------------------------------
 
 TalonInfo& operator<<(TalonInfo& info, TalonFX& m)
 {
@@ -126,119 +140,49 @@ static constexpr double TFX_COMMON_KV = 0.12;
 
 static constexpr double TFX_COMMON_NEUTRAL_DEADBAND = 0.05;
 
-static constexpr auto TFX_COMMON_STATOR_CURRENT_LIMIT = 30_A;
-static constexpr auto TFX_COMMON_SUPPLY_CURRENT_LIMIT = 20_A;
-static constexpr auto TFX_COMMON_PEAK_VOLTAGE = 12_V;
+static constexpr double TFX_COMMON_STATOR_CURRENT_LIMIT = 30.;
+static constexpr double TFX_COMMON_SUPPLY_CURRENT_LIMIT = 20.;
+static constexpr double TFX_COMMON_PEAK_VOLTAGE = 12.;
 
-static const TalonFXConfiguration LFET_TRACK_CONFIG =
-    TalonFXConfiguration{}
-        .WithSlot0(
-            Slot0Configs{}
-                .WithKP(TFX_COMMON_KP)
-                .WithKI(TFX_COMMON_KI)
-                .WithKD(TFX_COMMON_KD)
-                .WithKV(TFX_COMMON_KV))
+inline TalonFXConfiguration buildTalonConfig(
+    double kP,
+    double kI,
+    double kD,
+    double kV,
+    double neutral_deadband,
+    int neutral_mode,
+    int invert_mode,
+    double stator_current_limit = 0.,
+    double supply_current_limit = 0.,
+    double voltage_limit = 0.)
+{
+    return TalonFXConfiguration{}
+        .WithSlot0(Slot0Configs{}.WithKP(kP).WithKI(kI).WithKD(kD).WithKV(kV))
         .WithMotorOutput(
             MotorOutputConfigs{}
-                .WithDutyCycleNeutralDeadband(TFX_COMMON_NEUTRAL_DEADBAND)
-                .WithNeutralMode(NeutralModeValue::Coast)
-                .WithInverted(InvertedValue::CounterClockwise_Positive))
+                .WithDutyCycleNeutralDeadband(neutral_deadband)
+                .WithNeutralMode(neutral_mode)
+                .WithInverted(invert_mode))
         .WithFeedback(
             FeedbackConfigs{}.WithFeedbackSensorSource(
                 FeedbackSensorSourceValue::RotorSensor))
         .WithCurrentLimits(
             CurrentLimitsConfigs{}
-                .WithStatorCurrentLimit(TFX_COMMON_STATOR_CURRENT_LIMIT)
-                .WithStatorCurrentLimitEnable(true)
-                .WithSupplyCurrentLimit(TFX_COMMON_SUPPLY_CURRENT_LIMIT)
-                .WithSupplyCurrentLimitEnable(true))
+                .WithStatorCurrentLimit(
+                    units::current::ampere_t{stator_current_limit})
+                .WithStatorCurrentLimitEnable(stator_current_limit > 0.)
+                .WithSupplyCurrentLimit(
+                    units::current::ampere_t{supply_current_limit})
+                .WithSupplyCurrentLimitEnable(supply_current_limit >= 0.))
         .WithVoltage(
-            VoltageConfigs{}
-                .WithPeakForwardVoltage(TFX_COMMON_PEAK_VOLTAGE)
-                .WithPeakReverseVoltage(-TFX_COMMON_PEAK_VOLTAGE));
-
-static const TalonFXConfiguration RIGHT_TRACK_CONFIG =
-    TalonFXConfiguration{}
-        .WithSlot0(
-            Slot0Configs{}
-                .WithKP(TFX_COMMON_KP)
-                .WithKI(TFX_COMMON_KI)
-                .WithKD(TFX_COMMON_KD)
-                .WithKV(TFX_COMMON_KV))
-        .WithMotorOutput(
-            MotorOutputConfigs{}
-                .WithDutyCycleNeutralDeadband(TFX_COMMON_NEUTRAL_DEADBAND)
-                .WithNeutralMode(NeutralModeValue::Coast)
-                .WithInverted(InvertedValue::Clockwise_Positive))
-        .WithFeedback(
-            FeedbackConfigs{}.WithFeedbackSensorSource(
-                FeedbackSensorSourceValue::RotorSensor))
-        .WithCurrentLimits(
-            CurrentLimitsConfigs{}
-                .WithStatorCurrentLimit(TFX_COMMON_STATOR_CURRENT_LIMIT)
-                .WithStatorCurrentLimitEnable(true)
-                .WithSupplyCurrentLimit(TFX_COMMON_SUPPLY_CURRENT_LIMIT)
-                .WithSupplyCurrentLimitEnable(true))
-        .WithVoltage(
-            VoltageConfigs{}
-                .WithPeakForwardVoltage(TFX_COMMON_PEAK_VOLTAGE)
-                .WithPeakReverseVoltage(-TFX_COMMON_PEAK_VOLTAGE));
-
-static const TalonFXConfiguration TRENCHER_CONFIG =
-    TalonFXConfiguration{}
-        .WithSlot0(
-            Slot0Configs{}
-                .WithKP(TFX_COMMON_KP)
-                .WithKI(TFX_COMMON_KI)
-                .WithKD(TFX_COMMON_KD)
-                .WithKV(TFX_COMMON_KV))
-        .WithMotorOutput(
-            MotorOutputConfigs{}
-                .WithDutyCycleNeutralDeadband(TFX_COMMON_NEUTRAL_DEADBAND)
-                .WithNeutralMode(NeutralModeValue::Coast)
-                .WithInverted(InvertedValue::Clockwise_Positive))
-        // ^ trencher positive direction should result in digging
-        .WithFeedback(
-            FeedbackConfigs{}.WithFeedbackSensorSource(
-                FeedbackSensorSourceValue::RotorSensor))
-        .WithCurrentLimits(
-            CurrentLimitsConfigs{}
-                .WithStatorCurrentLimit(TFX_COMMON_STATOR_CURRENT_LIMIT)
-                .WithStatorCurrentLimitEnable(true)
-                .WithSupplyCurrentLimit(TFX_COMMON_SUPPLY_CURRENT_LIMIT)
-                .WithSupplyCurrentLimitEnable(true))
-        .WithVoltage(
-            VoltageConfigs{}
-                .WithPeakForwardVoltage(TFX_COMMON_PEAK_VOLTAGE)
-                .WithPeakReverseVoltage(-TFX_COMMON_PEAK_VOLTAGE));
-
-static const TalonFXConfiguration HOPPER_BELT_CONFIG =
-    TalonFXConfiguration{}
-        .WithSlot0(
-            Slot0Configs{}
-                .WithKP(TFX_COMMON_KP)
-                .WithKI(TFX_COMMON_KI)
-                .WithKD(TFX_COMMON_KD)
-                .WithKV(TFX_COMMON_KV))
-        .WithMotorOutput(
-            MotorOutputConfigs{}
-                .WithDutyCycleNeutralDeadband(TFX_COMMON_NEUTRAL_DEADBAND)
-                .WithNeutralMode(NeutralModeValue::Coast)
-                .WithInverted(InvertedValue::Clockwise_Positive))
-        // ^ hopper belt positive direction should result in dumping
-        .WithFeedback(
-            FeedbackConfigs{}.WithFeedbackSensorSource(
-                FeedbackSensorSourceValue::RotorSensor))
-        .WithCurrentLimits(
-            CurrentLimitsConfigs{}
-                .WithStatorCurrentLimit(TFX_COMMON_STATOR_CURRENT_LIMIT)
-                .WithStatorCurrentLimitEnable(true)
-                .WithSupplyCurrentLimit(TFX_COMMON_SUPPLY_CURRENT_LIMIT)
-                .WithSupplyCurrentLimitEnable(true))
-        .WithVoltage(
-            VoltageConfigs{}
-                .WithPeakForwardVoltage(TFX_COMMON_PEAK_VOLTAGE)
-                .WithPeakReverseVoltage(-TFX_COMMON_PEAK_VOLTAGE));
+            (voltage_limit >= 0.)
+                ? VoltageConfigs{}
+                      .WithPeakForwardVoltage(
+                          units::voltage::volt_t{voltage_limit})
+                      .WithPeakReverseVoltage(
+                          units::voltage::volt_t{-voltage_limit})
+                : VoltageConfigs{});
+}
 
 
 // --- Program defaults --------------------------------------------------------
@@ -289,6 +233,8 @@ private:
         }
     }
 
+    void parameterizeMotorConfigs();
+
     void initSerial(const char*);
     void sendSerialPowerDown();
     void sendSerialPowerUp();
@@ -317,6 +263,11 @@ private:
     TalonFX track_left;
     TalonFX trencher;
     TalonFX hopper_belt;
+
+    TalonFXConfiguration track_right_config;
+    TalonFXConfiguration track_left_config;
+    TalonFXConfiguration trencher_config;
+    TalonFXConfiguration hopper_belt_config;
 
     TalonFXPubSub track_right_pub_sub;
     TalonFXPubSub track_left_pub_sub;
@@ -404,9 +355,14 @@ Phoenix6Driver::Phoenix6Driver() :
         250ms,
         [this]() { this->pub_motor_fault_cb(); })}
 {
+    this->parameterizeMotorConfigs();
+
     std::string arduino_device;
-    this->declare_parameter("arduino_device", DEFAULT_ARDUINO_DEVICE);
-    this->get_parameter("arduino_device", arduino_device);
+    declare_param<std::string>(
+        this,
+        "arduino_device",
+        arduino_device,
+        DEFAULT_ARDUINO_DEVICE);
 
     RCLCPP_INFO(
         this->get_logger(),
@@ -430,6 +386,95 @@ Phoenix6Driver::~Phoenix6Driver()
     this->closeSerial();
 }
 
+
+void Phoenix6Driver::parameterizeMotorConfigs()
+{
+    double kP;
+    double kI;
+    double kD;
+    double kV;
+    double neutral_deadband;
+    double stator_current_limit;
+    double supply_current_limit;
+    double voltage_limit;
+    bool neutral_brake = false;
+
+    declare_param(this, "common.kP", kP, TFX_COMMON_KP);
+    declare_param(this, "common.kI", kI, TFX_COMMON_KI);
+    declare_param(this, "common.kD", kD, TFX_COMMON_KD);
+    declare_param(this, "common.kV", kV, TFX_COMMON_KV);
+    declare_param(
+        this,
+        "common.neutral_deadband",
+        neutral_deadband,
+        TFX_COMMON_NEUTRAL_DEADBAND);
+    declare_param(this, "common.neutral_brake", neutral_brake, false);
+    declare_param(
+        this,
+        "common.stator_current_limit",
+        stator_current_limit,
+        TFX_COMMON_STATOR_CURRENT_LIMIT);
+    declare_param(
+        this,
+        "common.supply_current_limit",
+        supply_current_limit,
+        TFX_COMMON_SUPPLY_CURRENT_LIMIT);
+    declare_param(
+        this,
+        "common.voltage_limit",
+        voltage_limit,
+        TFX_COMMON_PEAK_VOLTAGE);
+
+    // std::cout << kP << ", " << kI << ", " << kD << ", " << kV << ", "
+    //           << neutral_deadband << ", " << neutral_brake << ", "
+    //           << stator_current_limit << ", " << supply_current_limit << ", "
+    //           << voltage_limit << std::endl;
+
+    this->track_left_config = buildTalonConfig(
+        kP,
+        kI,
+        kD,
+        kV,
+        neutral_deadband,
+        neutral_brake ? NeutralModeValue::Brake : NeutralModeValue::Coast,
+        InvertedValue::Clockwise_Positive,
+        stator_current_limit,
+        supply_current_limit,
+        voltage_limit);
+    this->track_right_config = buildTalonConfig(
+        kP,
+        kI,
+        kD,
+        kV,
+        neutral_deadband,
+        neutral_brake ? NeutralModeValue::Brake : NeutralModeValue::Coast,
+        InvertedValue::CounterClockwise_Positive,
+        stator_current_limit,
+        supply_current_limit,
+        voltage_limit);
+    this->trencher_config = buildTalonConfig(
+        kP,
+        kI,
+        kD,
+        kV,
+        neutral_deadband,
+        neutral_brake ? NeutralModeValue::Brake : NeutralModeValue::Coast,
+        InvertedValue::Clockwise_Positive,
+        stator_current_limit,
+        supply_current_limit,
+        voltage_limit);
+    this->hopper_belt_config = buildTalonConfig(
+        kP,
+        kI,
+        kD,
+        kV,
+        neutral_deadband,
+        neutral_brake ? NeutralModeValue::Brake : NeutralModeValue::Coast,
+        InvertedValue::Clockwise_Positive,
+        stator_current_limit,
+        supply_current_limit,
+        voltage_limit);
+}
 
 void Phoenix6Driver::initSerial(const char* port)
 {
@@ -534,16 +579,16 @@ void Phoenix6Driver::feed_watchdog_status(int32_t status)
 
 void Phoenix6Driver::configure_motors_cb(units::time::second_t timeout)
 {
-    trencher.GetConfigurator().Apply(TRENCHER_CONFIG, timeout);
+    trencher.GetConfigurator().Apply(this->trencher_config, timeout);
     trencher.ClearStickyFaults();
 
-    hopper_belt.GetConfigurator().Apply(HOPPER_BELT_CONFIG, timeout);
+    hopper_belt.GetConfigurator().Apply(this->hopper_belt_config, timeout);
     hopper_belt.ClearStickyFaults();
 
-    track_right.GetConfigurator().Apply(RIGHT_TRACK_CONFIG, timeout);
+    track_right.GetConfigurator().Apply(this->track_right_config, timeout);
     track_right.ClearStickyFaults();
 
-    track_left.GetConfigurator().Apply(LFET_TRACK_CONFIG, timeout);
+    track_left.GetConfigurator().Apply(this->track_left_config, timeout);
     track_left.ClearStickyFaults();
 
     for (size_t i = 0; i < NUM_MOTORS; i++)

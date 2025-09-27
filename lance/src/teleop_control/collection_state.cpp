@@ -92,8 +92,21 @@ double HopperState::miningTargetMotorPosition() const
 
 double HopperState::offloadTargetMotorPosition() const
 {
+    if(this->occupied_delta_m() > 0.)
+    {
+        return hopper_belt_mps_to_motor_rps(
+            std::max(this->high_pos_m + this->offload_len_m, this->belt_pos_m));
+    }
+    else
+    {
+        return hopper_belt_mps_to_motor_rps(this->belt_pos_m);
+    }
+}
+
+double HopperState::calcOffloadTargetMotorPosition(double beg_motor_pos) const
+{
     return hopper_belt_mps_to_motor_rps(
-        std::max(this->high_pos_m + this->offload_len_m, this->belt_pos_m));
+        hopper_belt_motor_rps_to_belt_mps(beg_motor_pos) + this->offload_len_m);
 }
 
 

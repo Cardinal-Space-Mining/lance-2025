@@ -37,7 +37,7 @@ static double clamp_double(double x, double a, double b)
 class Battery
 {
 public:
-    Battery(double nominal_voltage = 12.0, double internal_resistance = 0.02) :
+    Battery(double nominal_voltage = 16.0, double internal_resistance = 0.02) :
         nominal_voltage_(nominal_voltage),
         internal_resistance_(internal_resistance)
     {
@@ -62,10 +62,10 @@ class FalconMotorSim
 public:
     FalconMotorSim(
         const std::string& name,
+        double inertia = 5e-5,
         double kv_rpm_per_volt = 531.7,
         double kt_nm_per_amp = 0.0184,
         double resistance_ohm = 12.0 / 257.0,
-        double inertia = 0.0005,
         double damping = 0.002) :
         name_(name),
         kv_rpm_per_volt_(kv_rpm_per_volt),
@@ -290,7 +290,7 @@ public:
     PhoenixPhysicalSimulator() :
         Node("phoenix_physical_simulator"),
         qos_{rclcpp::SystemDefaultsQoS()},
-        battery_(12.0, 0.02)  // 20mΩ internal resistance
+        battery_(16.0, 0.01)  // 20mΩ internal resistance
     {
         motor_names_ = {"track_right", "track_left", "trencher", "hopper_belt"};
         for (const auto& name : motor_names_)
@@ -316,7 +316,7 @@ public:
             qos_);
 
         timer_ = this->create_wall_timer(
-            5ms,
+            1ms,
             std::bind(&PhoenixPhysicalSimulator::timer_callback, this));
 
         RCLCPP_INFO(
@@ -367,7 +367,7 @@ private:
 
     void timer_callback()
     {
-        double dt = 0.005;
+        double dt = 0.001;
         double total_current = 0.0;
 
         for (auto& kv : motors_)
@@ -416,7 +416,7 @@ private:
 
     rclcpp::QoS qos_;
     Battery battery_;
-    double last_bus_voltage_ = 12.0;
+    double last_bus_voltage_ = 16.0;
 
     std::vector<std::string> motor_names_;
     std::unordered_map<std::string, std::shared_ptr<FalconMotorSim>> motors_;
