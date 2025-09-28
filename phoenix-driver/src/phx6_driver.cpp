@@ -15,6 +15,7 @@
 #include <std_msgs/msg/int32.hpp>
 
 #define Phoenix_No_WPI  // remove WPI dependencies
+#include <ctre/phoenix/cci/Diagnostics_CCI.h>
 #include <ctre/phoenix6/TalonFX.hpp>
 #include <ctre/phoenix6/unmanaged/Unmanaged.hpp>
 
@@ -711,6 +712,8 @@ void Phoenix6Driver::execute_ctrl_cb(TalonFX& motor, const TalonCtrl& msg)
 
 int main(int argc, char** argv)
 {
+    c_Phoenix_Diagnostics_Create_On_Port(1250);
+
     ctre::phoenix::unmanaged::LoadPhoenix();
     std::cout << "Loaded Phoenix 6 Unmanaged" << std::endl;
 
@@ -722,6 +725,8 @@ int main(int argc, char** argv)
 
     RCLCPP_INFO(node->get_logger(), "Driver node (Phoenix6) shutting down...");
     rclcpp::shutdown();
+
+    c_Phoenix_Diagnostics_Dispose();
 
     return EXIT_SUCCESS;
 }

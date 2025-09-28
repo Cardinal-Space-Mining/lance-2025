@@ -43,7 +43,28 @@
                 "bag_record": "telemetry"
             }
         },
-
+        "robot":
+        {
+            "pragma:action_overrides":
+            {
+                "teleop_control": "enabled",
+                "phoenix5_driver": "enabled",
+                "phoenix6_driver": "enabled",
+                "robot_tf": "lance",
+                "bag_record": "telemetry"
+            }
+        },
+        "system-test":
+        {
+            "pragma:derived": "robot",
+            "pragma:action_overrides":
+            {
+                "bag_record": null,
+                "joy_node": "xbox",
+                "robot_status": "enabled",
+                "foxglove_bridge": "test"
+            }
+        },
         "motor-dev":
         {
             "pragma:action_overrides":

@@ -10,7 +10,7 @@
 #define Phoenix_No_WPI  // remove WPI dependencies
 #include <ctre/Phoenix.h>
 #include <ctre/phoenix/cci/Unmanaged_CCI.h>
-#include <ctre/phoenix/platform/Platform.hpp>
+#include <ctre/phoenix/cci/Diagnostics_CCI.h>
 #include <ctre/phoenix/unmanaged/Unmanaged.h>
 
 #include <phoenix_ros_driver/msg/talon_ctrl.hpp>
@@ -281,7 +281,8 @@ void Phoenix5Driver::execute_ctrl(TalonSRX& motor, const TalonCtrl& msg)
 
 int main(int argc, char** argv)
 {
-    c_SetPhoenixDiagnosticsStartTime(-1);
+    c_Phoenix_Diagnostics_Create_On_Port(1251);
+
     ctre::phoenix::unmanaged::Unmanaged::LoadPhoenix();
     std::cout << "Loaded Phoenix 5 Unmanaged" << std::endl;
 
@@ -293,6 +294,8 @@ int main(int argc, char** argv)
 
     RCLCPP_INFO(node->get_logger(), "Driver node (Phoenix5) shutting down...");
     rclcpp::shutdown();
+
+    c_Phoenix_Diagnostics_Dispose();
 
     return EXIT_SUCCESS;
 }
