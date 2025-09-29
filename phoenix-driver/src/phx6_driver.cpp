@@ -23,109 +23,12 @@
 #include <phoenix_ros_driver/msg/talon_info.hpp>
 #include <phoenix_ros_driver/msg/talon_faults.hpp>
 
+#include "ros_utils.hpp"
+#include "phx6_utils.hpp"
 
-#define phx6 ctre::phoenix6
+
+using namespace util;
 using namespace std::chrono_literals;
-
-using phoenix_ros_driver::msg::TalonCtrl;
-using phoenix_ros_driver::msg::TalonInfo;
-using phoenix_ros_driver::msg::TalonFaults;
-
-using phx6::hardware::TalonFX;
-using phx6::configs::TalonFXConfiguration;
-using phx6::configs::Slot0Configs;
-using phx6::configs::MotorOutputConfigs;
-using phx6::configs::FeedbackConfigs;
-using phx6::configs::CurrentLimitsConfigs;
-using phx6::configs::VoltageConfigs;
-using phx6::signals::NeutralModeValue;
-using phx6::signals::InvertedValue;
-using phx6::signals::FeedbackSensorSourceValue;
-
-
-// --- util --------------------------------------------------------------------
-
-template<typename T>
-inline void declare_param(
-    rclcpp::Node* node,
-    const std::string param_name,
-    T& param,
-    const T& default_value)
-{
-    node->declare_parameter(param_name, default_value);
-    node->get_parameter(param_name, param);
-}
-
-
-// --- Ros message serialization helpers ---------------------------------------
-
-TalonInfo& operator<<(TalonInfo& info, TalonFX& m)
-{
-    info.position = m.GetPosition().GetValueAsDouble();
-    info.velocity = m.GetVelocity().GetValueAsDouble();
-    info.acceleration = m.GetAcceleration().GetValueAsDouble();
-
-    info.device_temp = m.GetDeviceTemp().GetValueAsDouble();
-    info.processor_temp = m.GetProcessorTemp().GetValueAsDouble();
-    info.bus_voltage = m.GetSupplyVoltage().GetValueAsDouble();
-    info.supply_current = m.GetSupplyCurrent().GetValueAsDouble();
-
-    info.output_percent = m.GetDutyCycle().GetValueAsDouble();
-    info.output_voltage = m.GetMotorVoltage().GetValueAsDouble();
-    info.output_current = m.GetStatorCurrent().GetValueAsDouble();
-
-    info.motor_state =
-        static_cast<uint8_t>(m.GetMotorOutputStatus().GetValue().value);
-    info.bridge_mode =
-        static_cast<uint8_t>(m.GetBridgeOutput().GetValue().value);
-    info.control_mode =
-        static_cast<uint8_t>(m.GetControlMode().GetValue().value);
-    info.enabled = static_cast<bool>(m.GetDeviceEnable().GetValue().value);
-
-    return info;
-}
-
-TalonFaults& operator<<(TalonFaults& faults, TalonFX& m)
-{
-    faults.faults = m.GetFaultField().GetValue();
-    faults.sticky_faults = m.GetStickyFaultField().GetValue();
-
-    faults.hardware_fault = m.GetFault_Hardware().GetValue();
-    faults.proc_temp_fault = m.GetFault_ProcTemp().GetValue();
-    faults.device_temp_fault = m.GetFault_DeviceTemp().GetValue();
-    faults.undervoltage_fault = m.GetFault_Undervoltage().GetValue();
-    faults.boot_fault = m.GetFault_BootDuringEnable().GetValue();
-    faults.unliscensed_fault = m.GetFault_UnlicensedFeatureInUse().GetValue();
-    faults.bridge_brownout_fault = m.GetFault_BridgeBrownout().GetValue();
-    faults.overvoltage_fault = m.GetFault_OverSupplyV().GetValue();
-    faults.unstable_voltage_fault = m.GetFault_UnstableSupplyV().GetValue();
-    faults.stator_current_limit_fault = m.GetFault_StatorCurrLimit().GetValue();
-    faults.supply_current_limit_fault = m.GetFault_SupplyCurrLimit().GetValue();
-    faults.static_brake_disabled_fault =
-        m.GetFault_StaticBrakeDisabled().GetValue();
-
-    faults.sticky_hardware_fault = m.GetStickyFault_Hardware().GetValue();
-    faults.sticky_proc_temp_fault = m.GetStickyFault_ProcTemp().GetValue();
-    faults.sticky_device_temp_fault = m.GetStickyFault_DeviceTemp().GetValue();
-    faults.sticky_undervoltage_fault =
-        m.GetStickyFault_Undervoltage().GetValue();
-    faults.sticky_boot_fault = m.GetStickyFault_BootDuringEnable().GetValue();
-    faults.sticky_unliscensed_fault =
-        m.GetStickyFault_UnlicensedFeatureInUse().GetValue();
-    faults.sticky_bridge_brownout_fault =
-        m.GetStickyFault_BridgeBrownout().GetValue();
-    faults.sticky_overvoltage_fault = m.GetStickyFault_OverSupplyV().GetValue();
-    faults.sticky_unstable_voltage_fault =
-        m.GetStickyFault_UnstableSupplyV().GetValue();
-    faults.sticky_stator_current_limit_fault =
-        m.GetStickyFault_StatorCurrLimit().GetValue();
-    faults.sticky_supply_current_limit_fault =
-        m.GetStickyFault_SupplyCurrLimit().GetValue();
-    faults.sticky_static_brake_disabled_fault =
-        m.GetStickyFault_StaticBrakeDisabled().GetValue();
-
-    return faults;
-}
 
 
 // --- Motor configs -----------------------------------------------------------
@@ -221,6 +124,9 @@ inline TalonFXConfiguration buildTalonConfig(
 
 class Phoenix6Driver : public rclcpp::Node
 {
+    using Int8Msg = std_msgs::msg::Int8;
+    using Int32Msg = std_msgs::msg::Int32;
+
 public:
     Phoenix6Driver();
     ~Phoenix6Driver();
@@ -248,15 +154,15 @@ private:
     void pub_motor_info_cb();
     void pub_motor_fault_cb();
     // Function to execute control commands on a motor
-    void execute_ctrl_cb(TalonFX& motor, const TalonCtrl& msg);
+    void execute_ctrl_cb(TalonFX& motor, const TalonCtrlMsg& msg);
 
 private:
     struct TalonFXPubSub
     {
-        rclcpp::Publisher<TalonInfo>::SharedPtr info_pub;
-        rclcpp::Publisher<TalonFaults>::SharedPtr faults_pub;
+        RclPubPtr<TalonInfoMsg> info_pub;
+        RclPubPtr<TalonFaultsMsg> faults_pub;
 
-        rclcpp::Subscription<TalonCtrl>::SharedPtr ctrl_sub;
+        RclSubPtr<TalonCtrlMsg> ctrl_sub;
     };
 
 private:
@@ -275,11 +181,11 @@ private:
     TalonFXPubSub trencher_pub_sub;
     TalonFXPubSub hopper_belt_pub_sub;
 
-    rclcpp::Publisher<std_msgs::msg::Int8>::SharedPtr relay_state_pub;
-    rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr watchdog_status_sub;
+    RclPubPtr<Int8Msg> relay_state_pub;
+    RclSubPtr<Int32Msg> watchdog_status_sub;
 
-    rclcpp::TimerBase::SharedPtr info_pub_timer;
-    rclcpp::TimerBase::SharedPtr fault_pub_timer;
+    RclTimerPtr info_pub_timer;
+    RclTimerPtr fault_pub_timer;
 
     std::array<std::reference_wrapper<TalonFX>, NUM_MOTORS> motors{
         {track_right, track_left, trencher, hopper_belt}
@@ -306,16 +212,16 @@ private:
 #define INIT_TALON_PUB_SUB(device)                         \
     device##_pub_sub                                       \
     {                                                      \
-        this->create_publisher<TalonInfo>(                 \
+        this->create_publisher<TalonInfoMsg>(                 \
             ROBOT_TOPIC(#device "/info"),                  \
             rclcpp::SensorDataQoS{}),                      \
-        this->create_publisher<TalonFaults>(               \
+        this->create_publisher<TalonFaultsMsg>(               \
             ROBOT_TOPIC(#device "/faults"),                \
             rclcpp::SensorDataQoS{}),                      \
-        this->create_subscription<TalonCtrl>(              \
+        this->create_subscription<TalonCtrlMsg>(              \
             ROBOT_TOPIC(#device "/ctrl"),                  \
             TALON_CTRL_SUB_QOS,                            \
-            [this](const TalonCtrl& msg)                   \
+            [this](const TalonCtrlMsg& msg)                   \
             { this->execute_ctrl_cb(this->device, msg); }) \
 }
 // clang-format on
@@ -333,14 +239,14 @@ Phoenix6Driver::Phoenix6Driver() :
     INIT_TALON_PUB_SUB(trencher),
     INIT_TALON_PUB_SUB(hopper_belt),
 
-    relay_state_pub{this->create_publisher<std_msgs::msg::Int8>(
+    relay_state_pub{this->create_publisher<Int8Msg>(
         ROBOT_TOPIC("relay_status"),
         rclcpp::SensorDataQoS{})},
 #if !DISABLE_WATCHDOG
-    watchdog_status_sub{this->create_subscription<std_msgs::msg::Int32>(
+    watchdog_status_sub{this->create_subscription<Int32Msg>(
         ROBOT_TOPIC("watchdog_status"),
         rclcpp::SensorDataQoS{},
-        [this](const std_msgs::msg::Int32& msg)
+        [this](const Int32Msg& msg)
         { this->feed_watchdog_status(msg.data); })},
 #endif
     info_pub_timer{this->create_wall_timer(
@@ -539,14 +445,14 @@ void Phoenix6Driver::sendSerialPowerDown()
 
     RCLCPP_INFO(this->get_logger(), "Sending serial power down command...");
     (void)write(this->serial_port, "0", 1);
-    this->relay_state_pub->publish(std_msgs::msg::Int8{}.set__data(0));
+    this->relay_state_pub->publish(Int8Msg{}.set__data(0));
 }
 
 void Phoenix6Driver::sendSerialPowerUp()
 {
     RCLCPP_INFO(this->get_logger(), "Sending serial power up command...");
     (void)write(this->serial_port, "1", 1);
-    this->relay_state_pub->publish(std_msgs::msg::Int8{}.set__data(1));
+    this->relay_state_pub->publish(Int8Msg{}.set__data(1));
 
     this->configure_motors_cb(TALONFX_MAX_BOOTUP_DELAY);
     this->neutralAll();
@@ -602,7 +508,7 @@ void Phoenix6Driver::configure_motors_cb(units::time::second_t timeout)
 
 void Phoenix6Driver::pub_motor_info_cb()
 {
-    TalonInfo talon_info_msg{};
+    TalonInfoMsg talon_info_msg{};
     talon_info_msg.header.stamp = this->get_clock()->now();
 
     bool any_disabled = false;
@@ -633,7 +539,7 @@ void Phoenix6Driver::pub_motor_info_cb()
 
 void Phoenix6Driver::pub_motor_fault_cb()
 {
-    TalonFaults talon_faults_msg{};
+    TalonFaultsMsg talon_faults_msg{};
     talon_faults_msg.header.stamp = this->get_clock()->now();
 
     for (size_t i = 0; i < NUM_MOTORS; i++)
@@ -643,7 +549,7 @@ void Phoenix6Driver::pub_motor_fault_cb()
     }
 }
 
-void Phoenix6Driver::execute_ctrl_cb(TalonFX& motor, const TalonCtrl& msg)
+void Phoenix6Driver::execute_ctrl_cb(TalonFX& motor, const TalonCtrlMsg& msg)
 {
     if (this->is_disabled)
     {
@@ -653,19 +559,19 @@ void Phoenix6Driver::execute_ctrl_cb(TalonFX& motor, const TalonCtrl& msg)
     {
         switch (msg.mode)
         {
-            case TalonCtrl::PERCENT_OUTPUT:
+            case TalonCtrlMsg::PERCENT_OUTPUT:
             {
                 motor.SetControl(phx6::controls::DutyCycleOut{msg.value});
                 break;
             }
-            case TalonCtrl::POSITION:
+            case TalonCtrlMsg::POSITION:
             {
                 motor.SetControl(
                     phx6::controls::PositionVoltage{
                         units::angle::turn_t{msg.value}});
                 break;
             }
-            case TalonCtrl::VELOCITY:
+            case TalonCtrlMsg::VELOCITY:
             {
                 motor.SetControl(
                     phx6::controls::VelocityVoltage{
@@ -673,35 +579,32 @@ void Phoenix6Driver::execute_ctrl_cb(TalonFX& motor, const TalonCtrl& msg)
                             msg.value}});
                 break;
             }
-            case TalonCtrl::CURRENT:
-            {
-                // torque/current control requires phoenix pro
-                break;
-            }
-            case TalonCtrl::VOLTAGE:
+            case TalonCtrlMsg::VOLTAGE:
             {
                 motor.SetControl(
                     phx6::controls::VoltageOut{
                         units::voltage::volt_t{msg.value}});
                 break;
             }
-            case TalonCtrl::DISABLED:
+            case TalonCtrlMsg::DISABLED:
             {
                 motor.SetControl(phx6::controls::NeutralOut());
                 break;
             }
-            case TalonCtrl::FOLLOWER:
-            case TalonCtrl::MOTION_MAGIC:
-            case TalonCtrl::MOTION_PROFILE:
-            case TalonCtrl::MOTION_PROFILE_ARC:
-            {
-                break;  // idk
-            }
-            case TalonCtrl::MUSIC_TONE:
+            case TalonCtrlMsg::MUSIC_TONE:
             {
                 motor.SetControl(
                     phx6::controls::MusicTone{
                         units::frequency::hertz_t{msg.value}});
+                break;
+            }
+            case TalonCtrlMsg::CURRENT:
+            case TalonCtrlMsg::FOLLOWER:
+            case TalonCtrlMsg::MOTION_MAGIC:
+            case TalonCtrlMsg::MOTION_PROFILE:
+            case TalonCtrlMsg::MOTION_PROFILE_ARC:
+            default:
+            {
                 break;
             }
         }

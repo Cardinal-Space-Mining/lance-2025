@@ -65,8 +65,7 @@ target_link_libraries(phx5_driver
     ${PHX5_LIB_DIR}/libCTRE_PhoenixTools.so)
 ament_target_dependencies(phx5_driver
     rclcpp
-    std_msgs
-    sensor_msgs)
+    std_msgs)
 target_compile_features(phx5_driver PUBLIC c_std_99 cxx_std_20)     # not necessary but silences a lot of warnings
 
 # --- Phoenix 6 Driver ---------------------------------------------------------
@@ -77,6 +76,7 @@ ament_target_dependencies(phx6_driver
     rclcpp
     std_msgs
     phoenix6)
+target_compile_features(phx6_driver PUBLIC c_std_99 cxx_std_20)     # not necessary but silences a lot of warnings
 
 # --- Falcon Test Node ---------------------------------------------------------
 add_executable(falcon_test src/falcon_test.cpp)

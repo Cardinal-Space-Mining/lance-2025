@@ -398,20 +398,20 @@ private:
         act_faults.header.stamp = now;
         publisher_faults_["hopper_act"]->publish(act_faults);
 
-        sensor_msgs::msg::JointState js;
-        js.header.stamp = now;
-        for (auto& kv : motors_)
-        {
-            js.name.push_back(kv.first + "_joint");
-            js.position.push_back(kv.second->position_);
-            js.velocity.push_back(kv.second->velocity_);
-            js.effort.push_back(kv.second->output_percent_ * 4.69);
-        }
-        js.name.push_back("hopper_act_joint");
-        js.position.push_back(linear_act_->position_);
-        js.velocity.push_back(linear_act_->velocity_);
-        js.effort.push_back(linear_act_->output_percent_);
-        joint_pub_->publish(js);
+        // sensor_msgs::msg::JointState js;
+        // js.header.stamp = now;
+        // for (auto& kv : motors_)
+        // {
+        //     js.name.push_back(kv.first + "_joint");
+        //     js.position.push_back(kv.second->position_);
+        //     js.velocity.push_back(kv.second->velocity_);
+        //     js.effort.push_back(kv.second->output_percent_ * 4.69);
+        // }
+        // js.name.push_back("hopper_act_joint");
+        // js.position.push_back(linear_act_->position_);
+        // js.velocity.push_back(linear_act_->velocity_);
+        // js.effort.push_back(linear_act_->output_percent_);
+        // joint_pub_->publish(js);
     }
 
     rclcpp::QoS qos_;

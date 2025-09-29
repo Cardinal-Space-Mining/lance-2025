@@ -64,6 +64,12 @@ constexpr inline T mining_depth_to_linear_actuator_clamped(const T& depth_m)
 }
 
 template<typename T>
+constexpr inline T linear_actuator_to_joint_angle(const T& actuator_normalized_pos)
+{
+    return (M_PI / 180.) * (15. + actuator_normalized_pos * -30.);
+}
+
+template<typename T>
 constexpr inline T mining_depth_to_trencher_impact_volume(const T& depth_m)
 {
     constexpr double R = TRENCHER_IMPACT_EFFECTIVE_RADIUS;

@@ -140,12 +140,6 @@
         },
         {
           "timestampMethod": "receiveTime",
-          "value": "/lance/hopper_act/ctrl.value",
-          "enabled": true,
-          "color": "#cad660"
-        },
-        {
-          "timestampMethod": "receiveTime",
           "value": "/lance/track_left/info.velocity",
           "enabled": true,
           "color": "#4e98e2"
@@ -218,7 +212,83 @@
       "isSynced": true,
       "showPoints": false
     },
-    "Plot!1spl1j7": {
+    "3D!wl899f": {
+      "cameraState": {
+        "perspective": true,
+        "distance": 2.3196444259997104,
+        "phi": 53.94230769230853,
+        "thetaOffset": -157.81882591093026,
+        "targetOffset": [
+          -0.06641931035778242,
+          -0.384490177770249,
+          -2.140175571845389e-18
+        ],
+        "target": [
+          0,
+          0,
+          0
+        ],
+        "targetOrientation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "fovy": 45,
+        "near": 0.5,
+        "far": 5000
+      },
+      "followMode": "follow-pose",
+      "scene": {
+        "transforms": {
+          "visible": false,
+          "showLabel": false
+        }
+      },
+      "transforms": {},
+      "topics": {
+        "/robot_description": {
+          "visible": true,
+          "displayMode": "collision",
+          "fallbackColor": "#5a5b5c"
+        }
+      },
+      "layers": {
+        "grid": {
+          "visible": true,
+          "drawBehind": false,
+          "frameLocked": true,
+          "label": "Grid",
+          "instanceId": "e0548b0c-65ef-4673-8b13-751acd3a20d8",
+          "layerId": "foxglove.Grid",
+          "size": 10,
+          "divisions": 10,
+          "lineWidth": 1,
+          "color": "#248eff",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      "publish": {
+        "type": "point",
+        "poseTopic": "/move_base_simple/goal",
+        "pointTopic": "/clicked_point",
+        "poseEstimateTopic": "/initialpose",
+        "poseEstimateXDeviation": 0.5,
+        "poseEstimateYDeviation": 0.5,
+        "poseEstimateThetaDeviation": 0.26179939
+      },
+      "imageMode": {}
+    },
+    "Plot!wy5z8y": {
       "paths": [
         {
           "timestampMethod": "receiveTime",
@@ -371,13 +441,13 @@
     "3D!3o2i4gc": {
       "cameraState": {
         "perspective": true,
-        "distance": 10.807201753194297,
-        "phi": 32.79038736655774,
-        "thetaOffset": -127.37261949904833,
+        "distance": 5.006881794710072,
+        "phi": 71.78416523800344,
+        "thetaOffset": -161.9153481200757,
         "targetOffset": [
-          -1.259398917383792,
-          -0.3336199011812358,
-          -9.683191477063898e-17
+          -0.04335038402260994,
+          -0.701006188595169,
+          -3.688577929300941e-17
         ],
         "target": [
           0,
@@ -413,7 +483,7 @@
           "visible": false
         },
         "frame:left_track_link": {
-          "visible": false
+          "visible": true
         },
         "frame:lidar_link_inv_rotated": {
           "visible": false
@@ -422,9 +492,15 @@
           "visible": false
         },
         "frame:right_track_link": {
-          "visible": false
+          "visible": true
         },
-        "frame:collection_link": {}
+        "frame:collection_link": {
+          "rpyCoefficient": [
+            0,
+            14.999999999999998,
+            0
+          ]
+        }
       },
       "topics": {
         "/cardinal_perception/filtered_scan": {
@@ -474,7 +550,7 @@
           "color": "#ff0084ff"
         },
         "/robot_description": {
-          "visible": false,
+          "visible": true,
           "displayMode": "collision",
           "fallbackColor": "#7e7e7e"
         },
@@ -530,7 +606,7 @@
         "poseEstimateThetaDeviation": 0.26179939
       },
       "imageMode": {},
-      "followTf": "odom"
+      "followTf": "base_link"
     },
     "Plot!4kazw24": {
       "paths": [
@@ -824,7 +900,7 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_left/info.velocity",
-          "enabled": true,
+          "enabled": false,
           "color": "#4e98e2"
         },
         {
@@ -866,7 +942,7 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_left/info.enabled",
-          "enabled": false,
+          "enabled": true,
           "color": "#4e98e2"
         },
         {
@@ -896,13 +972,13 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_left/ctrl.value",
-          "enabled": true,
+          "enabled": false,
           "color": "#a395e2"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_left/info.position",
-          "enabled": true,
+          "enabled": false,
           "color": "#cad660"
         }
       ],
@@ -921,7 +997,7 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/trencher/info.velocity",
-          "enabled": true,
+          "enabled": false,
           "color": "#4e98e2"
         },
         {
@@ -939,7 +1015,7 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/trencher/info.bus_voltage",
-          "enabled": false,
+          "enabled": true,
           "color": "#5cd6a9"
         },
         {
@@ -963,7 +1039,7 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/trencher/info.enabled",
-          "enabled": false,
+          "enabled": true,
           "color": "#4e98e2"
         },
         {
@@ -993,13 +1069,13 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/trencher/ctrl.value",
-          "enabled": true,
+          "enabled": false,
           "color": "#a395e2"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/trencher/info.position",
-          "enabled": true,
+          "enabled": false,
           "color": "#cad660"
         }
       ],
@@ -1018,7 +1094,7 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_right/info.velocity",
-          "enabled": true,
+          "enabled": false,
           "color": "#4e98e2"
         },
         {
@@ -1036,7 +1112,7 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_right/info.bus_voltage",
-          "enabled": false,
+          "enabled": true,
           "color": "#5cd6a9"
         },
         {
@@ -1060,7 +1136,7 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_right/info.enabled",
-          "enabled": false,
+          "enabled": true,
           "color": "#4e98e2"
         },
         {
@@ -1090,13 +1166,13 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_right/ctrl.value",
-          "enabled": true,
+          "enabled": false,
           "color": "#a395e2"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/track_right/info.position",
-          "enabled": true,
+          "enabled": false,
           "color": "#cad660"
         }
       ],
@@ -1115,7 +1191,7 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/hopper_belt/info.velocity",
-          "enabled": true,
+          "enabled": false,
           "color": "#4e98e2"
         },
         {
@@ -1133,7 +1209,7 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/hopper_belt/info.bus_voltage",
-          "enabled": false,
+          "enabled": true,
           "color": "#5cd6a9"
         },
         {
@@ -1157,7 +1233,7 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/hopper_belt/info.enabled",
-          "enabled": false,
+          "enabled": true,
           "color": "#4e98e2"
         },
         {
@@ -1187,13 +1263,13 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/hopper_belt/ctrl.value",
-          "enabled": true,
+          "enabled": false,
           "color": "#a395e2"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/hopper_belt/info.position",
-          "enabled": true,
+          "enabled": false,
           "color": "#cad660"
         }
       ],
@@ -1224,19 +1300,19 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/hopper_act/info.output_current",
-          "enabled": true,
+          "enabled": false,
           "color": "#f7df71"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/hopper_act/info.bus_voltage",
-          "enabled": false,
+          "enabled": true,
           "color": "#5cd6a9"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/hopper_act/info.supply_current",
-          "enabled": true,
+          "enabled": false,
           "color": "#61cbff"
         },
         {
@@ -1254,7 +1330,7 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/hopper_act/info.enabled",
-          "enabled": false,
+          "enabled": true,
           "color": "#4e98e2"
         },
         {
@@ -3004,7 +3080,12 @@
               "splitPercentage": 15.645796956847095
             },
             "second": {
-              "first": "Plot!1spl1j7",
+              "first": {
+                "first": "3D!wl899f",
+                "second": "Plot!wy5z8y",
+                "direction": "column",
+                "splitPercentage": 31.120891245064637
+              },
               "second": "StateTransitions!3qedham",
               "direction": "column",
               "splitPercentage": 65.6298600311042
@@ -3054,7 +3135,7 @@
               "splitPercentage": 31.15264797507788
             },
             "direction": "row",
-            "splitPercentage": 70.58845155550327
+            "splitPercentage": 72.1311475409836
           }
         },
         {

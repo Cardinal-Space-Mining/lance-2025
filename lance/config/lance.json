@@ -485,7 +485,10 @@
     "phoenix5_driver":
     {
         "pragma:default": null,
-        "enabled": {}
+        "enabled":
+        {
+            "diagnostics_server_port": 1251
+        }
     },
     "phoenix6_driver":
     {
@@ -707,6 +710,99 @@
                                 "rpy": [0, 0, 2.09439510239]
                             }
                         }
+                    }
+                },
+                "assets":
+                {
+                    "frame_link": {
+                        "collision": [
+                            {
+                                "origin": {
+                                    "xyz": [ 0.1511222, 0.304108825, 0.36666339 ]
+                                },
+                                "geometry": {
+                                    "type": "box",
+                                    "size": [ 0.30495059, 0.07924165, 0.20322540 ]
+                                }
+                            },
+                            {
+                                "origin": {
+                                    "xyz": [ 0.1511222, -0.304108825, 0.36666339 ]
+                                },
+                                "geometry": {
+                                    "type": "box",
+                                    "size": [ 0.30495059, 0.07924165, 0.20322540 ]
+                                }
+                            }
+                        ]
+                    },
+                    "left_track_link": {
+                        "collision": {
+                            "origin": {
+                                "xyz": [ -0.220493525, 0.023822025, -0.048669135 ]
+                            },
+                            "geometry": {
+                                "type": "box",
+                                "size": [ 0.74116316, 0.10161905, 0.17943783 ]
+                            }
+                        }
+                    },
+                    "right_track_link": {
+                        "collision": {
+                            "origin": {
+                                "xyz": [ -0.220493525, -0.023822025, -0.048669135 ]
+                            },
+                            "geometry": {
+                                "type": "box",
+                                "size": [ 0.74116316, 0.10161905, 0.17943783 ]
+                            }
+                        }
+                    },
+                    "collection_link": {
+                        "collision": [
+                            {
+                                "origin": {
+                                    "xyz": [ 0.340890235, 0.0, 0.119396825 ]
+                                },
+                                "geometry": {
+                                    "type": "box",
+                                    "size": [ 0.71292228, 0.46990000, 0.38611050 ]
+                                }
+                            },
+                            {
+                                "origin": {
+                                    "xyz": [ 0.76657724, 0.0, -0.010579805 ],
+                                    "rpy": [ 0.0, -0.372067876223, 0.0 ]
+                                },
+                                "geometry": {
+                                    "type": "box",
+                                    "size": [ 0.17228316, 0.26035000, 0.73220119 ]
+                                }
+                            }
+                        ]
+                    },
+                    "lidar_link":
+                    {
+                        "collision": [
+                            {
+                                "origin": { "xyz": [0, 0, -0.006] },
+                                "geometry": {
+                                    "type": "cylinder",
+                                    "radius": 0.05,
+                                    "length": 0.098
+                                }
+                            },
+                            {
+                                "origin": {
+                                     "xyz": [0, 0, -0.075],
+                                     "rpy": [0, 0, -2.09439510239]
+                                },
+                                "geometry": {
+                                    "type": "box",
+                                    "size": [ 0.10160000, 0.52897600, 0.05397500 ]
+                                }
+                            }
+                        ]
                     }
                 }
             }
