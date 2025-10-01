@@ -23,10 +23,6 @@
 #include <ctre/phoenix6/TalonFX.hpp>
 #include <ctre/phoenix6/unmanaged/Unmanaged.hpp>
 
-#include <phoenix_ros_driver/msg/talon_ctrl.hpp>
-#include <phoenix_ros_driver/msg/talon_info.hpp>
-#include <phoenix_ros_driver/msg/talon_faults.hpp>
-
 #include "ros_utils.hpp"
 #include "phx6_utils.hpp"
 
@@ -166,34 +162,18 @@ public:
     ~Phoenix6Driver();
 
 private:
-    // inline void neutralAll()
-    // {
-    //     for (auto& m : this->motors)
-    //     {
-    //         m.setNeutral();
-    //     }
-    // }
-
     void getParams(ParamConfig& buff);
     void initSerial(const ParamConfig& buff);
     void initPhx(const ParamConfig& buff);
     void initMotors(const ParamConfig& buff);
-    void initCallbacks(const ParamConfig& buff);
-
-    // void parameterizeMotorConfigs();
-
-    // void initSerial(const char*);
-    // void sendSerialPowerDown();
-    // void sendSerialPowerUp();
+    void initThread();
 
     void feed_watchdog_status(int32_t status);
-    // Function to setup motors for the robot
-    void configure_motors_cb(units::time::second_t timeout = 100_ms);
     // Periodic function for motor information updates
     void pub_motor_info_cb();
     void pub_motor_fault_cb();
-    // Function to execute control commands on a motor
-    void execute_ctrl_cb(TalonFX& motor, const TalonCtrlMsg& msg);
+
+    void handle_motor_states();
 
 private:
     SerialRelay relay;
@@ -203,17 +183,17 @@ private:
     RclPubPtr<StringMsg> op_pub;
     RclSubPtr<Int32Msg> watchdog_status_sub;
 
-    RclTimerPtr info_pub_timer;
-    RclTimerPtr fault_pub_timer;
+    std::thread motor_state_thread;
 
-    bool is_disabled = true;
-    std::chrono::system_clock::time_point last_enable_beg_time;
+    std::atomic<bool> is_disabled = true;
+    std::atomic<bool> thread_enabled = true;
+    system_clock::time_point last_enable_beg_time;
 };
 
 
 
 
-// --- Nested Class ------------------------------------------------------------
+// --- Configs -----------------------------------------------------------------
 
 TalonFXConfiguration
     Phoenix6Driver::ParamConfig::RclMotorConfig::buildFXConfig() const
@@ -231,6 +211,7 @@ TalonFXConfiguration
         this->voltage_limit);
 }
 
+// --- RclTalonFX --------------------------------------------------------------
 
 Phoenix6Driver::RclTalonFX::RclTalonFX(
     const ParamConfig::RclMotorConfig& config,
@@ -285,10 +266,7 @@ void Phoenix6Driver::RclTalonFX::setNeutral()
 {
     this->motor.SetControl(phx6::controls::NeutralOut{});
 }
-void Phoenix6Driver::RclTalonFX::setEnabled()
-{
-    this->disabled = false;
-}
+void Phoenix6Driver::RclTalonFX::setEnabled() { this->disabled = false; }
 void Phoenix6Driver::RclTalonFX::setDisabled()
 {
     this->disabled = true;
@@ -309,6 +287,7 @@ phx_::StatusCode Phoenix6Driver::RclTalonFX::applyConfig(
     return this->motor.GetConfigurator().Apply(this->config, timeout);
 }
 
+// --- Serial Relay ------------------------------------------------------------
 
 Phoenix6Driver::SerialRelay::SerialRelay(const char* device)
 {
@@ -395,8 +374,7 @@ void Phoenix6Driver::SerialRelay::disable()
 
 
 
-
-// --- Main Class --------------------------------------------------------------
+// --- Driver Node -------------------------------------------------------------
 
 Phoenix6Driver::Phoenix6Driver() :
     Node{"phoenix6_driver"},
@@ -405,47 +383,34 @@ Phoenix6Driver::Phoenix6Driver() :
         rclcpp::SensorDataQoS{})},
     op_pub{this->create_publisher<StringMsg>(
         ROBOT_TOPIC("phx6_op_status"),
-        rclcpp::SensorDataQoS{})}
+        rclcpp::SensorDataQoS{})},
+    watchdog_status_sub{this->create_subscription<Int32Msg>(
+        ROBOT_TOPIC("watchdog_status"),
+        rclcpp::SensorDataQoS{},
+        [this](const Int32Msg& msg) { this->feed_watchdog_status(msg.data); })}
 {
     ParamConfig params;
     this->getParams(params);
     this->initPhx(params);
     this->initMotors(params);
-    this->initCallbacks(params);
-
-    // this->parameterizeMotorConfigs();
-
-    // std::string arduino_device;
-    // declare_param<std::string>(
-    //     this,
-    //     "arduino_device",
-    //     arduino_device,
-    //     DEFAULT_ARDUINO_DEVICE);
-
-    // RCLCPP_INFO(
-    //     this->get_logger(),
-    //     "Using arduino device path : %s",
-    //     arduino_device.c_str());
-
-    // this->initSerial(arduino_device.c_str());
-    // this->sendSerialPowerUp();
+    this->initThread();
 
     RCLCPP_DEBUG(
         this->get_logger(),
         "Completed Phoenix6 Driver Node Initialization");
 }
-
-// #undef INIT_TALON_PUB_SUB
-
 Phoenix6Driver::~Phoenix6Driver()
 {
-    // this->sendSerialPowerDown();
-    // maybe need to pause here?
-    // this->closeSerial();
+    this->thread_enabled = false;
+    if (this->motor_state_thread.joinable())
+    {
+        this->motor_state_thread.join();
+    }
+
+    this->relay.disable();
 
     c_Phoenix_Diagnostics_Dispose();
 }
-
 
 
 void Phoenix6Driver::getParams(ParamConfig& params)
@@ -551,18 +516,10 @@ void Phoenix6Driver::initMotors(const ParamConfig& params)
     }
 }
 
-void Phoenix6Driver::initCallbacks(const ParamConfig& params)
+void Phoenix6Driver::initThread()
 {
-    this->watchdog_status_sub = this->create_subscription<Int32Msg>(
-        ROBOT_TOPIC("watchdog_status"),
-        rclcpp::SensorDataQoS{},
-        [this](const Int32Msg& msg) { this->feed_watchdog_status(msg.data); });
-    this->info_pub_timer = this->create_wall_timer(
-        MOTOR_STATUS_PUB_DT,
-        [this]() { this->pub_motor_info_cb(); });
-    this->fault_pub_timer = this->create_wall_timer(
-        250ms,
-        [this]() { this->pub_motor_fault_cb(); });
+    this->motor_state_thread =
+        std::thread(&Phoenix6Driver::handle_motor_states, this);
 }
 
 
@@ -675,66 +632,65 @@ void Phoenix6Driver::feed_watchdog_status(int32_t status)
 //     // RCLCPP_INFO(this->get_logger(), "Reconfigured motors.");
 // }
 
-void Phoenix6Driver::pub_motor_info_cb()
+void Phoenix6Driver::handle_motor_states()
 {
-    //     this->op_pub->publish(StringMsg{}.set__data("pub motor info"));
-    //     // std::cout << ">> begin pub motor info" << std::endl;
-    //     TalonInfoMsg talon_info_msg{};
-    //     talon_info_msg.header.stamp = this->get_clock()->now();
+    constexpr double MAX_INFO_PUB_FREQ = 20.;
+    constexpr double MAX_FAULT_PUB_FREQ = 4.;
 
-    //     bool any_disabled = false;
-    //     for (size_t i = 0; i < NUM_MOTORS; i++)
-    //     {
-    //         TalonFX& m = this->motors[i];
-    //         this->motor_pub_subs[i].get().info_pub->publish((talon_info_msg << m));
-    //         any_disabled |= (!talon_info_msg.enabled && m.IsConnected(100_ms));
-    //     }
+    constexpr auto MIN_INFO_PUB_DT = (1s / MAX_INFO_PUB_FREQ);
+    constexpr auto MIN_FAULT_PUB_DT = (1s / MAX_FAULT_PUB_FREQ);
 
-    //     if (any_disabled && !this->is_disabled &&
-    //         (std::chrono::system_clock::now() - this->last_enable_beg_time) >
-    //             MOTOR_RESTART_DT_THRESH)
-    //     {
-    //         this->op_pub->publish(StringMsg{}.set__data("trigger motor restart"));
-    //         // std::cout << "Restarting motors... (dt: "
-    //         //           << std::chrono::duration<double>(
-    //         //                  std::chrono::system_clock::now() -
-    //         //                  this->last_enable_beg_time)
-    //         //                  .count()
-    //         //           << ")" << std::endl;
+    system_clock::time_point prev_info_pub_t, prev_fault_pub_t;
 
-    //         this->sendSerialPowerDown();
-    //         std::this_thread::sleep_for(TALONFX_POWER_CYCLE_DELAY);
-    //         this->sendSerialPowerUp();
-    //         this->is_disabled = true;
-    //     }
-    //     // std::cout << "<< end pub motor info" << std::endl;
-
-    TalonInfoMsg buff;
-    buff.header.stamp = this->get_clock()->now();
-    for (auto& m : this->motors)
+    while (this->thread_enabled)
     {
-        m.pubInfo(buff);
-    }
-}
+        auto beg_t = system_clock::now();
 
-void Phoenix6Driver::pub_motor_fault_cb()
-{
-    //     this->op_pub->publish(StringMsg{}.set__data("publish faults"));
-    //     // std::cout << "begin pub motor faults -- ";
-    //     TalonFaultsMsg talon_faults_msg{};
-    //     talon_faults_msg.header.stamp = this->get_clock()->now();
+        if (beg_t - prev_info_pub_t > MIN_INFO_PUB_DT)
+        {
+            auto t1 = system_clock::now();
+            TalonInfoMsg buff;
+            buff.header.stamp = this->get_clock()->now();
+            for (auto& m : this->motors)
+            {
+                m.pubInfo(buff);
+            }
+            auto t2 = system_clock::now();
 
-    //     for (size_t i = 0; i < NUM_MOTORS; i++)
-    //     {
-    //         this->motor_pub_subs[i].get().faults_pub->publish(
-    //             (talon_faults_msg << this->motors[i]));
-    //     }
-    //     // std::cout << "end pub motor faults" << std::endl;
-    TalonFaultsMsg buff;
-    buff.header.stamp = this->get_clock()->now();
-    for (auto& m : this->motors)
-    {
-        m.pubFaults(buff);
+            std::cout << "published motor info - "
+                      << (std::chrono::duration<double>(beg_t - prev_info_pub_t)
+                              .count())
+                      << "s since prev, took "
+                      << (std::chrono::duration<double>(t2 - t1).count()) << "s"
+                      << std::endl;
+
+            prev_info_pub_t = beg_t;
+        }
+        if (beg_t - prev_fault_pub_t > MIN_FAULT_PUB_DT)
+        {
+            auto t1 = system_clock::now();
+            TalonFaultsMsg buff;
+            buff.header.stamp = this->get_clock()->now();
+            for (auto& m : this->motors)
+            {
+                m.pubFaults(buff);
+            }
+            auto t2 = system_clock::now();
+
+            std::cout << "published motor faults - "
+                      << (std::chrono::duration<double>(beg_t - prev_fault_pub_t)
+                              .count())
+                      << "s since prev, took "
+                      << (std::chrono::duration<double>(t2 - t1).count()) << "s"
+                      << std::endl;
+
+            prev_fault_pub_t = beg_t;
+        }
+
+        std::this_thread::sleep_until(
+            std::min(
+                prev_info_pub_t + MIN_INFO_PUB_DT,
+                prev_fault_pub_t + MIN_FAULT_PUB_DT));
     }
 }
 
@@ -742,9 +698,6 @@ void Phoenix6Driver::pub_motor_fault_cb()
 
 int main(int argc, char** argv)
 {
-    // ctre::phoenix::unmanaged::LoadPhoenix();
-    // std::cout << "Loaded Phoenix 6 Unmanaged" << std::endl;
-
     rclcpp::init(argc, argv);
     auto node = std::make_shared<Phoenix6Driver>();
     RCLCPP_INFO(node->get_logger(), "Driver node (Phoenix6) has started");
