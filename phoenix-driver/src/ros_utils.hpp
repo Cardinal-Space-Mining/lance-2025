@@ -25,4 +25,16 @@ inline void declare_param(
     node->get_parameter(param_name, param);
 }
 
+template<typename T>
+inline T declare_and_get_param(
+    rclcpp::Node* node,
+    const std::string param_name,
+    const T& default_value)
+{
+    T param;
+    node->declare_parameter(param_name, default_value);
+    node->get_parameter(param_name, param);
+    return param;
+}
+
 };  // namespace util

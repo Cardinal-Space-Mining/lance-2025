@@ -710,6 +710,7 @@ void Phoenix6Driver::pub_motor_info_cb()
     //     // std::cout << "<< end pub motor info" << std::endl;
 
     TalonInfoMsg buff;
+    buff.header.stamp = this->get_clock()->now();
     for (auto& m : this->motors)
     {
         m.pubInfo(buff);
@@ -730,6 +731,7 @@ void Phoenix6Driver::pub_motor_fault_cb()
     //     }
     //     // std::cout << "end pub motor faults" << std::endl;
     TalonFaultsMsg buff;
+    buff.header.stamp = this->get_clock()->now();
     for (auto& m : this->motors)
     {
         m.pubFaults(buff);

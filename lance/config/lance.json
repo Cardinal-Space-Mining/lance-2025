@@ -487,7 +487,8 @@
         "pragma:default": null,
         "enabled":
         {
-            "diagnostics_server_port": 1251
+            "diagnostics_port": 0,
+            "canbus": "can_phx5"
         }
     },
     "phoenix6_driver":
@@ -500,8 +501,8 @@
             "arduino_device": "/dev/ttyAMC0",
             "common":
             {
-                "kP": 0.2,
-                "kI": 0.05,
+                "kP": 0.4,
+                "kI": 0.1,
                 "kD": 0.0001,
                 "kV": 0.12,
                 "neutral_deadband": 0.05,

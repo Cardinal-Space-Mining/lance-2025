@@ -38,19 +38,13 @@ class Phoenix5Driver : public rclcpp::Node
         RclSubPtr<TalonCtrlMsg> ctrl_sub;
     };
 
-    struct TempParams
-    {
-        int diagnostics_server_port;
-    };
-
 public:
     Phoenix5Driver();
     ~Phoenix5Driver();
 
 private:
-    void getParams(TempParams& params);
-    void initMotor(const TempParams& params);
-    void startDiagnostics(const TempParams& params);
+    void initPhx();
+    void initMotor();
 
     void feed_watchdog_status(int32_t status);
 
@@ -74,7 +68,12 @@ private:
 Phoenix5Driver::Phoenix5Driver() :
     Node{ "phoenix5_driver" },
     hopper_act{
-        .motor{DEFAULT_MOTOR_CAN_ID, DEFAULT_CAN_INTERFACE},
+        .motor{
+            DEFAULT_MOTOR_CAN_ID,
+            declare_and_get_param<std::string>(
+                this,
+                "canbus",
+                DEFAULT_CAN_INTERFACE)},
         .info_pub{this->create_publisher<TalonInfoMsg>(
             ROBOT_TOPIC("hopper_act/info"),
             rclcpp::SensorDataQoS{})},
@@ -97,10 +96,8 @@ Phoenix5Driver::Phoenix5Driver() :
         250ms,
         [this]() { this->pub_motor_fault_cb(); })}
 {
-    TempParams params;
-    this->getParams(params);
-    this->initMotor(params);
-    this->startDiagnostics(params);
+    this->initPhx();
+    this->initMotor();
 
     RCLCPP_DEBUG(
         this->get_logger(),
@@ -110,28 +107,8 @@ Phoenix5Driver::Phoenix5Driver() :
 Phoenix5Driver::~Phoenix5Driver() { c_Phoenix_Diagnostics_Dispose(); }
 
 
-void Phoenix5Driver::getParams(TempParams& params)
+void Phoenix5Driver::initMotor()
 {
-    // declare_param<std::string>(
-    //     this,
-    //     "canbus",
-    //     params.canbus,
-    //     DEFAULT_CAN_INTERFACE);
-    // declare_param(this, "motor_id", params.can_id, DEFAULT_MOTOR_CAN_ID);
-    declare_param(
-        this,
-        "diagnostics_server_port",
-        params.diagnostics_server_port,
-        DEFAULT_DIAG_SERVER_PORT);
-}
-
-void Phoenix5Driver::initMotor(const TempParams& params)
-{
-    (void)params;
-
-    // this->hopper_act.motor =
-    //     std::make_unique<TalonSRX>(params.can_id, params.canbus);
-
     this->hopper_act.motor.ConfigFactoryDefault();
     this->hopper_act.motor.ConfigSelectedFeedbackSensor(
         TalonSRXFeedbackDevice::Analog);
@@ -139,25 +116,20 @@ void Phoenix5Driver::initMotor(const TempParams& params)
     this->hopper_act.motor.SetNeutralMode(NeutralMode::Brake);
     this->hopper_act.motor.ConfigNeutralDeadband(5.);  // <-- percent
     this->hopper_act.motor.ClearStickyFaults();
-
-    // this->hopper_act.info_pub = this->create_publisher<TalonInfoMsg>(
-    //     ROBOT_TOPIC("hopper_act/info"),
-    //     rclcpp::SensorDataQoS{});
-    // this->hopper_act.faults_pub = this->create_publisher<TalonFaultsMsg>(
-    //     ROBOT_TOPIC("hopper_act/faults"),
-    //     rclcpp::SensorDataQoS{});
-    // this->hopper_act.ctrl_sub = this->create_subscription<TalonCtrlMsg>(
-    //     ROBOT_TOPIC("hopper_act/ctrl"),
-    //     TALON_CTRL_SUB_QOS,
-    //     [this](const TalonCtrlMsg& msg)
-    //     { this->execute_ctrl(*this->hopper_act.motor, msg); });
 }
 
-void Phoenix5Driver::startDiagnostics(const TempParams& params)
+void Phoenix5Driver::initPhx()
 {
-    if (params.diagnostics_server_port > 0)
+    int diag_server_port;
+    declare_param(
+        this,
+        "diagnostics_port",
+        diag_server_port,
+        DEFAULT_DIAG_SERVER_PORT);
+
+    if (diag_server_port > 0)
     {
-        c_Phoenix_Diagnostics_Create_On_Port(params.diagnostics_server_port);
+        c_Phoenix_Diagnostics_Create_On_Port(diag_server_port);
     }
     else
     {
