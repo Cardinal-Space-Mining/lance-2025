@@ -9,9 +9,11 @@
 #include <std_msgs/msg/string.hpp>
 #include <std_msgs/msg/float64.hpp>
 #include <sensor_msgs/msg/joy.hpp>
+#include <sensor_msgs/msg/joint_state.hpp>
 
 #include "motor_interface.hpp"
 #include "controller.hpp"
+#include "robot_math.hpp"
 
 
 using namespace std::chrono_literals;
@@ -19,13 +21,24 @@ using namespace std::chrono_literals;
 #define ROBOT_TOPIC(subtopic) "/lance/" subtopic
 #define TALON_CTRL_PUB_QOS    10
 #define MOTOR_UPDATE_DT       50ms
+#define HOPPER_JOINT_NAME     "dump_joint"
+
+
+using BoolMsg = std_msgs::msg::Bool;
+using Int32Msg = std_msgs::msg::Int32;
+using StringMsg = std_msgs::msg::String;
+using Float64Msg = std_msgs::msg::Float64;
+using JointStateMsg = sensor_msgs::msg::JointState;
+
+template<typename T>
+using RclPubPtr = typename rclcpp::Publisher<T>::SharedPtr;
+template<typename T>
+using RclSubPtr = typename rclcpp::Subscription<T>::SharedPtr;
+using RclTimerPtr = rclcpp::TimerBase::SharedPtr;
 
 
 class CollectionStatePublisher
 {
-    using BoolMsg = std_msgs::msg::Bool;
-    using Float64Msg = std_msgs::msg::Float64;
-
 public:
     inline CollectionStatePublisher(rclcpp::Node& n) :
         is_vol_cap_pub{n.create_publisher<BoolMsg>(
@@ -81,10 +94,9 @@ public:
     }
 
 protected:
-    rclcpp::Publisher<BoolMsg>::SharedPtr is_vol_cap_pub, is_full_occ_pub;
-    rclcpp::Publisher<Float64Msg>::SharedPtr vol_pub, mining_target_pub,
-        offload_target_pub, belt_pos_pub, high_pos_pub, low_pos_pub,
-        belt_usage_pub;
+    RclPubPtr<BoolMsg> is_vol_cap_pub, is_full_occ_pub;
+    RclPubPtr<Float64Msg> vol_pub, mining_target_pub, offload_target_pub,
+        belt_pos_pub, high_pos_pub, low_pos_pub, belt_usage_pub;
 };
 
 
@@ -93,8 +105,8 @@ class RobotControlNode : public rclcpp::Node
 protected:
     struct TalonPubSub
     {
-        rclcpp::Publisher<TalonCtrl>::SharedPtr ctrl_pub;
-        rclcpp::Subscription<TalonInfo>::SharedPtr info_sub;
+        RclPubPtr<TalonCtrl> ctrl_pub;
+        RclSubPtr<TalonInfo> info_sub;
     };
 
 public:
@@ -118,14 +130,18 @@ public:
         INIT_TALON_PUB_SUB(hopper_belt, hopper_belt),
         INIT_TALON_PUB_SUB(hopper_act, hopper_actuator),
 
-        control_level_pub{this->create_publisher<std_msgs::msg::String>(
+        control_level_pub{this->create_publisher<StringMsg>(
             ROBOT_TOPIC("control_level"),
             rclcpp::SensorDataQoS{})},
-        mining_status_pub{this->create_publisher<std_msgs::msg::String>(
+        mining_status_pub{this->create_publisher<StringMsg>(
             ROBOT_TOPIC("mining_status"),
             rclcpp::SensorDataQoS{})},
-        offload_status_pub{this->create_publisher<std_msgs::msg::String>(
+        offload_status_pub{this->create_publisher<StringMsg>(
             ROBOT_TOPIC("offload_status"),
+            rclcpp::SensorDataQoS{})},
+
+        joint_pub{this->create_publisher<JointStateMsg>(
+            "joint_states",
             rclcpp::SensorDataQoS{})},
 
         collection_state_pub{*this},
@@ -134,11 +150,12 @@ public:
             "/joy",
             rclcpp::SensorDataQoS{},
             [this](const JoyMsg& joy) { this->joystick_values = joy; })},
-        watchdog_sub{this->create_subscription<std_msgs::msg::Int32>(
+        watchdog_sub{this->create_subscription<Int32Msg>(
             ROBOT_TOPIC("watchdog_status"),
             rclcpp::SensorDataQoS{},
-            [this](const std_msgs::msg::Int32& status)
+            [this](const Int32Msg& status)
             { this->watchdog_status = status.data; })},
+
         control_iteration_timer{this->create_wall_timer(
             MOTOR_UPDATE_DT,
             [this]()
@@ -147,8 +164,6 @@ public:
                     this->watchdog_status,
                     this->joystick_values,
                     this->robot_motor_status);
-                this->collection_state_pub.publish(
-                    this->robot_controller.getHopperState());
 
                 this->track_right_pub_sub.ctrl_pub->publish(mc.track_right);
                 this->track_left_pub_sub.ctrl_pub->publish(mc.track_left);
@@ -157,9 +172,13 @@ public:
                 this->hopper_actuator_pub_sub.ctrl_pub->publish(
                     mc.hopper_actuator);
 
-                static std_msgs::msg::String control_level_msg;
-                static std_msgs::msg::String mining_status_msg;
-                static std_msgs::msg::String offload_status_msg;
+                this->publishHopperJoint();
+                this->collection_state_pub.publish(
+                    this->robot_controller.getHopperState());
+
+                static StringMsg control_level_msg;
+                static StringMsg mining_status_msg;
+                static StringMsg offload_status_msg;
 
                 this->robot_controller.getStatusStrings(
                     control_level_msg.data,
@@ -174,16 +193,33 @@ public:
     }
 
 private:
-    TalonPubSub track_right_pub_sub, track_left_pub_sub, trencher_pub_sub,
-        hopper_belt_pub_sub, hopper_actuator_pub_sub;
-    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr control_level_pub,
-        mining_status_pub, offload_status_pub;
+    void publishHopperJoint()
+    {
+        JointStateMsg joint_msg;
+        joint_msg.header = this->robot_motor_status.hopper_actuator.header;
+        joint_msg.name.push_back(HOPPER_JOINT_NAME);
+        joint_msg.position.push_back(linear_actuator_to_joint_angle(
+            this->robot_motor_status.hopper_actuator.position / 1000.));
+        this->joint_pub->publish(joint_msg);
+    }
 
+private:
+    TalonPubSub track_right_pub_sub;
+    TalonPubSub track_left_pub_sub;
+    TalonPubSub trencher_pub_sub;
+    TalonPubSub hopper_belt_pub_sub;
+    TalonPubSub hopper_actuator_pub_sub;
+
+    RclPubPtr<StringMsg> control_level_pub;
+    RclPubPtr<StringMsg> mining_status_pub;
+    RclPubPtr<StringMsg> offload_status_pub;
+
+    RclPubPtr<JointStateMsg> joint_pub;
     CollectionStatePublisher collection_state_pub;
 
-    rclcpp::Subscription<JoyMsg>::SharedPtr joy_sub;
-    rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr watchdog_sub;
-    rclcpp::TimerBase::SharedPtr control_iteration_timer;
+    RclSubPtr<JoyMsg> joy_sub;
+    RclSubPtr<Int32Msg> watchdog_sub;
+    RclTimerPtr control_iteration_timer;
 
     RobotControl robot_controller;
 
