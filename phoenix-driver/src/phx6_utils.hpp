@@ -10,6 +10,7 @@
 #include <phoenix_ros_driver/msg/talon_faults.hpp>
 
 
+#define phx_ ctre::phoenix
 #define phx6 ctre::phoenix6
 
 using TalonCtrlMsg = phoenix_ros_driver::msg::TalonCtrl;
@@ -32,6 +33,48 @@ using phx6::signals::NeutralModeValue;
 using phx6::signals::InvertedValue;
 using phx6::signals::FeedbackSensorSourceValue;
 
+
+// --- Config Helpers ----------------------------------------------------------
+
+inline TalonFXConfiguration buildFXConfig(
+    double kP,
+    double kI,
+    double kD,
+    double kV,
+    double neutral_deadband,
+    int neutral_mode,
+    int invert_mode,
+    double stator_current_limit = 0.,
+    double supply_current_limit = 0.,
+    double voltage_limit = 0.)
+{
+    return TalonFXConfiguration{}
+        .WithSlot0(Slot0Configs{}.WithKP(kP).WithKI(kI).WithKD(kD).WithKV(kV))
+        .WithMotorOutput(
+            MotorOutputConfigs{}
+                .WithDutyCycleNeutralDeadband(neutral_deadband)
+                .WithNeutralMode(neutral_mode)
+                .WithInverted(invert_mode))
+        .WithFeedback(
+            FeedbackConfigs{}.WithFeedbackSensorSource(
+                FeedbackSensorSourceValue::RotorSensor))
+        .WithCurrentLimits(
+            CurrentLimitsConfigs{}
+                .WithStatorCurrentLimit(
+                    units::current::ampere_t{stator_current_limit})
+                .WithStatorCurrentLimitEnable(stator_current_limit > 0.)
+                .WithSupplyCurrentLimit(
+                    units::current::ampere_t{supply_current_limit})
+                .WithSupplyCurrentLimitEnable(supply_current_limit >= 0.))
+        .WithVoltage(
+            (voltage_limit >= 0.)
+                ? VoltageConfigs{}
+                      .WithPeakForwardVoltage(
+                          units::voltage::volt_t{voltage_limit})
+                      .WithPeakReverseVoltage(
+                          units::voltage::volt_t{-voltage_limit})
+                : VoltageConfigs{});
+}
 
 // --- Message Serializers -----------------------------------------------------
 
@@ -169,4 +212,55 @@ inline TalonFaultsMsg& operator<<(TalonFaultsMsg& faults, TalonFXS& m)
         m.GetStickyFault_StaticBrakeDisabled().GetValue();
 
     return faults;
+}
+
+// ---
+
+inline phx_::StatusCode operator<<(TalonFX& motor, const TalonCtrlMsg& msg)
+{
+    switch (msg.mode)
+    {
+        case TalonCtrlMsg::PERCENT_OUTPUT:
+        {
+            return motor.SetControl(phx6::controls::DutyCycleOut{msg.value});
+        }
+        case TalonCtrlMsg::POSITION:
+        {
+            return motor.SetControl(
+                phx6::controls::PositionVoltage{
+                    units::angle::turn_t{msg.value}});
+        }
+        case TalonCtrlMsg::VELOCITY:
+        {
+            return motor.SetControl(
+                phx6::controls::VelocityVoltage{
+                    units::angular_velocity::turns_per_second_t{
+                        msg.value}});
+        }
+        case TalonCtrlMsg::VOLTAGE:
+        {
+            return motor.SetControl(
+                phx6::controls::VoltageOut{
+                    units::voltage::volt_t{msg.value}});
+        }
+        case TalonCtrlMsg::DISABLED:
+        {
+            return motor.SetControl(phx6::controls::NeutralOut());
+        }
+        case TalonCtrlMsg::MUSIC_TONE:
+        {
+            return motor.SetControl(
+                phx6::controls::MusicTone{
+                    units::frequency::hertz_t{msg.value}});
+        }
+        case TalonCtrlMsg::CURRENT:
+        case TalonCtrlMsg::FOLLOWER:
+        case TalonCtrlMsg::MOTION_MAGIC:
+        case TalonCtrlMsg::MOTION_PROFILE:
+        case TalonCtrlMsg::MOTION_PROFILE_ARC:
+        default:
+        {
+            return phx_::StatusCode{};
+        }
+    }
 }

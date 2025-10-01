@@ -495,6 +495,9 @@
         "pragma:default": null,
         "enabled":
         {
+            "diagnostics_port": 1250,
+            "canbus": "can_phx6",
+            "arduino_device": "/dev/ttyAMC0",
             "common":
             {
                 "kP": 0.2,
@@ -503,8 +506,8 @@
                 "kV": 0.12,
                 "neutral_deadband": 0.05,
                 "neutral_brake": false,
-                "stator_current_limit": 30.0,
-                "supply_current_limit": 20.0,
+                "stator_current_limit": 10.0,
+                "supply_current_limit": 2.0,
                 "voltage_limit": 12.0
             }
         }
