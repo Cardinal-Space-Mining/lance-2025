@@ -78,16 +78,6 @@ ament_target_dependencies(phx6_driver
     phoenix6)
 target_compile_features(phx6_driver PUBLIC c_std_99 cxx_std_20)     # not necessary but silences a lot of warnings
 
-# --- Falcon Test Node ---------------------------------------------------------
-add_executable(falcon_test src/falcon_test.cpp)
-target_link_libraries(falcon_test
-    ${phoenix_ros_driver_custom_types})
-ament_target_dependencies(falcon_test
-    rclcpp
-    std_msgs
-    sensor_msgs
-    phoenix6)
-
 # --- Motor Sim Node -----------------------------------------------------------
 add_executable(motor_sim src/motor_sim.cpp)
 target_link_libraries(motor_sim
@@ -109,7 +99,6 @@ ament_package()
 install(TARGETS
     phx5_driver
     phx6_driver
-    falcon_test
     motor_sim
     DESTINATION lib/${PROJECT_NAME} )
 install(DIRECTORY

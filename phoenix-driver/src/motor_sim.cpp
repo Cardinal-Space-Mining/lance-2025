@@ -177,7 +177,7 @@ public:
         info.output_percent = static_cast<float>(output_percent_);
         info.output_voltage = static_cast<float>(output_voltage_);
         info.output_current = static_cast<float>(output_current_);
-        info.enabled = enabled_;
+        info.status = enabled_ ? 0b11 : 0;
         info.control_mode = static_cast<uint8_t>(control_mode_);
     }
 
@@ -266,7 +266,7 @@ public:
         info.output_percent = static_cast<float>(output_percent_);
         info.output_voltage = static_cast<float>(output_percent_ * bus_voltage);
         info.output_current = 0.0f;
-        info.enabled = enabled_;
+        info.status = enabled_ ? 0b11 : 0;
         info.control_mode = static_cast<uint8_t>(control_mode_);
     }
 

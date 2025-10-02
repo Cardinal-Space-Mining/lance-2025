@@ -159,9 +159,11 @@ void Phoenix5Driver::pub_motor_info_cb()
 {
     TalonInfoMsg info_msg{};
     info_msg.header.stamp = this->get_clock()->now();
-    info_msg.enabled = !this->is_disabled;
 
-    this->hopper_act.info_pub->publish((info_msg << this->hopper_act.motor));
+    info_msg << this->hopper_act.motor;
+    info_msg.status |= static_cast<uint8_t>(!this->is_disabled);
+
+    this->hopper_act.info_pub->publish(info_msg);
 }
 
 void Phoenix5Driver::pub_motor_fault_cb()

@@ -99,7 +99,10 @@ inline TalonInfoMsg& operator<<(TalonInfoMsg& info, TalonFX& m)
         static_cast<uint8_t>(m.GetBridgeOutput().GetValue().value);
     info.control_mode =
         static_cast<uint8_t>(m.GetControlMode().GetValue().value);
-    info.enabled = static_cast<bool>(m.GetDeviceEnable().GetValue().value);
+    info.status =
+        (static_cast<uint8_t>(m.GetDeviceEnable().GetValue().value) << 1) |
+        (static_cast<uint8_t>(m.IsConnected()) << 2) |
+        (static_cast<uint8_t>(m.HasResetOccurred()) << 3);
 
     return info;
 }
@@ -167,7 +170,10 @@ inline TalonInfoMsg& operator<<(TalonInfoMsg& info, TalonFXS& m)
         static_cast<uint8_t>(m.GetBridgeOutput().GetValue().value);
     info.control_mode =
         static_cast<uint8_t>(m.GetControlMode().GetValue().value);
-    info.enabled = static_cast<bool>(m.GetDeviceEnable().GetValue().value);
+    info.status =
+        (static_cast<uint8_t>(m.GetDeviceEnable().GetValue().value) << 1) |
+        (static_cast<uint8_t>(m.IsConnected()) << 2) |
+        (static_cast<uint8_t>(m.HasResetOccurred()) << 3);
 
     return info;
 }
@@ -234,14 +240,12 @@ inline phx_::StatusCode operator<<(TalonFX& motor, const TalonCtrlMsg& msg)
         {
             return motor.SetControl(
                 phx6::controls::VelocityVoltage{
-                    units::angular_velocity::turns_per_second_t{
-                        msg.value}});
+                    units::angular_velocity::turns_per_second_t{msg.value}});
         }
         case TalonCtrlMsg::VOLTAGE:
         {
             return motor.SetControl(
-                phx6::controls::VoltageOut{
-                    units::voltage::volt_t{msg.value}});
+                phx6::controls::VoltageOut{units::voltage::volt_t{msg.value}});
         }
         case TalonCtrlMsg::DISABLED:
         {
