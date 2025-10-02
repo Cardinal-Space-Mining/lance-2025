@@ -32,7 +32,7 @@ inline TalonInfoMsg& operator<<(TalonInfoMsg& info, TalonSRX& m)
     info.output_current = m.GetOutputCurrent();
 
     info.control_mode = static_cast<uint8_t>(m.GetControlMode());
-    info.status = static_cast<uint8_t>(m.HasResetOccurred()) << 3;
+    info.status = static_cast<uint8_t>(m.HasResetOccurred()) << 2;
 
     return info;
 }

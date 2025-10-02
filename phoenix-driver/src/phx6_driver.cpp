@@ -1,4 +1,3 @@
-#include <array>
 #include <atomic>
 #include <chrono>
 #include <memory>
@@ -31,25 +30,7 @@ using namespace util;
 using namespace std::chrono_literals;
 
 
-// --- Motor configs -----------------------------------------------------------
-
-static constexpr double TFX_COMMON_KP = 0.2;
-// ^ 0.5 volts added for every turn per second error
-static constexpr double TFX_COMMON_KI = 0.05;
-// ^ 0.2 volts added for every rotation integrated error
-static constexpr double TFX_COMMON_KD = 0.0001;
-// ^ 0.0001 volts added for every rotation per second^2 change in error [per second]
-static constexpr double TFX_COMMON_KV = 0.12;
-// ^ Falcon 500 is a 500kV motor, 500rpm / 1V = 8.333 rps / 1V --> 1/8.33 = 0.12 volts / rps
-
-static constexpr double TFX_COMMON_NEUTRAL_DEADBAND = 0.05;
-
-static constexpr double TFX_COMMON_STATOR_CURRENT_LIMIT = 30.;
-static constexpr double TFX_COMMON_SUPPLY_CURRENT_LIMIT = 20.;
-static constexpr double TFX_COMMON_PEAK_VOLTAGE = 12.;
-
-
-// --- Program defaults --------------------------------------------------------
+// --- Program configs ---------------------------------------------------------
 
 #define DIAG_SERVER_PORT       1250
 #define DEFAULT_ARDUINO_DEVICE "/dev/ttyACM0"
@@ -59,13 +40,34 @@ static constexpr double TFX_COMMON_PEAK_VOLTAGE = 12.;
 #define TRENCHER_CANID         2
 #define HOPPER_BELT_CANID      3
 
+#define TFX_DEFAULT_KP 0.2
+// ^ 0.5 volts added for every turn per second error
+#define TFX_DEFAULT_KI 0.05
+// ^ 0.2 volts added for every rotation integrated error
+#define TFX_DEFAULT_KD 0.0001
+// ^ 0.0001 volts added for every rotation per second^2 change in error [per second]
+#define TFX_DEFAULT_KV 0.12
+// ^ Falcon 500 is a 500kV motor, 500rpm / 1V = 8.333 rps / 1V --> 1/8.33 = 0.12 volts / rps
+
+#define TFX_DEFAULT_NEUTRAL_DEADBAND     0.05
+#define TFX_DEFAULT_STATOR_CURRENT_LIMIT 30.
+#define TFX_DEFAULT_SUPPLY_CURRENT_LIMIT 20.
+#define TFX_DEFAULT_PEAK_VOLTAGE         12.
+
 #define ROBOT_TOPIC(subtopic) "/lance/" subtopic
 #define TALON_CTRL_SUB_QOS    1
 
-#define MOTOR_STATUS_PUB_DT       50ms
-#define TALONFX_MAX_BOOTUP_DELAY  3s
+#define MOTOR_INFO_PUB_FREQ       20.
+#define MOTOR_FAULT_PUB_FREQ      4.
 #define TALONFX_POWER_CYCLE_DELAY 0.5s
-#define MOTOR_RESTART_DT_THRESH   1.5s
+#define MOTOR_RESTART_THRESH_S    1.0
+
+static constexpr auto NOMINAL_INFO_PUB_DT =
+    std::chrono::duration_cast<std::chrono::system_clock::duration>(
+        1s / MOTOR_INFO_PUB_FREQ);
+static constexpr auto NOMINAL_FAULT_PUB_DT =
+    std::chrono::duration_cast<std::chrono::system_clock::duration>(
+        1s / MOTOR_FAULT_PUB_FREQ);
 
 
 // --- Driver node -------------------------------------------------------------
@@ -110,9 +112,9 @@ class Phoenix6Driver : public rclcpp::Node
     {
         enum
         {
-            DISABLE_EXTERNAL = 1 << 0,
-            DISABLE_INTERNAL = 1 << 1,
-            DISABLE_MASK = DISABLE_EXTERNAL | DISABLE_INTERNAL
+            DISABLE_WATCHDOG = 1 << 0,
+            DISABLE_REINIT = 1 << 1,
+            DISABLE_MASK = DISABLE_WATCHDOG | DISABLE_REINIT
         };
 
     public:
@@ -131,15 +133,22 @@ class Phoenix6Driver : public rclcpp::Node
             system_clock::time_point::min()};
         units::angle::turn_t cached_position{0_tr};
 
-        std::atomic<uint8_t> disable_bits{0b00};
+        // start fully disabled (require config and pos_set)
+        std::atomic<uint8_t> disable_bits{DISABLE_WATCHDOG | DISABLE_REINIT};
         struct State
         {
             bool watchdog_disabled : 1 {false};
-            bool internal_disabled : 1 {false};
+            bool reinit_disabled   : 1 {false};
             bool hardware_disabled : 1 {false};
             bool disconnected      : 1 {false};
             bool need_config       : 1 {true};
             bool need_set_pos      : 1 {true};
+
+            inline bool isFault() const
+            {
+                return hardware_disabled && !watchdog_disabled &&
+                       !reinit_disabled && !disconnected;
+            }
         }  //
         state;
 
@@ -156,17 +165,18 @@ class Phoenix6Driver : public rclcpp::Node
         double elapsedFaultTime() const;
 
     public:
+        void updateState();
         void updateAndPubInfo(const HeaderMsg& header);
         void pubFaults(const HeaderMsg& header);
-        void acceptCtrl(const TalonCtrlMsg& ctrl);
-        void setExtEnabled();
-        void setExtDisabled();
+        phx_::StatusCode acceptCtrl(const TalonCtrlMsg& ctrl);
+        void setWatchdogEnabled();
+        void setWatchdogDisabled();
 
         void notifyRestart();
-        void handleReinit(units::time::second_t timeout = 100_ms);
+        void handleReinit(std::chrono::duration<double> timeout = 100ms);
 
     protected:
-        void neutralOut();
+        phx_::StatusCode neutralOut();
     };
 
     class SerialRelay
@@ -210,11 +220,9 @@ private:
     RclSubPtr<Int32Msg> watchdog_status_sub;
 
     std::thread motor_state_thread;
-
-    // std::atomic<bool> is_disabled = true;
     std::atomic<bool> thread_enabled = true;
-    // system_clock::time_point last_enable_beg_time;
 };
+
 
 
 
@@ -286,39 +294,32 @@ double Phoenix6Driver::RclTalonFX::elapsedFaultTime() const
     return this->elapsed_faulted_time;
 }
 
-void Phoenix6Driver::RclTalonFX::updateAndPubInfo(const HeaderMsg& header)
+void Phoenix6Driver::RclTalonFX::updateState()
 {
-    system_clock::time_point t = system_clock::now();
+    system_clock::time_point curr_t = system_clock::now();
     if (this->prev_update_time == system_clock::time_point::min())
     {
-        this->prev_update_time = t;
+        this->prev_update_time = curr_t;
     }
 
-    // extract info and publish
-    this->last_info.header = header;
-    this->last_info << this->motor;
-    this->last_info.status |= static_cast<uint8_t>(!this->isDisabled());
-    this->info_pub->publish(this->last_info);
-
-    auto new_state = this->state;
-    new_state.watchdog_disabled = (this->disable_bits & DISABLE_EXTERNAL);
-    new_state.internal_disabled = (this->disable_bits & DISABLE_INTERNAL);
+    // construct a new state - copy old values of need_config and need_set_pos, update everything else
+    RclTalonFX::State new_state = this->state;
+    new_state.watchdog_disabled = (this->disable_bits & DISABLE_WATCHDOG);
+    new_state.reinit_disabled = (this->disable_bits & DISABLE_REINIT);
     new_state.hardware_disabled =
-        !(this->last_info.status & TalonInfoMsg::STATUS_PHX_ENABLED);
-    new_state.disconnected =
-        !(this->last_info.status & TalonInfoMsg::STATUS_CONNECTED);
+        !this->motor.GetDeviceEnable().GetValue().value;
+    new_state.disconnected = !this->motor.IsConnected();
 
-    // if hard disabled while NOT soft disabled AND NOT disconnected --> fault state
+    // if hard disabled while NOT externally disabled AND NOT internally disabled AND NOT disconnected --> fault state
     // accumulate time in fault state --> if 'rising edge', take half of update dt, otherwise full dt
-    if (new_state.hardware_disabled && !new_state.disconnected &&
-        !new_state.watchdog_disabled)
+    if (new_state.isFault())
     {
         const double dt =
-            std::chrono::duration<double>(t - this->prev_update_time).count();
+            std::chrono::duration<double>(curr_t - this->prev_update_time)
+                .count();
 
         // if previous state also fault, accumulate for full dt
-        if (this->state.hardware_disabled && !this->state.disconnected &&
-            !this->state.watchdog_disabled)
+        if (this->state.isFault())
         {
             this->elapsed_faulted_time += dt;
         }
@@ -343,6 +344,33 @@ void Phoenix6Driver::RclTalonFX::updateAndPubInfo(const HeaderMsg& header)
 
     this->state = new_state;
 }
+
+void Phoenix6Driver::RclTalonFX::updateAndPubInfo(const HeaderMsg& header)
+{
+    this->updateState();
+
+    // extract info and publish
+    this->last_info.header = header;
+    serializeTalonInfoNoStatus(this->last_info, this->motor);
+
+    this->last_info.status =
+        // first bit "is hardware enabled"
+        (static_cast<uint8_t>(!this->state.hardware_disabled) << 0 |
+         // second bit "is connected"
+         static_cast<uint8_t>(!this->state.disconnected) << 1 |
+         // third bit "has reset occurred"
+         static_cast<uint8_t>(this->motor.HasResetOccurred()) << 2 |
+         // fourth bit "is watchdog allowing enabled"
+         static_cast<uint8_t>(!this->state.watchdog_disabled) << 3 |
+         // fifth bit "is NOT disabled because of reinit"
+         static_cast<uint8_t>(!this->state.reinit_disabled) << 4 |
+         // sixth bit "has been configured properly"
+         static_cast<uint8_t>(!this->state.need_config) << 5 |
+         // seventh bit "has position been set correctly"
+         static_cast<uint8_t>(!this->state.need_set_pos) << 6);
+
+    this->info_pub->publish(this->last_info);
+}
 void Phoenix6Driver::RclTalonFX::pubFaults(const HeaderMsg& header)
 {
     this->last_faults.header = header;
@@ -350,75 +378,112 @@ void Phoenix6Driver::RclTalonFX::pubFaults(const HeaderMsg& header)
     this->faults_pub->publish(this->last_faults);
 }
 
-void Phoenix6Driver::RclTalonFX::acceptCtrl(const TalonCtrlMsg& ctrl)
+phx_::StatusCode Phoenix6Driver::RclTalonFX::acceptCtrl(
+    const TalonCtrlMsg& ctrl)
 {
     // if either watchdog or reset disable bits set, don't output
     if (this->isDisabled())
     {
-        this->neutralOut();
+        return this->neutralOut();
     }
     else
     {
-        this->motor << ctrl;
+        return (this->motor << ctrl);
     }
-    // TODO: return status
 }
-void Phoenix6Driver::RclTalonFX::setExtEnabled()
+void Phoenix6Driver::RclTalonFX::setWatchdogEnabled()
 {
-    this->disable_bits &= ~DISABLE_EXTERNAL;
+    this->disable_bits &= ~DISABLE_WATCHDOG;
 }
-void Phoenix6Driver::RclTalonFX::setExtDisabled()
+void Phoenix6Driver::RclTalonFX::setWatchdogDisabled()
 {
-    this->disable_bits |= DISABLE_EXTERNAL;
+    this->disable_bits |= DISABLE_WATCHDOG;
     this->neutralOut();
 }
 
 void Phoenix6Driver::RclTalonFX::notifyRestart()
 {
+    std::cout << "Notified reset for motor (" << this->motor.GetDeviceID()
+              << ", " << this->motor.GetNetwork() << ")" << std::endl;
     // disable output -- does not conflict with watchdog disable bit
-    this->disable_bits |= DISABLE_INTERNAL;
+    // this doesn't get cleared until motor is reconnected and successfully gets currently cached pos
+    this->disable_bits |= DISABLE_REINIT;
     this->neutralOut();
 
+    // restart fault timer since a fault state may still be detected on restart
+    this->elapsed_faulted_time = 0.;
     // cache position and set prereq bits for handler to resolve after the reset
-    this->cached_position = this->motor.GetPosition().GetValue();
+    if (!this->state.disconnected)
+    {
+        // don't cache if not connected -- use last backup (or init value) if the motor ever reconnects
+        this->cached_position = this->motor.GetPosition().GetValue();
+    }
     // don't set `need config` bit -- this should persist? (init value has this set so handler should resolve on startup)
     this->state.need_set_pos = true;
 }
-void Phoenix6Driver::RclTalonFX::handleReinit(units::time::second_t timeout)
+void Phoenix6Driver::RclTalonFX::handleReinit(
+    std::chrono::duration<double> timeout)
 {
     system_clock::time_point beg_t = system_clock::now();
-    const auto max_dt = std::chrono::duration<double>(timeout.value());
 
+    // handle refreshing state (after relay restart state will be old)
+    if ((beg_t - this->prev_update_time) > NOMINAL_INFO_PUB_DT)
+    {
+        this->updateState();
+    }
+    // skip if disconnected
+    if (this->state.disconnected)
+    {
+        return;
+    }
+
+    // attempt to configure if bit is set
     if (this->state.need_config)
     {
-        if (this->motor.GetConfigurator().Apply(this->config, timeout).IsOK())
+        if (this->motor.GetConfigurator()
+                .Apply(this->config, units::time::second_t{timeout.count()})
+                .IsOK())
         {
+            std::cout << "Successfully configured motor! ("
+                      << this->motor.GetDeviceID() << ", "
+                      << this->motor.GetNetwork() << ")" << std::endl;
+            // clear bit on success
             this->state.need_config = false;
         }
     }
 
     const std::chrono::duration<double> elapsed = (system_clock::now() - beg_t);
-
-    if (elapsed >= max_dt)
+    if (elapsed >= timeout)
     {
         return;
     }
+    // attempt to apply last pos if bit is set and timeout not reached
     if (this->state.need_set_pos)
     {
         if (this->motor
                 .SetPosition(
                     this->cached_position,
-                    units::time::second_t{(max_dt - elapsed).count()})
+                    units::time::second_t{(timeout - elapsed).count()})
                 .IsOK())
         {
+            std::cout << "Successfully set position for motor! ("
+                      << this->motor.GetDeviceID() << ", "
+                      << this->motor.GetNetwork() << ")" << std::endl;
+            // clear bit on success
             this->state.need_set_pos = false;
         }
     }
+
+    // if both bits clear, remove internal control blocking
+    if (!this->state.need_config && !this->state.need_set_pos)
+    {
+        this->disable_bits &= ~DISABLE_REINIT;
+    }
 }
 
-void Phoenix6Driver::RclTalonFX::neutralOut()
+phx_::StatusCode Phoenix6Driver::RclTalonFX::neutralOut()
 {
-    this->motor.SetControl(phx6::controls::NeutralOut{});
+    return this->motor.SetControl(phx6::controls::NeutralOut{});
 }
 
 // --- Serial Relay ------------------------------------------------------------
@@ -441,8 +506,8 @@ void Phoenix6Driver::SerialRelay::init(const char* device)
 
     if (this->port < 0)
     {
-        std::cout << "Failed to open serial port " << device
-                  << " for motor resets!" << std::endl;
+        std::cout << "Failed to open serial device (" << device
+                  << ") for motor resets!" << std::endl;
         return;
     }
 
@@ -564,30 +629,30 @@ void Phoenix6Driver::getParams(ParamConfig& params)
     ParamConfig::RclMotorConfig defaults;
     defaults.canbus = params.canbus;
 
-    declare_param(this, "common.kP", defaults.kP, TFX_COMMON_KP);
-    declare_param(this, "common.kI", defaults.kI, TFX_COMMON_KI);
-    declare_param(this, "common.kD", defaults.kD, TFX_COMMON_KD);
-    declare_param(this, "common.kV", defaults.kV, TFX_COMMON_KV);
+    declare_param(this, "common.kP", defaults.kP, TFX_DEFAULT_KP);
+    declare_param(this, "common.kI", defaults.kI, TFX_DEFAULT_KI);
+    declare_param(this, "common.kD", defaults.kD, TFX_DEFAULT_KD);
+    declare_param(this, "common.kV", defaults.kV, TFX_DEFAULT_KV);
     declare_param(
         this,
         "common.neutral_deadband",
         defaults.neutral_deadband,
-        TFX_COMMON_NEUTRAL_DEADBAND);
+        TFX_DEFAULT_NEUTRAL_DEADBAND);
     declare_param(
         this,
         "common.stator_current_limit",
         defaults.stator_current_limit,
-        TFX_COMMON_STATOR_CURRENT_LIMIT);
+        TFX_DEFAULT_STATOR_CURRENT_LIMIT);
     declare_param(
         this,
         "common.supply_current_limit",
         defaults.supply_current_limit,
-        TFX_COMMON_SUPPLY_CURRENT_LIMIT);
+        TFX_DEFAULT_SUPPLY_CURRENT_LIMIT);
     declare_param(
         this,
         "common.voltage_limit",
         defaults.voltage_limit,
-        TFX_COMMON_PEAK_VOLTAGE);
+        TFX_DEFAULT_PEAK_VOLTAGE);
 
     bool use_neutral_brake;
     declare_param(this, "common.neutral_brake", use_neutral_brake, false);
@@ -639,11 +704,11 @@ void Phoenix6Driver::initPhx(const ParamConfig& params)
 void Phoenix6Driver::initMotors(const ParamConfig& params)
 {
     this->motors.reserve(params.motor_configs.size());
-    for (const auto& m_conf : params.motor_configs)
+    for (const auto& config : params.motor_configs)
     {
         size_t idx = this->motors.size();
         this->motors.emplace_back(
-            m_conf,
+            config,
             *this,
             [this, idx](const TalonCtrlMsg& ctrl)
             { this->motors[idx].acceptCtrl(ctrl); });
@@ -660,131 +725,100 @@ void Phoenix6Driver::initThread()
 
 void Phoenix6Driver::feed_watchdog_status(int32_t status)
 {
-    // std::cout << ">> begin feed watchdog status" << std::endl;
     /* Watchdog feed decoding:
      * POSTIVE feed time --> enabled
      * ZERO feed time --> disabled
      * NEGATIVE feed time --> autonomous */
     if (!status)
     {
-        // this->neutralAll();
         for (auto& m : this->motors)
         {
-            m.setExtDisabled();
+            m.setWatchdogDisabled();
         }
-        // this->is_disabled = true;
     }
     else
     {
+        ctre::phoenix::unmanaged::FeedEnable(std::abs(status));
         for (auto& m : this->motors)
         {
-            m.setExtEnabled();
+            m.setWatchdogEnabled();
         }
-        // if (this->is_disabled)
-        // {
-        //     this->last_enable_beg_time = system_clock::now();
-        //     // std::cout << "Applied new last enabled state change time "
-        //     //           << this->last_enable_beg_time.time_since_epoch().count()
-        //     //           << std::endl;
-        // }
-        ctre::phoenix::unmanaged::FeedEnable(std::abs(status));
-        // this->is_disabled = false;
-        // std::cout << "watchdog set disabled to false" << std::endl;
     }
-    // this->relay_state_pub->publish(Int8Msg{}.set__data(1));
-    // std::cout << ">> end feed watchdog status" << std::endl;
 }
 
 void Phoenix6Driver::handle_motor_states()
 {
-    constexpr double MAX_INFO_PUB_FREQ = 20.;
-    constexpr double MAX_FAULT_PUB_FREQ = 4.;
-
-    constexpr auto MIN_INFO_PUB_DT = (1s / MAX_INFO_PUB_FREQ);
-    constexpr auto MIN_FAULT_PUB_DT = (1s / MAX_FAULT_PUB_FREQ);
-
-    constexpr double FAULT_DT_THRESH = 1.0;
-
-    system_clock::time_point prev_info_pub_t, prev_fault_pub_t;
+    system_clock::time_point next_info_pub_t, next_fault_pub_t;
+    next_info_pub_t = next_fault_pub_t = system_clock::now();
 
     while (this->thread_enabled)
     {
-        auto beg_t = system_clock::now();
-
-        const auto info_dt = beg_t - prev_info_pub_t;
+        // handle update motor state and pub info
+        auto curr_t = system_clock::now();
         bool any_faulted = false;
-        if (info_dt > MIN_INFO_PUB_DT)
+        if (curr_t >= next_info_pub_t)
         {
-            auto t1 = system_clock::now();
             HeaderMsg header;
             header.stamp = this->get_clock()->now();
             for (auto& m : this->motors)
             {
                 m.updateAndPubInfo(header);
-                any_faulted |= (m.elapsedFaultTime() >= FAULT_DT_THRESH);
-            }
-            auto t2 = system_clock::now();
-
-            auto dt = t2 - t1;
-            if (dt > 10ms)
-            {
-                std::cout << "Motor info pub took >10ms ("
-                          << (std::chrono::duration<double>(dt).count() * 1000.)
-                          << "ms)" << std::endl;
+                any_faulted |= (m.elapsedFaultTime() >= MOTOR_RESTART_THRESH_S);
             }
 
-            prev_info_pub_t = beg_t;
+            next_info_pub_t += NOMINAL_INFO_PUB_DT;
         }
 
-        const auto fault_dt = beg_t - prev_fault_pub_t;
-        if (fault_dt > MIN_FAULT_PUB_DT)
+        // handle pub faults
+        curr_t = system_clock::now();
+        if (curr_t >= next_fault_pub_t)
         {
-            auto t1 = system_clock::now();
             HeaderMsg header;
             header.stamp = this->get_clock()->now();
             for (auto& m : this->motors)
             {
                 m.pubFaults(header);
             }
-            auto t2 = system_clock::now();
 
-            auto dt = t2 - t1;
-            if (dt > 10ms)
-            {
-                std::cout << "Motor faults pub took >10ms ("
-                          << (std::chrono::duration<double>(dt).count() * 1000.)
-                          << "ms)" << std::endl;
-            }
-
-            prev_fault_pub_t = beg_t;
+            next_fault_pub_t += NOMINAL_FAULT_PUB_DT;
         }
 
-        // handle relay restart here
-        // ... notify all motors to set states accordingly
+        // if any faults, conduct reset routine
         if (any_faulted)
         {
+            // notify motors of restart
             for (auto& m : this->motors)
             {
                 m.notifyRestart();
             }
+
+            // toggle relay
+            this->relay_state_pub->publish(Int8Msg{}.set__data(0));
             this->relay.disable();
-            // pub status
             std::this_thread::sleep_for(TALONFX_POWER_CYCLE_DELAY);
             this->relay.enable();
-            // pub status again
-        }
 
-        // call motor handlers for configuring/applying cached position (or add to pubInfo?)
+            // re-sync pub targets
+            next_info_pub_t = next_fault_pub_t = system_clock::now();
+        }
+        this->relay_state_pub->publish(Int8Msg{}.set__data(1));
+
+        // handle setting configs for each motor, timing out before the next iteration
+        const auto next_loop_t = std::min(next_info_pub_t, next_fault_pub_t);
         for (auto& m : this->motors)
         {
-            // TODO: calculate timeout for each depending on time until next loop
-            m.handleReinit();
+            auto timeout = next_loop_t - system_clock::now();
+            if (timeout > 0s)
+            {
+                m.handleReinit(timeout);
+            }
+            else
+            {
+                break;
+            }
         }
 
-        std::this_thread::sleep_until(
-            std::min(
-                prev_info_pub_t + MIN_INFO_PUB_DT,
-                prev_fault_pub_t + MIN_FAULT_PUB_DT));
+        std::this_thread::sleep_until(next_loop_t);
     }
 }
 
