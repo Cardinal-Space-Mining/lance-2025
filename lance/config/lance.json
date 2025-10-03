@@ -487,7 +487,7 @@
         "pragma:default": null,
         "enabled":
         {
-            "diagnostics_port": 0,
+            "diagnostics_port": 1250,
             "canbus": "can_phx5"
         }
     },
@@ -496,13 +496,14 @@
         "pragma:default": null,
         "enabled":
         {
-            "diagnostics_port": 1250,
+            "diagnostics_port": 0,
             "canbus": "can_phx6",
-            "arduino_device": "/dev/ttyAMC0",
+            "arduino_device": "",
+            "power_cycle_fault_thresh_s": 0.5,
             "common":
             {
                 "kP": 0.4,
-                "kI": 0.1,
+                "kI": 0.05,
                 "kD": 0.0001,
                 "kV": 0.12,
                 "neutral_deadband": 0.05,

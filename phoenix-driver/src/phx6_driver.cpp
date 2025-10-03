@@ -57,10 +57,10 @@ using namespace std::chrono_literals;
 #define ROBOT_TOPIC(subtopic) "/lance/" subtopic
 #define TALON_CTRL_SUB_QOS    1
 
-#define MOTOR_INFO_PUB_FREQ       20.
-#define MOTOR_FAULT_PUB_FREQ      4.
-#define TALONFX_POWER_CYCLE_DELAY 0.5s
-#define MOTOR_RESTART_THRESH_S    1.0
+#define MOTOR_INFO_PUB_FREQ               20.
+#define MOTOR_FAULT_PUB_FREQ              4.
+#define MOTOR_POWER_CYCLE_DELAY           0.5s
+#define MOTOR_DEFAULT_FAULT_TIME_THRESH_S 1.0
 
 static constexpr auto NOMINAL_INFO_PUB_DT =
     std::chrono::duration_cast<std::chrono::system_clock::duration>(
@@ -141,13 +141,13 @@ class Phoenix6Driver : public rclcpp::Node
             bool reinit_disabled   : 1 {false};
             bool hardware_disabled : 1 {false};
             bool disconnected      : 1 {false};
+            bool phx_disabled      : 1 {false};
             bool need_config       : 1 {true};
             bool need_set_pos      : 1 {true};
 
             inline bool isFault() const
             {
-                return hardware_disabled && !watchdog_disabled &&
-                       !reinit_disabled && !disconnected;
+                return !phx_disabled && hardware_disabled && !disconnected;
             }
         }  //
         state;
@@ -221,6 +221,8 @@ private:
 
     std::thread motor_state_thread;
     std::atomic<bool> thread_enabled = true;
+
+    double fault_thresh_s;
 };
 
 
@@ -309,6 +311,7 @@ void Phoenix6Driver::RclTalonFX::updateState()
     new_state.hardware_disabled =
         !this->motor.GetDeviceEnable().GetValue().value;
     new_state.disconnected = !this->motor.IsConnected();
+    new_state.phx_disabled = !ctre::phoenix::unmanaged::GetEnableState();
 
     // if hard disabled while NOT externally disabled AND NOT internally disabled AND NOT disconnected --> fault state
     // accumulate time in fault state --> if 'rising edge', take half of update dt, otherwise full dt
@@ -342,6 +345,7 @@ void Phoenix6Driver::RclTalonFX::updateState()
         this->cached_position = units::angle::turn_t{this->last_info.position};
     }
 
+    this->prev_update_time = curr_t;
     this->state = new_state;
 }
 
@@ -360,14 +364,16 @@ void Phoenix6Driver::RclTalonFX::updateAndPubInfo(const HeaderMsg& header)
          static_cast<uint8_t>(!this->state.disconnected) << 1 |
          // third bit "has reset occurred"
          static_cast<uint8_t>(this->motor.HasResetOccurred()) << 2 |
-         // fourth bit "is watchdog allowing enabled"
-         static_cast<uint8_t>(!this->state.watchdog_disabled) << 3 |
-         // fifth bit "is NOT disabled because of reinit"
-         static_cast<uint8_t>(!this->state.reinit_disabled) << 4 |
-         // sixth bit "has been configured properly"
-         static_cast<uint8_t>(!this->state.need_config) << 5 |
-         // seventh bit "has position been set correctly"
-         static_cast<uint8_t>(!this->state.need_set_pos) << 6);
+         // fourth bit "is phx enabled"
+         static_cast<uint8_t>(!this->state.phx_disabled) << 3 |
+         // fifth bit "is watchdog allowing enabled"
+         static_cast<uint8_t>(!this->state.watchdog_disabled) << 4 |
+         // sixth bit "is NOT disabled because of reinit"
+         static_cast<uint8_t>(!this->state.reinit_disabled) << 5 |
+         // seventh bit "has been configured properly"
+         static_cast<uint8_t>(!this->state.need_config) << 6 |
+         // eight bit "has position been set correctly"
+         static_cast<uint8_t>(!this->state.need_set_pos) << 7);
 
     this->info_pub->publish(this->last_info);
 }
@@ -376,6 +382,11 @@ void Phoenix6Driver::RclTalonFX::pubFaults(const HeaderMsg& header)
     this->last_faults.header = header;
     this->last_faults << this->motor;
     this->faults_pub->publish(this->last_faults);
+
+    if (this->last_faults.sticky_faults)
+    {
+        this->motor.ClearStickyFaults();
+    }
 }
 
 phx_::StatusCode Phoenix6Driver::RclTalonFX::acceptCtrl(
@@ -468,7 +479,8 @@ void Phoenix6Driver::RclTalonFX::handleReinit(
         {
             std::cout << "Successfully set position for motor! ("
                       << this->motor.GetDeviceID() << ", "
-                      << this->motor.GetNetwork() << ")" << std::endl;
+                      << this->motor.GetNetwork() << ") -- "
+                      << this->cached_position.value() << std::endl;
             // clear bit on success
             this->state.need_set_pos = false;
         }
@@ -490,7 +502,10 @@ phx_::StatusCode Phoenix6Driver::RclTalonFX::neutralOut()
 
 Phoenix6Driver::SerialRelay::SerialRelay(const char* device)
 {
-    this->init(device);
+    if (device && *device)
+    {
+        this->init(device);
+    }
 }
 Phoenix6Driver::SerialRelay::~SerialRelay()
 {
@@ -553,6 +568,9 @@ void Phoenix6Driver::SerialRelay::init(const char* device)
         this->port = -1;
         return;
     }
+
+    std::cout << "Successfully configured serial device (" << device
+              << ") for motor resets!" << std::endl;
 }
 void Phoenix6Driver::SerialRelay::enable()
 {
@@ -590,6 +608,7 @@ Phoenix6Driver::Phoenix6Driver() :
 {
     ParamConfig params;
     this->getParams(params);
+    this->initSerial(params);
     this->initPhx(params);
     this->initMotors(params);
     this->initThread();
@@ -625,6 +644,11 @@ void Phoenix6Driver::getParams(ParamConfig& params)
         "arduino_device",
         params.arduino_device,
         DEFAULT_ARDUINO_DEVICE);
+    declare_param(
+        this,
+        "power_cycle_fault_thresh_s",
+        this->fault_thresh_s,
+        MOTOR_DEFAULT_FAULT_TIME_THRESH_S);
 
     ParamConfig::RclMotorConfig defaults;
     defaults.canbus = params.canbus;
@@ -755,15 +779,32 @@ void Phoenix6Driver::handle_motor_states()
     {
         // handle update motor state and pub info
         auto curr_t = system_clock::now();
-        bool any_faulted = false;
+        bool need_restart = false;
         if (curr_t >= next_info_pub_t)
         {
             HeaderMsg header;
             header.stamp = this->get_clock()->now();
+            double longest_elapsed_fault = 0.;
             for (auto& m : this->motors)
             {
                 m.updateAndPubInfo(header);
-                any_faulted |= (m.elapsedFaultTime() >= MOTOR_RESTART_THRESH_S);
+                longest_elapsed_fault =
+                    std::max(longest_elapsed_fault, m.elapsedFaultTime());
+            }
+
+            if (longest_elapsed_fault > 0.)
+            {
+                std::cout << "Longest detected fault duration was "
+                          << longest_elapsed_fault << "s";
+                if (longest_elapsed_fault >= this->fault_thresh_s)
+                {
+                    need_restart = true;
+                    std::cout << " -- triggering restart!" << std::endl;
+                }
+                else
+                {
+                    std::cout << std::endl;
+                }
             }
 
             next_info_pub_t += NOMINAL_INFO_PUB_DT;
@@ -784,7 +825,7 @@ void Phoenix6Driver::handle_motor_states()
         }
 
         // if any faults, conduct reset routine
-        if (any_faulted)
+        if (need_restart)
         {
             // notify motors of restart
             for (auto& m : this->motors)
@@ -795,7 +836,7 @@ void Phoenix6Driver::handle_motor_states()
             // toggle relay
             this->relay_state_pub->publish(Int8Msg{}.set__data(0));
             this->relay.disable();
-            std::this_thread::sleep_for(TALONFX_POWER_CYCLE_DELAY);
+            std::this_thread::sleep_for(MOTOR_POWER_CYCLE_DELAY);
             this->relay.enable();
 
             // re-sync pub targets
