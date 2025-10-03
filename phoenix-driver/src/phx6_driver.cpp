@@ -60,7 +60,7 @@ using namespace std::chrono_literals;
 #define MOTOR_INFO_PUB_FREQ               20.
 #define MOTOR_FAULT_PUB_FREQ              4.
 #define MOTOR_POWER_CYCLE_DELAY           0.5s
-#define MOTOR_DEFAULT_FAULT_TIME_THRESH_S 1.0
+#define MOTOR_DEFAULT_FAULT_TIME_THRESH_S 1.5
 
 static constexpr auto NOMINAL_INFO_PUB_DT =
     std::chrono::duration_cast<std::chrono::system_clock::duration>(
@@ -80,6 +80,7 @@ class Phoenix6Driver : public rclcpp::Node
     using HeaderMsg = std_msgs::msg::Header;
     using system_clock = std::chrono::system_clock;
 
+    // Temporary parameter buffer
     struct ParamConfig
     {
         struct RclMotorConfig
@@ -108,6 +109,7 @@ class Phoenix6Driver : public rclcpp::Node
         std::vector<RclMotorConfig> motor_configs;
     };
 
+    // Phx motor instance + pubsubs + state managers
     struct RclTalonFX
     {
         enum
@@ -131,6 +133,7 @@ class Phoenix6Driver : public rclcpp::Node
         double elapsed_faulted_time{0.};
         system_clock::time_point prev_update_time{
             system_clock::time_point::min()};
+        // system_clock::time_point last_reset_time;
         units::angle::turn_t cached_position{0_tr};
 
         // start fully disabled (require config and pos_set)
@@ -142,6 +145,7 @@ class Phoenix6Driver : public rclcpp::Node
             bool hardware_disabled : 1 {false};
             bool disconnected      : 1 {false};
             bool phx_disabled      : 1 {false};
+            bool has_reset         : 1 {false};
             bool need_config       : 1 {true};
             bool need_set_pos      : 1 {true};
 
@@ -179,6 +183,7 @@ class Phoenix6Driver : public rclcpp::Node
         phx_::StatusCode neutralOut();
     };
 
+    // Serial interface for triggering relay
     class SerialRelay
     {
     public:
@@ -216,7 +221,6 @@ private:
     std::vector<RclTalonFX> motors;
 
     RclPubPtr<Int8Msg> relay_state_pub;
-    RclPubPtr<StringMsg> op_pub;
     RclSubPtr<Int32Msg> watchdog_status_sub;
 
     std::thread motor_state_thread;
@@ -312,6 +316,7 @@ void Phoenix6Driver::RclTalonFX::updateState()
         !this->motor.GetDeviceEnable().GetValue().value;
     new_state.disconnected = !this->motor.IsConnected();
     new_state.phx_disabled = !ctre::phoenix::unmanaged::GetEnableState();
+    new_state.has_reset = this->motor.HasResetOccurred();
 
     // if hard disabled while NOT externally disabled AND NOT internally disabled AND NOT disconnected --> fault state
     // accumulate time in fault state --> if 'rising edge', take half of update dt, otherwise full dt
@@ -338,8 +343,17 @@ void Phoenix6Driver::RclTalonFX::updateState()
         this->elapsed_faulted_time = 0.;
     }
 
+    // on power-cycle, position gets reset and immediately cached unless we specifically check for this state
+    if ((!new_state.disconnected && this->state.disconnected) ||
+        new_state.has_reset)
+    {
+        // this->last_reset_time = curr_t;
+        new_state.need_set_pos = true;
+        this->disable_bits |= DISABLE_REINIT;
+    }
+
     // if connected and don't need to set pos, cache last position
-    if (!new_state.disconnected && !this->state.need_set_pos)
+    if (!new_state.disconnected && !new_state.need_set_pos)
     {
         // this is as a backup - we also cache right before triggering a restart
         this->cached_position = units::angle::turn_t{this->last_info.position};
@@ -357,13 +371,20 @@ void Phoenix6Driver::RclTalonFX::updateAndPubInfo(const HeaderMsg& header)
     this->last_info.header = header;
     serializeTalonInfoNoStatus(this->last_info, this->motor);
 
+    // if we are trying to re-apply the cached position, don't trust the current value from the motor
+    if (this->state.need_set_pos)
+    {
+        this->last_info.position = this->cached_position.value();
+    }
+
+    // first 3 bits are 'message spec', rest are extra and only defined here
     this->last_info.status =
         // first bit "is hardware enabled"
         (static_cast<uint8_t>(!this->state.hardware_disabled) << 0 |
          // second bit "is connected"
          static_cast<uint8_t>(!this->state.disconnected) << 1 |
          // third bit "has reset occurred"
-         static_cast<uint8_t>(this->motor.HasResetOccurred()) << 2 |
+         static_cast<uint8_t>(this->state.has_reset) << 2 |
          // fourth bit "is phx enabled"
          static_cast<uint8_t>(!this->state.phx_disabled) << 3 |
          // fifth bit "is watchdog allowing enabled"
@@ -463,14 +484,15 @@ void Phoenix6Driver::RclTalonFX::handleReinit(
         }
     }
 
-    const std::chrono::duration<double> elapsed = (system_clock::now() - beg_t);
-    if (elapsed >= timeout)
-    {
-        return;
-    }
     // attempt to apply last pos if bit is set and timeout not reached
     if (this->state.need_set_pos)
     {
+        const std::chrono::duration<double> elapsed =
+            (system_clock::now() - beg_t);
+        if (elapsed >= timeout)
+        {
+            return;
+        }
         if (this->motor
                 .SetPosition(
                     this->cached_position,
@@ -598,9 +620,6 @@ Phoenix6Driver::Phoenix6Driver() :
     relay_state_pub{this->create_publisher<Int8Msg>(
         ROBOT_TOPIC("relay_status"),
         rclcpp::SensorDataQoS{})},
-    op_pub{this->create_publisher<StringMsg>(
-        ROBOT_TOPIC("phx6_op_status"),
-        rclcpp::SensorDataQoS{})},
     watchdog_status_sub{this->create_subscription<Int32Msg>(
         ROBOT_TOPIC("watchdog_status"),
         rclcpp::SensorDataQoS{},
@@ -612,10 +631,6 @@ Phoenix6Driver::Phoenix6Driver() :
     this->initPhx(params);
     this->initMotors(params);
     this->initThread();
-
-    RCLCPP_DEBUG(
-        this->get_logger(),
-        "Completed Phoenix6 Driver Node Initialization");
 }
 Phoenix6Driver::~Phoenix6Driver()
 {
@@ -644,6 +659,12 @@ void Phoenix6Driver::getParams(ParamConfig& params)
         "arduino_device",
         params.arduino_device,
         DEFAULT_ARDUINO_DEVICE);
+
+    // --- IMPORTANT! ----------------------------------------------------------
+    // Configure this to be the maximum amount of time that it takes any motor
+    // to initialize after being powered on, or during a "soft"
+    // (temporary disable) current limit event - from testing this has been
+    // ~1.25 seconds, so the default is 1.5
     declare_param(
         this,
         "power_cycle_fault_thresh_s",

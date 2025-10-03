@@ -499,7 +499,7 @@
             "diagnostics_port": 0,
             "canbus": "can_phx6",
             "arduino_device": "",
-            "power_cycle_fault_thresh_s": 0.5,
+            "power_cycle_fault_thresh_s": 1.5,
             "common":
             {
                 "kP": 0.4,
