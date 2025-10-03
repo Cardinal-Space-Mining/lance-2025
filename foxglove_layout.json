@@ -78,7 +78,8 @@
         "#0bff00ff"
       ],
       "reverse": false,
-      "foxglovePanelTitle": "Hopper Fullness"
+      "foxglovePanelTitle": "Hopper Fullness",
+      "reverseDirection": false
     },
     "Bar Display.Bar Display!308m91j": {
       "topicField": "/lance/hopper_act/info.bus_voltage",
@@ -215,8 +216,8 @@
     "3D!wl899f": {
       "cameraState": {
         "perspective": true,
-        "distance": 2.3196444259997104,
-        "phi": 53.94230769230853,
+        "distance": 2.3196444259997064,
+        "phi": 53.942307692308525,
         "thetaOffset": -157.81882591093026,
         "targetOffset": [
           -0.06641931035778242,
@@ -339,19 +340,15 @@
     "StateTransitions!3qedham": {
       "paths": [
         {
-          "value": "/lance/track_left/info.enabled",
+          "value": "/lance/track_left/info.status",
           "timestampMethod": "receiveTime"
         },
         {
-          "value": "/lance/track_right/info.enabled",
+          "value": "/lance/track_right/info.status",
           "timestampMethod": "receiveTime"
         },
         {
-          "value": "/lance/trencher/info.enabled",
-          "timestampMethod": "receiveTime"
-        },
-        {
-          "value": "/lance/hopper_belt/info.enabled",
+          "value": "/lance/trencher/info.status",
           "timestampMethod": "receiveTime",
           "customStates": {
             "type": "discrete",
@@ -359,7 +356,15 @@
           }
         },
         {
-          "value": "/lance/hopper_act/info.enabled",
+          "value": "/lance/hopper_belt/info.status",
+          "timestampMethod": "receiveTime",
+          "customStates": {
+            "type": "discrete",
+            "states": []
+          }
+        },
+        {
+          "value": "/lance/hopper_act/info.status",
           "timestampMethod": "receiveTime",
           "customStates": {
             "type": "discrete",
@@ -368,6 +373,14 @@
         },
         {
           "value": "/lance/watchdog_status.data",
+          "timestampMethod": "receiveTime",
+          "customStates": {
+            "type": "discrete",
+            "states": []
+          }
+        },
+        {
+          "value": "/lance/phx6_op_status.data",
           "timestampMethod": "receiveTime",
           "customStates": {
             "type": "discrete",
@@ -441,13 +454,13 @@
     "3D!3o2i4gc": {
       "cameraState": {
         "perspective": true,
-        "distance": 5.006881794710072,
-        "phi": 71.78416523800344,
-        "thetaOffset": -161.9153481200757,
+        "distance": 7.547072050492943,
+        "phi": 37.15329275478564,
+        "thetaOffset": -145.4052810059803,
         "targetOffset": [
-          -0.04335038402260994,
-          -0.701006188595169,
-          -3.688577929300941e-17
+          0.5460708880545221,
+          -0.8402841491504667,
+          -9.081901389596454e-17
         ],
         "target": [
           0,
@@ -512,10 +525,10 @@
         },
         "/multiscan/lidar_scan": {
           "visible": true,
-          "colorField": "reflective",
+          "colorField": "intensity",
           "colorMode": "colormap",
           "colorMap": "turbo",
-          "pointSize": 1
+          "pointSize": 4
         },
         "/cardinal_perception/trav_interp_points": {
           "visible": true,
@@ -997,7 +1010,7 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/trencher/info.velocity",
-          "enabled": false,
+          "enabled": true,
           "color": "#4e98e2"
         },
         {
@@ -1009,7 +1022,7 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/trencher/info.output_current",
-          "enabled": false,
+          "enabled": true,
           "color": "#f7df71"
         },
         {
@@ -1021,13 +1034,13 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/trencher/info.supply_current",
-          "enabled": false,
+          "enabled": true,
           "color": "#61cbff"
         },
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/trencher/info.device_temp",
-          "enabled": false,
+          "enabled": true,
           "color": "#a395e2"
         },
         {
@@ -1075,7 +1088,7 @@
         {
           "timestampMethod": "receiveTime",
           "value": "/lance/trencher/info.position",
-          "enabled": false,
+          "enabled": true,
           "color": "#cad660"
         }
       ],
@@ -1525,7 +1538,7 @@
           "timestampMethod": "receiveTime"
         },
         {
-          "value": "/lance/trencher/info.enabled",
+          "value": "/lance/trencher/info.status",
           "timestampMethod": "receiveTime"
         },
         {
@@ -1661,11 +1674,7 @@
           "timestampMethod": "receiveTime"
         },
         {
-          "value": "/lance/track_right/faults.device_temp_fault",
-          "timestampMethod": "receiveTime"
-        },
-        {
-          "value": "/lance/track_left/faults.proc_temp_fault",
+          "value": "/lance/track_left/info.status",
           "timestampMethod": "receiveTime"
         },
         {
@@ -1703,6 +1712,22 @@
         {
           "value": "/lance/track_left/faults.static_brake_disabled_fault",
           "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/track_left/faults.device_temp_fault",
+          "timestampMethod": "receiveTime",
+          "customStates": {
+            "type": "discrete",
+            "states": []
+          }
+        },
+        {
+          "value": "/lance/track_left/faults.proc_temp_fault",
+          "timestampMethod": "receiveTime",
+          "customStates": {
+            "type": "discrete",
+            "states": []
+          }
         }
       ],
       "isSynced": true,
@@ -1715,11 +1740,7 @@
           "timestampMethod": "receiveTime"
         },
         {
-          "value": "/lance/trencher/faults.device_temp_fault",
-          "timestampMethod": "receiveTime"
-        },
-        {
-          "value": "/lance/trencher/faults.proc_temp_fault",
+          "value": "/lance/trencher/info.status",
           "timestampMethod": "receiveTime"
         },
         {
@@ -1757,6 +1778,22 @@
         {
           "value": "/lance/trencher/faults.static_brake_disabled_fault",
           "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/trencher/faults.device_temp_fault",
+          "timestampMethod": "receiveTime",
+          "customStates": {
+            "type": "discrete",
+            "states": []
+          }
+        },
+        {
+          "value": "/lance/trencher/faults.proc_temp_fault",
+          "timestampMethod": "receiveTime",
+          "customStates": {
+            "type": "discrete",
+            "states": []
+          }
         }
       ],
       "isSynced": true,
@@ -1769,11 +1806,7 @@
           "timestampMethod": "receiveTime"
         },
         {
-          "value": "/lance/track_right/faults.device_temp_fault",
-          "timestampMethod": "receiveTime"
-        },
-        {
-          "value": "/lance/track_right/faults.proc_temp_fault",
+          "value": "/lance/track_right/info.status",
           "timestampMethod": "receiveTime"
         },
         {
@@ -1811,6 +1844,22 @@
         {
           "value": "/lance/track_right/faults.static_brake_disabled_fault",
           "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/track_right/faults.device_temp_fault",
+          "timestampMethod": "receiveTime",
+          "customStates": {
+            "type": "discrete",
+            "states": []
+          }
+        },
+        {
+          "value": "/lance/track_right/faults.proc_temp_fault",
+          "timestampMethod": "receiveTime",
+          "customStates": {
+            "type": "discrete",
+            "states": []
+          }
         }
       ],
       "isSynced": true,
@@ -1823,11 +1872,7 @@
           "timestampMethod": "receiveTime"
         },
         {
-          "value": "/lance/hopper_belt/faults.device_temp_fault",
-          "timestampMethod": "receiveTime"
-        },
-        {
-          "value": "/lance/hopper_belt/faults.proc_temp_fault",
+          "value": "/lance/hopper_belt/info.status",
           "timestampMethod": "receiveTime"
         },
         {
@@ -1865,6 +1910,22 @@
         {
           "value": "/lance/hopper_belt/faults.static_brake_disabled_fault",
           "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/lance/hopper_belt/faults.device_temp_fault",
+          "timestampMethod": "receiveTime",
+          "customStates": {
+            "type": "discrete",
+            "states": []
+          }
+        },
+        {
+          "value": "/lance/hopper_belt/faults.proc_temp_fault",
+          "timestampMethod": "receiveTime",
+          "customStates": {
+            "type": "discrete",
+            "states": []
+          }
         }
       ],
       "isSynced": true,
@@ -3068,7 +3129,7 @@
                   "splitPercentage": 8.392715756136182
                 },
                 "direction": "column",
-                "splitPercentage": 7.540263543191801
+                "splitPercentage": 7.157057654075547
               },
               "second": {
                 "first": "Plot!1n7cgqb",
@@ -3088,10 +3149,10 @@
               },
               "second": "StateTransitions!3qedham",
               "direction": "column",
-              "splitPercentage": 65.6298600311042
+              "splitPercentage": 63.61639824304539
             },
             "direction": "row",
-            "splitPercentage": 73.69431107124213
+            "splitPercentage": 73.61436377829821
           }
         },
         {

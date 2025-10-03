@@ -28,7 +28,7 @@ done
 
 if [ -z "$ARDUINO_DEVICE" ]; then
     echo "Failed to detect serial arduino."
-    ARDUINO_DEVICE=/dev/ttyACM0
+    ARDUINO_DEVICE=/dev/ttyACM2
     # exit 1
 fi
 
