@@ -16,4 +16,8 @@ float32 output_current
 uint8 motor_state
 uint8 bridge_mode
 uint8 control_mode
-bool enabled
+
+uint8 STATUS_PHX_ENABLED = 1
+uint8 STATUS_CONNECTED = 2
+uint8 STATUS_RESET_OCC = 4
+uint8 status
