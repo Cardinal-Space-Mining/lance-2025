@@ -76,6 +76,28 @@
                 "robot_tf": "lance",
                 "foxglove_bridge": "test"
             }
+        },
+        "lidar-dev":
+        {
+            "pragma:action_overrides":
+            {
+                "multiscan_driver": "robot",
+                "perception": "lidar-only",
+                "pplan_client": "enabled",
+                "foxglove_bride": "test",
+                "foxglove_gui": "local"
+            }
+        },
+        "lidar-bag":
+        {
+            "pragma:action_overrides":
+            {
+                "perception": "test",
+                "pplan_client": "enabled",
+                "robot_tf": "lance",
+                "foxglove_bridge": "test",
+                "foxglove_gui": "local"
+            }
         }
     },
 
@@ -837,6 +859,7 @@
                 "/multiscan/imu"
             ],
             "start_paused": true,
+            "start_time": 359.0,
             "loop": false,
             "remappings": {}
         },
@@ -848,6 +871,12 @@
                 "/tf",
                 "/tf_static"
             ]
+        },
+        "cosmic-bag":
+        {
+            "start_paused": true,
+            "start_time": 359.0,
+            "loop": false
         }
     },
     "bag_record":
