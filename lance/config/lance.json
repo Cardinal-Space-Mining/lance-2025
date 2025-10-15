@@ -924,6 +924,15 @@
             "start_paused": true,
             "start_time": 359.0,
             "loop": false
+        },
+        "ksc_bag":
+        {
+            "topics": [
+                "/multiscan/lidar_scan"
+            ],
+            "start_paused": true,
+            "start_time": 250.0,
+            "loop": false
         }
     },
     "bag_record":
