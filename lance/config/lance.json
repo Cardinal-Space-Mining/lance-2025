@@ -584,6 +584,13 @@
 
 
 
+    "gz_sim":
+    {
+        "pragma:default": null,
+        "enabled": {}
+    },
+
+
     "foxglove_bridge":
     {
         "pragma:default": null,

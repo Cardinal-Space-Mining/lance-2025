@@ -19,6 +19,13 @@ try:
 except Exception as e:
     HAVE_PERCEPTION_UTILS = False
 
+try:
+    sys.path.append(os.path.join(get_package_share_directory('csm_sim'), 'launch'))
+    from sim_launch_utils import get_sim_actions
+    HAVE_SIM_UTILS = True
+except Exception as e:
+    HAVE_SIM_UTILS = False
+
 PKG_PATH = get_package_share_directory('lance')
 DEFAULT_JSON_PATH = os.path.join(PKG_PATH, 'config', 'lance.json')
 
@@ -94,12 +101,17 @@ def launch(context, *args, **kwargs):
     launch_args = parse_launch_args(context.argv)
     json_data = try_load_json_from_args(launch_args, DEFAULT_JSON_PATH)
     config = preprocess_launch_json(json_data, launch_args)
+
     actions.extend(get_util_actions(config, launch_args))
     actions.extend(get_robot_actions(config, launch_args))
+
     if HAVE_PERCEPTION_UTILS:
         actions.extend(get_perception_actions(config))
     else:
         print("Failed to load 'Cardinal Perception' launch utils!")
+
+    if HAVE_SIM_UTILS:
+        actions.extend(get_sim_actions(config))
 
     return actions
 
