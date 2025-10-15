@@ -310,13 +310,13 @@
             "traversibility":
             {
                 "chunk_horizontal_range": 2.5,
-                "chunk_vertical_range": 0.5,
-                "normal_estimation_radius": 0.05,
-                "interp_grid_res": 0.02,
-                "non_trav_grad_angle": 45.0,
-                "required_clearance": 1.5,
-                "avoidance_radius": 0.1,
-                "interp_point_samples": 7
+                "chunk_vertical_range": 1.0,
+                "interp_grid_res": 0.1,
+                "grad_search_radius": 0.3,
+                "min_grad_diff": 0.15,
+                "non_trav_grad_angle": 30.0,
+                "avoidance_radius": 0.4,
+                "avoid_min_num_points": 3
             }
         }
     },
