@@ -248,7 +248,7 @@
                 "crop_vertical_range": 1.0,
                 "frustum_search_radius": 0.04,
                 "radial_distance_thresh": 0.05,
-                "immunity_time_s": 5.0,
+                "surface_width": 0.04,
                 "delete_max_range": 3.5,
                 "add_max_range": 3.5,
                 "voxel_size": 0.08
@@ -302,7 +302,7 @@
                 "crop_vertical_range": 1.0,
                 "frustum_search_radius": 0.015,
                 "radial_distance_thresh": 0.008,
-                "immunity_time_s": 1.0,
+                "surface_width": 0.02,
                 "delete_max_range": 2.5,
                 "add_max_range": 2.5,
                 "voxel_size": 0.02

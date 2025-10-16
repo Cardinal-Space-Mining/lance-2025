@@ -90,6 +90,12 @@ Note that this runs a simplified script. If logging or other utility nodes need 
 ## Foxglove Studio
 A foxglove studio layout configuration (`foxglove_layout.json`) is included which provides a main control dashboard as well as tabs for each perception stage and motor status info. This can be loaded by clicking the **"LAYOUT"** dropdown in the top right corner of foxglove studio, then clicking **"Import from file..."** and navigating to the json.
 
+## Simulation
+Simulation assets (Gazebo and Nvidia Isaac) and launch utilities are encapsulated in a separate repo since including them here by default would make the repo quite bloated. Conveniently, the repo just needs to be cloned alongside the other packages to be built and used (see included readme for dependencies!):
+```bash
+pushd src && git clone https://gitlab.com/csm2.0/csm-sim && popd
+```
+
 ## VSCode
 The build script exports compile commands which can help VSCode's C/C++ extension resolve correct syntax highlighting. To ensure this is working, paste the following code into the `c_cpp_properties.json` file (under .vscode directory in a workspace):
 ```json
