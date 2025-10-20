@@ -5,6 +5,7 @@ project(phoenix_ros_driver)
 find_package(rosidl_default_generators REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
@@ -84,12 +85,15 @@ target_link_libraries(motor_sim
     ${phoenix_ros_driver_custom_types})
 ament_target_dependencies(motor_sim
     rclcpp
+    nav_msgs
     std_msgs
-    sensor_msgs)
+    sensor_msgs
+    geometry_msgs)
 
 # --- Export -------------------------------------------------------------------
 ament_export_dependencies(
     rclcpp
+    nav_msgs
     std_msgs
     sensor_msgs
     geometry_msgs

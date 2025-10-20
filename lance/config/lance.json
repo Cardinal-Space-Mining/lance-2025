@@ -587,6 +587,19 @@
     "gz_sim":
     {
         "pragma:default": null,
+        "enabled": {},
+        "motor_sim":
+        {
+            "bridge_remappings":
+            {
+                "/joint_states": "/gz_joint_states"
+            },
+            "hid_control": false
+        }
+    },
+    "gz_gui" :
+    {
+        "pragma:default": null,
         "enabled": {}
     },
 
