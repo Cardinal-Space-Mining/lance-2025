@@ -314,8 +314,8 @@
                 "interp_grid_res": 0.1,
                 "grad_search_radius": 0.3,
                 "min_grad_diff": 0.15,
-                "non_trav_grad_angle": 30.0,
-                "avoidance_radius": 0.4,
+                "non_trav_grad_angle": 45.0,
+                "avoidance_radius": 0.35,
                 "avoid_min_num_points": 3
             }
         }
