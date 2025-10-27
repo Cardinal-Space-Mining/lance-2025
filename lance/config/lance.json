@@ -244,24 +244,27 @@
             },
             "mapping":
             {
-                "crop_horizontal_range": 3.5,
+                "crop_horizontal_range": 5.0,
                 "crop_vertical_range": 1.0,
-                "frustum_search_radius": 0.04,
-                "radial_distance_thresh": 0.05,
-                "surface_width": 0.04,
-                "delete_max_range": 3.5,
-                "add_max_range": 3.5,
-                "voxel_size": 0.08
+                "frustum_search_radius": 0.015,
+                "radial_distance_thresh": 0.008,
+                "surface_width": 0.02,
+                "delete_max_range": 2.5,
+                "add_max_range": 2.5,
+                "voxel_size": 0.02
             },
             "traversibility":
             {
-                "chunk_horizontal_range": 3.5,
+                "chunk_horizontal_range": 2.5,
                 "chunk_vertical_range": 1.0,
                 "normal_estimation_radius": 0.2,
-                "interp_grid_res": 0.1,
+                "output_res": 0.1,
+                "grad_search_radius": 0.3,
+                "min_grad_diff": 0.15,
                 "non_trav_grad_angle": 45.0,
-                "required_clearance": 1.5,
-                "avoidance_radius": 0.5,
+                "avoidance_radius": 0.35,
+                "trav_score_curvature_weight": 5.0,
+                "trav_score_grad_weight": 1.0,
                 "interp_point_samples": 7
             }
         },
@@ -291,33 +294,6 @@
             "pragma:derived": "test",
             "base_frame_id": "lidar_link",
             "exclusion_zones": []
-        },
-        "high_res_map":
-        {
-            "pragma:derived": "test",
-            "base_frame_id": "base_link",
-            "mapping":
-            {
-                "crop_horizontal_range": 5.0,
-                "crop_vertical_range": 1.0,
-                "frustum_search_radius": 0.015,
-                "radial_distance_thresh": 0.008,
-                "surface_width": 0.02,
-                "delete_max_range": 2.5,
-                "add_max_range": 2.5,
-                "voxel_size": 0.02
-            },
-            "traversibility":
-            {
-                "chunk_horizontal_range": 2.5,
-                "chunk_vertical_range": 1.0,
-                "interp_grid_res": 0.1,
-                "grad_search_radius": 0.3,
-                "min_grad_diff": 0.15,
-                "non_trav_grad_angle": 45.0,
-                "avoidance_radius": 0.35,
-                "avoid_min_num_points": 3
-            }
         }
     },
 
