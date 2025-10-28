@@ -11,6 +11,7 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
+#include <numbers>
 
 #include "rclcpp/rclcpp.hpp"
 #include "nav_msgs/msg/odometry.hpp"
@@ -59,12 +60,12 @@ static void motor_vels_to_robot_twist(double l, double r, TwistMsg& twist)
 static double track_m_to_motor_rot(double track_mps)
 {
     return track_mps *
-           (1. / (TRACK_EFFECTIVE_OUTPUT_RADIUS_M * 2 * M_PI) * TRACK_GEARING);
+           (1. / (TRACK_EFFECTIVE_OUTPUT_RADIUS_M * 2 * std::numbers::pi) * TRACK_GEARING);
 }
 
 static double act_val_to_gz_joint_target(double act_val)
 {
-    double angle = (M_PI / 180.) * (15. + (act_val / 1000.) * -30.);
+    double angle = (std::numbers::pi / 180.) * (15. + (act_val / 1000.) * -30.);
     return angle > 0.1 ? 0.1 : angle;
 }
 
@@ -158,9 +159,9 @@ public:
                 case TalonCtrlMsg::VELOCITY:
                 {
                     double vel_sp_rad_s =
-                        setpoint_ * 2.0 * M_PI;  // turns/s -> rad/s
+                        setpoint_ * 2.0 * std::numbers::pi;  // turns/s -> rad/s
                     double kv_rad_s_per_volt =
-                        kv_rpm_per_volt_ * (2.0 * M_PI / 60.0);
+                        kv_rpm_per_volt_ * (2.0 * std::numbers::pi / 60.0);
                     double vel_error = vel_sp_rad_s - velocity_;
                     double kf_volts = vel_sp_rad_s / kv_rad_s_per_volt;
                     double kp_volts = vel_error * 0.2;  // tune
@@ -179,7 +180,7 @@ public:
         }
 
         // Back-EMF
-        double kv_rad_s_per_volt = kv_rpm_per_volt_ * (2.0 * M_PI / 60.0);
+        double kv_rad_s_per_volt = kv_rpm_per_volt_ * (2.0 * std::numbers::pi / 60.0);
         double back_emf = velocity_ / kv_rad_s_per_volt;
         double voltage_diff = applied_voltage - back_emf;
 
@@ -206,9 +207,9 @@ public:
 
     void fill_talon_info(TalonInfoMsg& info, double bus_voltage)
     {
-        info.position = position_ / (2.0 * M_PI);          // turns
-        info.velocity = velocity_ / (2.0 * M_PI);          // turns/s
-        info.acceleration = acceleration_ / (2.0 * M_PI);  // turns/s^2
+        info.position = position_ / (2.0 * std::numbers::pi);          // turns
+        info.velocity = velocity_ / (2.0 * std::numbers::pi);          // turns/s
+        info.acceleration = acceleration_ / (2.0 * std::numbers::pi);  // turns/s^2
         info.device_temp = 30.0f;
         info.processor_temp = 30.0f;
         info.bus_voltage = static_cast<float>(bus_voltage);
