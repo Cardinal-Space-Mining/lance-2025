@@ -5,12 +5,11 @@
 #include <ctime>
 #include <chrono>
 #include <numeric>
+#include <numbers>
 
 
 using system_time = std::chrono::system_clock;
 using system_time_point = system_time::time_point;
-
-static constexpr long double PI = 3.14159265358979323846;
 
 namespace util
 {
@@ -39,7 +38,7 @@ std::array<double, 2>
 {
     const double augmented_angle =
         std::atan2(x, y) +
-        (PI / 4.0);  // x and y are inverted to make a CW "heading" angle
+        (std::numbers::pi / 4.0);  // x and y are inverted to make a CW "heading" angle
     double magnitude = std::sqrt(x * x + y * y);
     if (magnitude < mag_deadzone)
     {
