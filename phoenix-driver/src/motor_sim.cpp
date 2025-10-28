@@ -118,9 +118,9 @@ public:
         output_voltage_(0.0),
         output_current_(0.0),
         output_percent_(0.0),
+        setpoint_(0.0),
         enabled_(true),
-        control_mode_(TalonCtrlMsg::PERCENT_OUTPUT),
-        setpoint_(0.0)
+        control_mode_(TalonCtrlMsg::PERCENT_OUTPUT)
     {
     }
 
@@ -254,10 +254,10 @@ public:
         position_(0.0),
         velocity_(0.0),
         output_percent_(0.0),
-        enabled_(true),
-        control_mode_(TalonCtrlMsg::PERCENT_OUTPUT),
         setpoint_(0.0),
-        max_speed_(max_speed)
+        max_speed_(max_speed),
+        control_mode_(TalonCtrlMsg::PERCENT_OUTPUT),
+        enabled_(true)
     {
     }
 
