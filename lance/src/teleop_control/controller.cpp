@@ -94,7 +94,7 @@ RobotMotorCommands& RobotControl::update(
                     {
                         this->state.last_manual_control_level =
                             this->state.control_level;
-                        // fallthrough on purpose
+                        [[fallthrough]];
                     }
                     case RobotMode::AUTONOMOUS:
                     {
@@ -137,7 +137,7 @@ RobotMotorCommands& RobotControl::update(
                     {
                         this->state.last_manual_control_level =
                             this->state.control_level;
-                        // fallthrough on purpose
+                        [[fallthrough]];
                     }
                     case RobotMode::DISABLED:
                     {
@@ -369,7 +369,7 @@ void RobotControl::cancel_offload()
             {
                 this->state.handle_change_control_level(
                     RobotControl::State::ControlLevel::MANUAL);
-                this->stop_all();  // hard stop... and reset all states
+                this->stop_all();  // hard stop... and reset all states 
 
                 // this->state.offload.enabled = false;
                 // this->state.offload.stage =
@@ -397,7 +397,7 @@ void RobotControl::periodic_handle_mining()
             {
                 this->state.mining.stage =
                     RobotControl::State::MiningStage::LOWERING_HOPPER;
-                // fallthrough to process the next stage
+                [[fallthrough]];
             }
             case RobotControl::State::MiningStage::LOWERING_HOPPER:
             {
@@ -427,7 +427,7 @@ void RobotControl::periodic_handle_mining()
                     util::disableMotor(this->motor_commands.hopper_actuator);
                     this->state.mining.stage =
                         RobotControl::State::MiningStage::TRAVERSING;
-                    // allow fallthrough bc we might as well start processing traversal
+                    [[fallthrough]]; // we might as well start processing traversal
                 }
             }
             case RobotControl::State::MiningStage::TRAVERSING:
@@ -586,7 +586,7 @@ void RobotControl::periodic_handle_mining()
                     util::disableMotor(this->motor_commands.hopper_belt);
                     this->state.mining.stage =
                         RobotControl::State::MiningStage::RAISING_HOPPER;
-                    // allow fallthrough
+                    [[fallthrough]];
                 }
             }
             case RobotControl::State::MiningStage::RAISING_HOPPER:
@@ -605,7 +605,7 @@ void RobotControl::periodic_handle_mining()
                     util::disableMotor(this->motor_commands.hopper_actuator);
                     this->state.mining.stage =
                         RobotControl::State::MiningStage::FINISHED;
-                    // fallthrough to call shutdown
+                    [[fallthrough]]; // to call shutdown
                 }
             }
             case RobotControl::State::MiningStage::FINISHED:
@@ -657,14 +657,14 @@ void RobotControl::periodic_handle_offload()
                             this->curr_motor_states.hopper_belt.position);
                 this->state.offload.stage =
                     RobotControl::State::OffloadingStage::BACKING_UP;
-                // fallthrough
+                [[fallthrough]];
             }
             case RobotControl::State::OffloadingStage::BACKING_UP:
             {
                 // previously used for semi-auto routine
                 this->state.offload.stage =
                     RobotControl::State::OffloadingStage::RAISING_HOPPER;
-                // fallthrough and process the next stage
+                [[fallthrough]]; // process the next stage
             }
             case RobotControl::State::OffloadingStage::RAISING_HOPPER:
             {
@@ -681,7 +681,7 @@ void RobotControl::periodic_handle_offload()
                     util::disableMotor(this->motor_commands.hopper_actuator);
                     this->state.offload.stage =
                         RobotControl::State::OffloadingStage::OFFLOADING;
-                    // fallthrough
+                    [[fallthrough]];
                 }
             }
             case RobotControl::State::OffloadingStage::OFFLOADING:
@@ -705,7 +705,7 @@ void RobotControl::periodic_handle_offload()
                     util::disableMotor(this->motor_commands.hopper_belt);
                     this->state.offload.stage =
                         RobotControl::State::OffloadingStage::LOWERING_HOPPER;
-                    // fallthrough
+                    [[fallthrough]];
                 }
             }
             case RobotControl::State::OffloadingStage::LOWERING_HOPPER:
@@ -722,7 +722,7 @@ void RobotControl::periodic_handle_offload()
                     util::disableMotor(this->motor_commands.hopper_actuator);
                     this->state.offload.stage =
                         RobotControl::State::OffloadingStage::FINISHED;
-                    // fallthrough
+                    [[fallthrough]];
                 }
             }
             case RobotControl::State::OffloadingStage::FINISHED:
