@@ -649,13 +649,13 @@ Phoenix6Driver::~Phoenix6Driver()
 void Phoenix6Driver::getParams(ParamConfig& params)
 {
     declare_param(
-        this,
+        *this,
         "diagnostics_port",
         params.diagnostics_server_port,
         DIAG_SERVER_PORT);
-    declare_param<std::string>(this, "canbus", params.canbus, CAN_INTERFACE);
+    declare_param<std::string>(*this, "canbus", params.canbus, CAN_INTERFACE);
     declare_param<std::string>(
-        this,
+        *this,
         "arduino_device",
         params.arduino_device,
         DEFAULT_ARDUINO_DEVICE);
@@ -666,7 +666,7 @@ void Phoenix6Driver::getParams(ParamConfig& params)
     // (temporary disable) current limit event - from testing this has been
     // ~1.25 seconds, so the default is 1.5
     declare_param(
-        this,
+        *this,
         "power_cycle_fault_thresh_s",
         this->fault_thresh_s,
         MOTOR_DEFAULT_FAULT_TIME_THRESH_S);
@@ -674,33 +674,33 @@ void Phoenix6Driver::getParams(ParamConfig& params)
     ParamConfig::RclMotorConfig defaults;
     defaults.canbus = params.canbus;
 
-    declare_param(this, "common.kP", defaults.kP, TFX_DEFAULT_KP);
-    declare_param(this, "common.kI", defaults.kI, TFX_DEFAULT_KI);
-    declare_param(this, "common.kD", defaults.kD, TFX_DEFAULT_KD);
-    declare_param(this, "common.kV", defaults.kV, TFX_DEFAULT_KV);
+    declare_param(*this, "common.kP", defaults.kP, TFX_DEFAULT_KP);
+    declare_param(*this, "common.kI", defaults.kI, TFX_DEFAULT_KI);
+    declare_param(*this, "common.kD", defaults.kD, TFX_DEFAULT_KD);
+    declare_param(*this, "common.kV", defaults.kV, TFX_DEFAULT_KV);
     declare_param(
-        this,
+        *this,
         "common.neutral_deadband",
         defaults.neutral_deadband,
         TFX_DEFAULT_NEUTRAL_DEADBAND);
     declare_param(
-        this,
+        *this,
         "common.stator_current_limit",
         defaults.stator_current_limit,
         TFX_DEFAULT_STATOR_CURRENT_LIMIT);
     declare_param(
-        this,
+        *this,
         "common.supply_current_limit",
         defaults.supply_current_limit,
         TFX_DEFAULT_SUPPLY_CURRENT_LIMIT);
     declare_param(
-        this,
+        *this,
         "common.voltage_limit",
         defaults.voltage_limit,
         TFX_DEFAULT_PEAK_VOLTAGE);
 
     bool use_neutral_brake;
-    declare_param(this, "common.neutral_brake", use_neutral_brake, false);
+    declare_param(*this, "common.neutral_brake", use_neutral_brake, false);
     defaults.neutral_mode_val =
         use_neutral_brake ? NeutralModeValue::Brake : NeutralModeValue::Coast;
 

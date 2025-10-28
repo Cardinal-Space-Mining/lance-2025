@@ -71,7 +71,7 @@ Phoenix5Driver::Phoenix5Driver() :
         .motor{
             DEFAULT_MOTOR_CAN_ID,
             declare_and_get_param<std::string>(
-                this,
+                *this,
                 "canbus",
                 DEFAULT_CAN_INTERFACE)},
         .info_pub{this->create_publisher<TalonInfoMsg>(
@@ -122,7 +122,7 @@ void Phoenix5Driver::initPhx()
 {
     int diag_server_port;
     declare_param(
-        this,
+        *this,
         "diagnostics_port",
         diag_server_port,
         DEFAULT_DIAG_SERVER_PORT);
