@@ -598,7 +598,12 @@ void Phoenix6Driver::SerialRelay::enable()
 {
     if (this->isValid())
     {
-        (void)write(this->port, "1", 1);
+        if (write(this->port, "1", 1) == -1)
+        {
+            // Error, this should not happen
+            std::cerr << "Phoenix6Driver::SerialRelay::enable write failure!"
+                      << std::flush;
+        };
         this->state = true;
     }
 }
@@ -606,7 +611,12 @@ void Phoenix6Driver::SerialRelay::disable()
 {
     if (this->isValid())
     {
-        (void)write(this->port, "0", 1);
+        if (write(this->port, "0", 1) == -1)
+        {
+            // Error, this should not happen
+            std::cerr << "Phoenix6Driver::SerialRelay::disable write failure!"
+                      << std::flush;
+        }
         this->state = false;
     }
 }
@@ -648,16 +658,13 @@ Phoenix6Driver::~Phoenix6Driver()
 
 void Phoenix6Driver::getParams(ParamConfig& params)
 {
-    declare_param(
-        *this,
-        "diagnostics_port",
-        params.diagnostics_server_port,
-        DIAG_SERVER_PORT);
-    declare_param<std::string>(*this, "canbus", params.canbus, CAN_INTERFACE);
-    declare_param<std::string>(
+    params.diagnostics_server_port =
+        declare_param(*this, "diagnostics_port", DIAG_SERVER_PORT);
+    params.canbus =
+        declare_param<std::string>(*this, "canbus", CAN_INTERFACE);
+    params.arduino_device = declare_param<std::string>(
         *this,
         "arduino_device",
-        params.arduino_device,
         DEFAULT_ARDUINO_DEVICE);
 
     // --- IMPORTANT! ----------------------------------------------------------
@@ -665,42 +672,41 @@ void Phoenix6Driver::getParams(ParamConfig& params)
     // to initialize after being powered on, or during a "soft"
     // (temporary disable) current limit event - from testing this has been
     // ~1.25 seconds, so the default is 1.5
-    declare_param(
+    this->fault_thresh_s = declare_param<double>(
         *this,
         "power_cycle_fault_thresh_s",
-        this->fault_thresh_s,
         MOTOR_DEFAULT_FAULT_TIME_THRESH_S);
 
     ParamConfig::RclMotorConfig defaults;
     defaults.canbus = params.canbus;
 
-    declare_param(*this, "common.kP", defaults.kP, TFX_DEFAULT_KP);
-    declare_param(*this, "common.kI", defaults.kI, TFX_DEFAULT_KI);
-    declare_param(*this, "common.kD", defaults.kD, TFX_DEFAULT_KD);
-    declare_param(*this, "common.kV", defaults.kV, TFX_DEFAULT_KV);
-    declare_param(
+    defaults.kP =
+        declare_param<double>(*this, "common.kP", TFX_DEFAULT_KP);
+    defaults.kI =
+        declare_param<double>(*this, "common.kI", TFX_DEFAULT_KI);
+    defaults.kD =
+        declare_param<double>(*this, "common.kD", TFX_DEFAULT_KD);
+    defaults.kV =
+        declare_param<double>(*this, "common.kV", TFX_DEFAULT_KV);
+    defaults.neutral_deadband = declare_param<double>(
         *this,
         "common.neutral_deadband",
-        defaults.neutral_deadband,
         TFX_DEFAULT_NEUTRAL_DEADBAND);
-    declare_param(
+    defaults.stator_current_limit = declare_param<double>(
         *this,
         "common.stator_current_limit",
-        defaults.stator_current_limit,
         TFX_DEFAULT_STATOR_CURRENT_LIMIT);
-    declare_param(
+    defaults.supply_current_limit = declare_param<double>(
         *this,
         "common.supply_current_limit",
-        defaults.supply_current_limit,
         TFX_DEFAULT_SUPPLY_CURRENT_LIMIT);
-    declare_param(
+    defaults.voltage_limit = declare_param<double>(
         *this,
         "common.voltage_limit",
-        defaults.voltage_limit,
         TFX_DEFAULT_PEAK_VOLTAGE);
 
-    bool use_neutral_brake;
-    declare_param(*this, "common.neutral_brake", use_neutral_brake, false);
+    bool use_neutral_brake =
+        declare_param<bool>(*this, "common.neutral_brake", false);
     defaults.neutral_mode_val =
         use_neutral_brake ? NeutralModeValue::Brake : NeutralModeValue::Coast;
 

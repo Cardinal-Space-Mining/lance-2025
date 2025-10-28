@@ -1,7 +1,7 @@
 #pragma once
 
 #ifndef Phoenix_No_WPI
-#define Phoenix_No_WPI
+    #define Phoenix_No_WPI
 #endif
 #include <ctre/Phoenix.h>
 

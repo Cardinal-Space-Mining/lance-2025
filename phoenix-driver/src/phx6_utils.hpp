@@ -116,10 +116,9 @@ inline TalonInfoMsg& operator<<(TalonInfoMsg& info, TalonT& m)
         std::is_same<TalonT, TalonFXS>::value);
 
     serializeTalonInfoNoStatus(info, m);
-    info.status =
-        (static_cast<uint8_t>(m.GetDeviceEnable().GetValue().value)) |
-        (static_cast<uint8_t>(m.IsConnected()) << 1) |
-        (static_cast<uint8_t>(m.HasResetOccurred()) << 2);
+    info.status = (static_cast<uint8_t>(m.GetDeviceEnable().GetValue().value)) |
+                  (static_cast<uint8_t>(m.IsConnected()) << 1) |
+                  (static_cast<uint8_t>(m.HasResetOccurred()) << 2);
 
     return info;
 }

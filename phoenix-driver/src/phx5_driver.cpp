@@ -66,11 +66,13 @@ private:
 
 
 Phoenix5Driver::Phoenix5Driver() :
-    Node{ "phoenix5_driver" },
+    Node{
+        "phoenix5_driver"
+},
     hopper_act{
         .motor{
             DEFAULT_MOTOR_CAN_ID,
-            declare_and_get_param<std::string>(
+            declare_param<std::string>(
                 *this,
                 "canbus",
                 DEFAULT_CAN_INTERFACE)},
@@ -120,11 +122,9 @@ void Phoenix5Driver::initMotor()
 
 void Phoenix5Driver::initPhx()
 {
-    int diag_server_port;
-    declare_param(
+    int diag_server_port = declare_param(
         *this,
         "diagnostics_port",
-        diag_server_port,
         DEFAULT_DIAG_SERVER_PORT);
 
     if (diag_server_port > 0)

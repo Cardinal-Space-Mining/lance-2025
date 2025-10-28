@@ -330,7 +330,11 @@ public:
         Node("phoenix_physical_simulator"),
         battery_(16.0, 0.01)  // 10mΩ internal resistance
     {
-        std::array<std::string,4> motor_names_{"track_right", "track_left", "trencher", "hopper_belt"};
+        std::array<std::string, 4> motor_names_{
+            "track_right",
+            "track_left",
+            "trencher",
+            "hopper_belt"};
         for (const auto& name : motor_names_)
         {
             motors_[name] = std::make_shared<FalconMotorSim>(name);
@@ -406,8 +410,12 @@ public:
                 this->gz_right_track_vel =
                     track_m_to_motor_rot(msg.twist.twist.linear.x);
             });
-        act_vel_pub = this->create_publisher<Float64Msg>("/dump_cmd_vel", rclcpp::SystemDefaultsQoS());
-        track_twist_pub = this->create_publisher<TwistMsg>("/cmd_vel", rclcpp::SystemDefaultsQoS());
+        act_vel_pub = this->create_publisher<Float64Msg>(
+            "/dump_cmd_vel",
+            rclcpp::SystemDefaultsQoS());
+        track_twist_pub = this->create_publisher<TwistMsg>(
+            "/cmd_vel",
+            rclcpp::SystemDefaultsQoS());
 
         RCLCPP_INFO(this->get_logger(), "Motor sim started!");
     }
