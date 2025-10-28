@@ -266,6 +266,15 @@
                 "trav_score_curvature_weight": 5.0,
                 "trav_score_grad_weight": 1.0,
                 "interp_point_samples": 7
+            },
+            "pplan":
+            {
+                "boundary_radius": 0.15,
+                "goal_threshold": 0.1,
+                "search_radius": 0.5,
+                "lambda_distance": 1.0,
+                "lambda_penalty": 1.0,
+                "max_neighbors": 11
             }
         },
         "sim":
