@@ -120,7 +120,7 @@ void Phoenix5Driver::initMotor()
 
 void Phoenix5Driver::initPhx()
 {
-    int diag_server_port;
+    int diag_server_port{};
     declare_param(
         *this,
         "diagnostics_port",
