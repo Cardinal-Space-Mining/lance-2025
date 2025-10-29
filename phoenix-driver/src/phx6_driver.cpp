@@ -598,7 +598,12 @@ void Phoenix6Driver::SerialRelay::enable()
 {
     if (this->isValid())
     {
-        (void)write(this->port, "1", 1);
+        if (write(this->port, "1", 1) == -1)
+        {
+            // Error, this should not happen
+            std::cerr << "Phoenix6Driver::SerialRelay::enable write failure!"
+                      << std::flush;
+        };
         this->state = true;
     }
 }
@@ -606,7 +611,12 @@ void Phoenix6Driver::SerialRelay::disable()
 {
     if (this->isValid())
     {
-        (void)write(this->port, "0", 1);
+        if (write(this->port, "0", 1) == -1)
+        {
+            // Error, this should not happen
+            std::cerr << "Phoenix6Driver::SerialRelay::disable write failure!"
+                      << std::flush;
+        };
         this->state = false;
     }
 }
@@ -699,7 +709,7 @@ void Phoenix6Driver::getParams(ParamConfig& params)
         defaults.voltage_limit,
         TFX_DEFAULT_PEAK_VOLTAGE);
 
-    bool use_neutral_brake;
+    bool use_neutral_brake{};
     declare_param(*this, "common.neutral_brake", use_neutral_brake, false);
     defaults.neutral_mode_val =
         use_neutral_brake ? NeutralModeValue::Brake : NeutralModeValue::Coast;
