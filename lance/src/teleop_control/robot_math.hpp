@@ -1,6 +1,7 @@
 #pragma once
 
-#include <math.h>
+#include <cmath>
+#include <numbers>
 
 static constexpr double TRACK_GEARING = 64.;
 static constexpr double TRACK_EFFECTIVE_OUTPUT_RADIUS_M = 0.07032851;
@@ -24,13 +25,13 @@ template<typename T>
 constexpr inline T track_motor_rps_to_ground_mps(const T& rps)
 {
     return rps *
-           ((1. / TRACK_GEARING) * TRACK_EFFECTIVE_OUTPUT_RADIUS_M * 2 * M_PI);
+           ((1. / TRACK_GEARING) * TRACK_EFFECTIVE_OUTPUT_RADIUS_M * 2 * std::numbers::pi);
 }
 template<typename T>
 constexpr inline T ground_mps_to_track_motor_rps(const T& mps)
 {
     return mps *
-           (1. / (TRACK_EFFECTIVE_OUTPUT_RADIUS_M * 2 * M_PI) * TRACK_GEARING);
+           (1. / (TRACK_EFFECTIVE_OUTPUT_RADIUS_M * 2 * std::numbers::pi) * TRACK_GEARING);
 }
 
 template<typename T>
@@ -66,7 +67,7 @@ constexpr inline T mining_depth_to_linear_actuator_clamped(const T& depth_m)
 template<typename T>
 constexpr inline T linear_actuator_to_joint_angle(const T& actuator_normalized_pos)
 {
-    return (M_PI / 180.) * (15. + actuator_normalized_pos * -30.);
+    return (std::numbers::pi / 180.) * (15. + actuator_normalized_pos * -30.);
 }
 
 template<typename T>
@@ -90,7 +91,7 @@ constexpr inline T mining_depth_to_trencher_impact_volume(const T& depth_m)
     else
     {
         // (full semi-circle cross-section + additional depth rect) * width * 1000 liters/m^3
-        return ((M_PI * R2) + ((depth_m - R) * TRENCHER_WIDTH_M * R)) * 1000.;
+        return ((std::numbers::pi * R2) + ((depth_m - R) * TRENCHER_WIDTH_M * R)) * 1000.;
     }
 }
 
@@ -154,12 +155,12 @@ template<typename T>
 constexpr inline T hopper_belt_motor_rps_to_belt_mps(const T& motor_rps)
 {
     return motor_rps * ((1. / HOPPER_BELT_GEARING) *
-                        (HOPPER_BELT_EFFECTIVE_OUTPUT_RADIUS_M * 2 * M_PI));
+                        (HOPPER_BELT_EFFECTIVE_OUTPUT_RADIUS_M * 2 * std::numbers::pi));
 }
 template<typename T>
 constexpr inline T hopper_belt_mps_to_motor_rps(const T& belt_mps)
 {
     return belt_mps *
-           ((1. / (HOPPER_BELT_EFFECTIVE_OUTPUT_RADIUS_M * 2 * M_PI)) *
+           ((1. / (HOPPER_BELT_EFFECTIVE_OUTPUT_RADIUS_M * 2 * std::numbers::pi)) *
             HOPPER_BELT_GEARING);
 }
