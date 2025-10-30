@@ -11,6 +11,7 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
+#include <numbers>
 
 #include "rclcpp/rclcpp.hpp"
 #include "nav_msgs/msg/odometry.hpp"
@@ -40,11 +41,6 @@ using Float64Msg = std_msgs::msg::Float64;
 using JointStateMsg = sensor_msgs::msg::JointState;
 using TwistMsg = geometry_msgs::msg::Twist;
 
-static double clamp_double(double x, double a, double b)
-{
-    return (x < a ? a : (x > b ? b : x));
-}
-
 static constexpr double TRACK_WIDTH_M = 0.579;
 static constexpr double TRACK_EFFECTIVE_OUTPUT_RADIUS_M = 0.07032851;
 static constexpr double TRACK_GEARING = 64.;
@@ -64,12 +60,12 @@ static void motor_vels_to_robot_twist(double l, double r, TwistMsg& twist)
 static double track_m_to_motor_rot(double track_mps)
 {
     return track_mps *
-           (1. / (TRACK_EFFECTIVE_OUTPUT_RADIUS_M * 2 * M_PI) * TRACK_GEARING);
+           (1. / (TRACK_EFFECTIVE_OUTPUT_RADIUS_M * 2 * std::numbers::pi) * TRACK_GEARING);
 }
 
 static double act_val_to_gz_joint_target(double act_val)
 {
-    double angle = (M_PI / 180.) * (15. + (act_val / 1000.) * -30.);
+    double angle = (std::numbers::pi / 180.) * (15. + (act_val / 1000.) * -30.);
     return angle > 0.1 ? 0.1 : angle;
 }
 
@@ -123,9 +119,9 @@ public:
         output_voltage_(0.0),
         output_current_(0.0),
         output_percent_(0.0),
+        setpoint_(0.0),
         enabled_(true),
-        control_mode_(TalonCtrlMsg::PERCENT_OUTPUT),
-        setpoint_(0.0)
+        control_mode_(TalonCtrlMsg::PERCENT_OUTPUT)
     {
     }
 
@@ -152,24 +148,24 @@ public:
             switch (control_mode_)
             {
                 case TalonCtrlMsg::PERCENT_OUTPUT:
-                    effort = clamp_double(setpoint_, -1.0, 1.0);
+                    effort = std::clamp(setpoint_, -1.0, 1.0);
                     applied_voltage = effort * bus_voltage;
                     break;
                 case TalonCtrlMsg::VOLTAGE:
                     applied_voltage =
-                        clamp_double(setpoint_, -bus_voltage, bus_voltage);
+                        std::clamp(setpoint_, -bus_voltage, bus_voltage);
                     effort = applied_voltage / bus_voltage;
                     break;
                 case TalonCtrlMsg::VELOCITY:
                 {
                     double vel_sp_rad_s =
-                        setpoint_ * 2.0 * M_PI;  // turns/s -> rad/s
+                        setpoint_ * 2.0 * std::numbers::pi;  // turns/s -> rad/s
                     double kv_rad_s_per_volt =
-                        kv_rpm_per_volt_ * (2.0 * M_PI / 60.0);
+                        kv_rpm_per_volt_ * (2.0 * std::numbers::pi / 60.0);
                     double vel_error = vel_sp_rad_s - velocity_;
                     double kf_volts = vel_sp_rad_s / kv_rad_s_per_volt;
                     double kp_volts = vel_error * 0.2;  // tune
-                    applied_voltage = clamp_double(
+                    applied_voltage = std::clamp(
                         kf_volts + kp_volts,
                         -bus_voltage,
                         bus_voltage);
@@ -184,7 +180,7 @@ public:
         }
 
         // Back-EMF
-        double kv_rad_s_per_volt = kv_rpm_per_volt_ * (2.0 * M_PI / 60.0);
+        double kv_rad_s_per_volt = kv_rpm_per_volt_ * (2.0 * std::numbers::pi / 60.0);
         double back_emf = velocity_ / kv_rad_s_per_volt;
         double voltage_diff = applied_voltage - back_emf;
 
@@ -192,7 +188,7 @@ public:
         double current =
             (std::abs(resistance_) > 1e-9) ? voltage_diff / resistance_ : 0.0;
         double stall_current = 257.0;
-        current = clamp_double(current, -stall_current, stall_current);
+        current = std::clamp(current, -stall_current, stall_current);
 
         // Torque
         double torque = kt_nm_per_amp_ * current;
@@ -211,9 +207,9 @@ public:
 
     void fill_talon_info(TalonInfoMsg& info, double bus_voltage)
     {
-        info.position = position_ / (2.0 * M_PI);          // turns
-        info.velocity = velocity_ / (2.0 * M_PI);          // turns/s
-        info.acceleration = acceleration_ / (2.0 * M_PI);  // turns/s^2
+        info.position = position_ / (2.0 * std::numbers::pi);          // turns
+        info.velocity = velocity_ / (2.0 * std::numbers::pi);          // turns/s
+        info.acceleration = acceleration_ / (2.0 * std::numbers::pi);  // turns/s^2
         info.device_temp = 30.0f;
         info.processor_temp = 30.0f;
         info.bus_voltage = static_cast<float>(bus_voltage);
@@ -240,9 +236,9 @@ public:
     double output_current_;
     double output_percent_;
 
+    double setpoint_;
     bool enabled_;
     int control_mode_;
-    double setpoint_;
 };
 
 // -----------------------------
@@ -259,10 +255,10 @@ public:
         position_(0.0),
         velocity_(0.0),
         output_percent_(0.0),
-        enabled_(true),
-        control_mode_(TalonCtrlMsg::PERCENT_OUTPUT),
         setpoint_(0.0),
-        max_speed_(max_speed)
+        max_speed_(max_speed),
+        control_mode_(TalonCtrlMsg::PERCENT_OUTPUT),
+        enabled_(true)
     {
     }
 
@@ -285,17 +281,17 @@ public:
             control_mode_ == TalonCtrlMsg::PERCENT_OUTPUT ||
             control_mode_ == TalonCtrlMsg::VOLTAGE)
         {
-            output_percent_ = clamp_double(setpoint_, -1.0, 1.0);
+            output_percent_ = std::clamp(setpoint_, -1.0, 1.0);
             velocity_ = output_percent_ * max_speed_;
         }
         else if (control_mode_ == TalonCtrlMsg::VELOCITY)
         {
-            velocity_ = clamp_double(setpoint_, -max_speed_, max_speed_);
+            velocity_ = std::clamp(setpoint_, -max_speed_, max_speed_);
             output_percent_ = velocity_ / max_speed_;
         }
 
         position_ += velocity_ * dt;
-        position_ = clamp_double(position_, 0.0, 1000.0);  // clamp travel
+        position_ = std::clamp(position_, 0.0, 1000.0);  // clamp travel
     }
 
     void fill_talon_info(TalonInfoMsg& info, double bus_voltage)
@@ -319,10 +315,10 @@ public:
     double velocity_;
     double output_percent_;
 
-    bool enabled_;
-    int control_mode_;
     double setpoint_;
     double max_speed_;
+    int control_mode_;
+    bool enabled_;
 };
 
 // -----------------------------
@@ -333,10 +329,9 @@ class PhoenixPhysicalSimulator : public rclcpp::Node
 public:
     PhoenixPhysicalSimulator() :
         Node("phoenix_physical_simulator"),
-        qos_{rclcpp::SystemDefaultsQoS()},
         battery_(16.0, 0.01)  // 10mΩ internal resistance
     {
-        motor_names_ = {"track_right", "track_left", "trencher", "hopper_belt"};
+        std::array<std::string,4> motor_names_{"track_right", "track_left", "trencher", "hopper_belt"};
         for (const auto& name : motor_names_)
         {
             motors_[name] = std::make_shared<FalconMotorSim>(name);
@@ -347,12 +342,12 @@ public:
 
         watchdog_sub_ = this->create_subscription<Int32Msg>(
             "/lance/watchdog_status",
-            qos_,
+            rclcpp::SystemDefaultsQoS(),
             [this](const Int32Msg::SharedPtr msg) { on_watchdog(msg->data); });
 
         // joint_pub_ = this->create_publisher<sensor_msgs::msg::JointState>(
         //     "joint_states",
-        //     qos_);
+        //     rclcpp::SystemDefaultsQoS());
 
         sim_timer_ = this->create_wall_timer(
             std::chrono::milliseconds(SIM_STEP_DT_MS),
@@ -363,7 +358,7 @@ public:
 
         gz_joint_sub = this->create_subscription<JointStateMsg>(
             "/gz_joint_states",
-            qos_,
+            rclcpp::SystemDefaultsQoS(),
             [this](const JointStateMsg& msg)
             {
                 // std::cout << "Received GZ Joint State Msg" << std::endl;
@@ -394,7 +389,7 @@ public:
             });
         left_track_odom_sub = this->create_subscription<OdometryMsg>(
             "/left_track_odom",
-            qos_,
+            rclcpp::SystemDefaultsQoS(),
             [this](const OdometryMsg& msg)
             {
                 this->gz_left_track_pos =
@@ -404,7 +399,7 @@ public:
             });
         right_track_odom_sub = this->create_subscription<OdometryMsg>(
             "/right_track_odom",
-            qos_,
+            rclcpp::SystemDefaultsQoS(),
             [this](const OdometryMsg& msg)
             {
                 this->gz_right_track_pos =
@@ -412,8 +407,8 @@ public:
                 this->gz_right_track_vel =
                     track_m_to_motor_rot(msg.twist.twist.linear.x);
             });
-        act_vel_pub = this->create_publisher<Float64Msg>("/dump_cmd_vel", qos_);
-        track_twist_pub = this->create_publisher<TwistMsg>("/cmd_vel", qos_);
+        act_vel_pub = this->create_publisher<Float64Msg>("/dump_cmd_vel", rclcpp::SystemDefaultsQoS());
+        track_twist_pub = this->create_publisher<TwistMsg>("/cmd_vel", rclcpp::SystemDefaultsQoS());
 
         RCLCPP_INFO(this->get_logger(), "Motor sim started!");
     }
@@ -423,13 +418,13 @@ private:
     {
         publisher_info_[name] = this->create_publisher<TalonInfoMsg>(
             "/lance/" + name + "/info",
-            qos_);
+            rclcpp::SystemDefaultsQoS());
         publisher_faults_[name] = this->create_publisher<TalonFaultsMsg>(
             "/lance/" + name + "/faults",
-            qos_);
+            rclcpp::SystemDefaultsQoS());
         subscription_ctrl_[name] = this->create_subscription<TalonCtrlMsg>(
             "/lance/" + name + "/ctrl",
-            qos_,
+            rclcpp::SystemDefaultsQoS(),
             [this, name](const TalonCtrlMsg::SharedPtr msg)
             { on_ctrl(name, *msg); });
     }
@@ -517,7 +512,6 @@ private:
     }
 
 private:
-    rclcpp::QoS qos_;
     Battery battery_;
     double last_bus_voltage_ = 16.0;
 
@@ -526,7 +520,6 @@ private:
     double gz_right_track_pos = 0.0;
     double gz_right_track_vel = 0.0;
 
-    std::vector<std::string> motor_names_;
     std::unordered_map<std::string, std::shared_ptr<FalconMotorSim>> motors_;
     std::shared_ptr<LinearActuatorSim> linear_act_;
 

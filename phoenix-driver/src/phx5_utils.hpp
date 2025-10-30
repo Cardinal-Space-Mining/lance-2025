@@ -3,7 +3,10 @@
 #ifndef Phoenix_No_WPI
 #define Phoenix_No_WPI
 #endif
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <ctre/Phoenix.h>
+#pragma GCC diagnostic pop
 
 #include <phoenix_ros_driver/msg/talon_ctrl.hpp>
 #include <phoenix_ros_driver/msg/talon_info.hpp>

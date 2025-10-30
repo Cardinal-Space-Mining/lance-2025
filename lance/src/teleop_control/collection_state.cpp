@@ -128,10 +128,11 @@ void CollectionState::setParams(
 
 void CollectionState::update(const RobotMotorStatus& motors_status)
 {
-    const double& trencher_rotations = motors_status.trencher.position;
-    const double& belt_rotations = motors_status.hopper_belt.position;
-    const double& ltrack_rotations = motors_status.track_left.position;
-    const double& rtrack_rotations = motors_status.track_right.position;
+    const double trencher_rotations = motors_status.trencher.position;
+    const double belt_rotations = motors_status.hopper_belt.position;
+    const double ltrack_rotations = motors_status.track_left.position;
+    const double rtrack_rotations = motors_status.track_right.position;
+
     double curr_mining_depth_m = linear_actuator_to_mining_depth_clamped(
         motors_status.hopper_actuator.position / 1000.);
     double curr_impact_volume =
