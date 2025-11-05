@@ -6,8 +6,8 @@
 
 #include "sensor_msgs/msg/joy.hpp"
 
+#include "hid_constants.hpp"
 #include "motor_interface.hpp"
-#include "logitech_map.hpp"
 #include "collection_state.hpp"
 
 
