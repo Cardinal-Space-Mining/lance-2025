@@ -252,37 +252,37 @@ public:
         COLLECTION_MODEL_BELT_OFFLOAD_LEN_M = 0.7;          // how much to increment the belt when offloading
 
     static constexpr int
-        DISABLE_ALL_ACTIONS_BUTTON_IDX = LogitechMapping::Buttons::A,
+        DISABLE_ALL_ACTIONS_BUTTON_IDX = LogitechController::Buttons::A,
 
-        TELEOP_LOW_SPEED_BUTTON_IDX = LogitechMapping::Buttons::B,
-        TELEOP_MEDIUM_SPEED_BUTTON_IDX = LogitechMapping::Buttons::Y,
-        TELEOP_HIGH_SPEED_BUTTON_IDX = LogitechMapping::Buttons::X,
+        TELEOP_LOW_SPEED_BUTTON_IDX = LogitechController::Buttons::B,
+        TELEOP_MEDIUM_SPEED_BUTTON_IDX = LogitechController::Buttons::Y,
+        TELEOP_HIGH_SPEED_BUTTON_IDX = LogitechController::Buttons::X,
 
-        TELEOP_DRIVE_X_AXIS_IDX = LogitechMapping::Axes::LEFTX,
-        TELEOP_DRIVE_Y_AXIS_IDX = LogitechMapping::Axes::LEFTY,
+        TELEOP_DRIVE_X_AXIS_IDX = LogitechController::Axes::LEFTX,
+        TELEOP_DRIVE_Y_AXIS_IDX = LogitechController::Axes::LEFTY,
 
-        TELEOP_TRENCHER_SPEED_AXIS_IDX = LogitechMapping::Axes::R_TRIGGER,
-        TELEOP_TRENCHER_INVERT_BUTTON_IDX = LogitechMapping::Buttons::RB,
+        TELEOP_TRENCHER_SPEED_AXIS_IDX = LogitechController::Axes::R_TRIGGER,
+        TELEOP_TRENCHER_INVERT_BUTTON_IDX = LogitechController::Buttons::RB,
 
-        TELEOP_HOPPER_SPEED_AXIS_IDX = LogitechMapping::Axes::L_TRIGGER,
-        TELEOP_HOPPER_INVERT_BUTTON_IDX = LogitechMapping::Buttons::LB,
-        TELEOP_HOPPER_ACTUATE_AXIS_IDX = LogitechMapping::Axes::RIGHTY,
+        TELEOP_HOPPER_SPEED_AXIS_IDX = LogitechController::Axes::L_TRIGGER,
+        TELEOP_HOPPER_INVERT_BUTTON_IDX = LogitechController::Buttons::LB,
+        TELEOP_HOPPER_ACTUATE_AXIS_IDX = LogitechController::Axes::RIGHTY,
 
-        ASSISTED_MINING_TOGGLE_BUTTON_IDX = LogitechMapping::Buttons::L_STICK,
-        ASSISTED_OFFLOAD_TOGGLE_BUTTON_IDX = LogitechMapping::Buttons::R_STICK,
+        ASSISTED_MINING_TOGGLE_BUTTON_IDX = LogitechController::Buttons::L_STICK,
+        ASSISTED_OFFLOAD_TOGGLE_BUTTON_IDX = LogitechController::Buttons::R_STICK,
 
-        ASSISTED_HOPPER_ENABLE_BUTTON_IDX = LogitechMapping::Buttons::BACK,
-        ASSISTED_HOPPER_DISABLE_BUTTON_IDX = LogitechMapping::Buttons::START,
+        ASSISTED_HOPPER_ENABLE_BUTTON_IDX = LogitechController::Buttons::BACK,
+        ASSISTED_HOPPER_DISABLE_BUTTON_IDX = LogitechController::Buttons::START,
 
-        TELEAUTO_MINING_INIT_POV_ID = LogitechMapping::Axes::DPAD_U_D,
-        TELEAUTO_MINING_STOP_POV_ID = LogitechMapping::Axes::DPAD_U_D,
-        TELEAUTO_OFFLOAD_INIT_POV_ID = LogitechMapping::Axes::DPAD_R_L,
-        TELEAUTO_OFFLOAD_STOP_POV_ID = LogitechMapping::Axes::DPAD_R_L;
+        TELEAUTO_MINING_INIT_POV_ID = LogitechController::Axes::DPAD_U_D,
+        TELEAUTO_MINING_STOP_POV_ID = LogitechController::Axes::DPAD_U_D,
+        TELEAUTO_OFFLOAD_INIT_POV_ID = LogitechController::Axes::DPAD_R_L,
+        TELEAUTO_OFFLOAD_STOP_POV_ID = LogitechController::Axes::DPAD_R_L;
 
     static constexpr float
-        TELEAUTO_MINING_INIT_POV_VAL = LogitechMapping::Axes::DPAD_K::DPAD_UP,
-        TELEAUTO_MINING_STOP_POV_VAL = LogitechMapping::Axes::DPAD_K::DPAD_DOWN,
-        TELEAUTO_OFFLOAD_INIT_POV_VAL = LogitechMapping::Axes::DPAD_K::DPAD_RIGHT,
-        TELEAUTO_OFFLOAD_STOP_POV_VAL = LogitechMapping::Axes::DPAD_K::DPAD_LEFT;
+        TELEAUTO_MINING_INIT_POV_VAL = LogitechController::Axes::DPAD_K::DPAD_UP,
+        TELEAUTO_MINING_STOP_POV_VAL = LogitechController::Axes::DPAD_K::DPAD_DOWN,
+        TELEAUTO_OFFLOAD_INIT_POV_VAL = LogitechController::Axes::DPAD_K::DPAD_RIGHT,
+        TELEAUTO_OFFLOAD_STOP_POV_VAL = LogitechController::Axes::DPAD_K::DPAD_LEFT;
     // clang-format on
 };

@@ -1,19 +1,14 @@
 #pragma once
 
-#include "sensor_msgs/msg/joy.hpp"
-
 #include "../motor_interface.hpp"
-#include "../collection_state.hpp"
 #include "../../util/pub_map.hpp"
 
 
-class MiningController
+class LocalizationController
 {
-    using JoyMsg = sensor_msgs::msg::Joy;
-
 public:
-    MiningController();
-    ~MiningController() = default;
+    LocalizationController();
+    ~LocalizationController() = default;
 
 public:
     void initialize();
@@ -21,7 +16,6 @@ public:
     void setCancelled();
 
     void iterate(
-        const JoyMsg& joy,
         const RobotMotorStatus& motor_status,
         RobotMotorCommands& commands);
 
@@ -29,15 +23,13 @@ protected:
     enum class Stage
     {
         INITIALIZATION,
-        LOWERING,
-        TRAVERSING,
-        RAISING,
+        SEARCHING,
+        TARGETTING,
         FINISHED
     };
 
 protected:
     const util::GenericPubMap& pub_map;
-    const HopperState& hopper_state;
 
     Stage stage{Stage::FINISHED};
 };
@@ -45,27 +37,27 @@ protected:
 
 // --- Implementation ----------------------------------------------------------
 
-MiningController::MiningController()
+LocalizationController::LocalizationController()
 {
 
 }
 
-void MiningController::initialize()
+void LocalizationController::initialize()
 {
     this->stage = Stage::INITIALIZATION;
 }
 
-bool MiningController::isFinished()
+bool LocalizationController::isFinished()
 {
     return this->stage == Stage::FINISHED;
 }
 
-void MiningController::setCancelled()
+void LocalizationController::setCancelled()
 {
 
 }
 
-void MiningController::iterate(
+void LocalizationController::iterate(
     const JoyMsg& joy,
     const RobotMotorStatus& motor_status,
     RobotMotorCommands& commands)
@@ -76,15 +68,11 @@ void MiningController::iterate(
         {
 
         }
-        case Stage::LOWERING:
+        case Stage::SEARCHING:
         {
 
         }
-        case Stage::TRAVERSING:
-        {
-
-        }
-        case Stage::RAISING:
+        case Stage::TARGETTING:
         {
 
         }

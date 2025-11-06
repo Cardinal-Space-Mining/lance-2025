@@ -4,44 +4,54 @@
 #include "phoenix_ros_driver/msg/talon_info.hpp"
 
 
-using phoenix_ros_driver::msg::TalonCtrl;
-using phoenix_ros_driver::msg::TalonInfo;
+using TalonCtrlMsg = phoenix_ros_driver::msg::TalonCtrl;
+using TalonInfoMsg = phoenix_ros_driver::msg::TalonInfo;
 
 /** Contains TalonInfo for each motor */
 struct RobotMotorStatus
 {
-    TalonInfo track_right;
-    TalonInfo track_left;
-    TalonInfo trencher;
-    TalonInfo hopper_belt;
-    TalonInfo hopper_actuator;
+    TalonInfoMsg track_right;
+    TalonInfoMsg track_left;
+    TalonInfoMsg trencher;
+    TalonInfoMsg hopper_belt;
+    TalonInfoMsg hopper_actuator;
 };
 
 /** Contains TalonCtrl for each motor */
 struct RobotMotorCommands
 {
-    TalonCtrl track_right;
-    TalonCtrl track_left;
-    TalonCtrl trencher;
-    TalonCtrl hopper_belt;
-    TalonCtrl hopper_actuator;
+    TalonCtrlMsg track_right;
+    TalonCtrlMsg track_left;
+    TalonCtrlMsg trencher;
+    TalonCtrlMsg hopper_belt;
+    TalonCtrlMsg hopper_actuator;
 
-    inline void set_hopper_act_percent(double percent)
+    inline void setHopperActPercent(double percent)
     {
-        this->hopper_actuator.set__mode(TalonCtrl::PERCENT_OUTPUT)
+        this->hopper_actuator.set__mode(TalonCtrlMsg::PERCENT_OUTPUT)
             .set__value(percent);
     }
-    inline void set_hopper_belt_velocity(double rps)
+    inline void setHopperBeltVelocity(double rps)
     {
-        this->hopper_belt.set__mode(TalonCtrl::VELOCITY).set__value(rps);
+        this->hopper_belt.set__mode(TalonCtrlMsg::VELOCITY).set__value(rps);
     }
-    inline void set_trencher_velocity(double rps)
+    inline void setTrencherVelocity(double rps)
     {
-        this->trencher.set__mode(TalonCtrl::VELOCITY).set__value(rps);
+        this->trencher.set__mode(TalonCtrlMsg::VELOCITY).set__value(rps);
     }
-    inline void set_tracks_velocity(double left_rps, double right_rps)
+    inline void setTracksVelocity(double left_rps, double right_rps)
     {
-        this->track_left.set__mode(TalonCtrl::VELOCITY).set__value(left_rps);
-        this->track_right.set__mode(TalonCtrl::VELOCITY).set__value(right_rps);
+        this->track_left.set__mode(TalonCtrlMsg::VELOCITY).set__value(left_rps);
+        this->track_right.set__mode(TalonCtrlMsg::VELOCITY)
+            .set__value(right_rps);
+    }
+
+    inline void disableAll()
+    {
+        this->track_left.set__mode(TalonCtrlMsg::DISABLED).set__value(0.);
+        this->track_right.set__mode(TalonCtrlMsg::DISABLED).set__value(0.);
+        this->trencher.set__mode(TalonCtrlMsg::DISABLED).set__value(0.);
+        this->hopper_belt.set__mode(TalonCtrlMsg::DISABLED).set__value(0.);
+        this->hopper_actuator.set__mode(TalonCtrlMsg::DISABLED).set__value(0.);
     }
 };

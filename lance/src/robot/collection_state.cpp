@@ -145,7 +145,7 @@ void CollectionState::update(const RobotMotorStatus& motors_status)
         trencher_rotations - this->prev_trencher_rotations;
     double trencher_max_delta_volume =
         trencher_motor_rps_to_max_volume_rate(delta_trencher_rotations);
-    // ^ f(r/s) -> l/s <=> f(r) -> l
+    // ^ f(r/s) -> L/s <=> f(r) -> L
 
     // calculate maximum possible volume material 'swept' given change in track rotations (linear distance)
     double avg_mining_depth_m =
@@ -157,7 +157,7 @@ void CollectionState::update(const RobotMotorStatus& motors_status)
     double delta_sweep_volume = track_motor_rps_to_volume_rate(
         avg_track_delta_rotations,
         avg_mining_depth_m);
-    // ^ f(m/s) -> l/s <=> f(m) -> l
+    // ^ f(m/s) -> L/s <=> f(m) -> L
 
     // calculate the volume which we have dug into the ground just by lowering the trencher
     double delta_impact_volume =

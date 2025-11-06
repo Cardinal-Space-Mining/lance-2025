@@ -1,6 +1,7 @@
 #pragma once
 
-namespace LogitechMapping
+// Equivalent to Xbox controller mappings
+namespace LogitechController
 {
     namespace Buttons
     {
@@ -44,4 +45,41 @@ namespace LogitechMapping
         constexpr int NUM_AXES = 8;
 
     } // namespace Axes
-} // namespace LogitechMapping
+} // namespace LogitechController
+
+namespace Bindings
+{
+    using namespace LogitechController;
+
+    constexpr int DISABLE_ALL_ACTIONS_BUTTON_IDX = Buttons::A;
+
+    constexpr int TELEOP_LOW_SPEED_BUTTON_IDX = Buttons::B;
+    constexpr int TELEOP_MEDIUM_SPEED_BUTTON_IDX = Buttons::Y;
+    constexpr int TELEOP_HIGH_SPEED_BUTTON_IDX = Buttons::X;
+
+    constexpr int TELEOP_DRIVE_X_AXIS_IDX = Axes::LEFTX;
+    constexpr int TELEOP_DRIVE_Y_AXIS_IDX = Axes::LEFTY;
+
+    constexpr int TELEOP_TRENCHER_SPEED_AXIS_IDX = Axes::R_TRIGGER;
+    constexpr int TELEOP_TRENCHER_INVERT_BUTTON_IDX = Buttons::RB;
+
+    constexpr int TELEOP_HOPPER_SPEED_AXIS_IDX = Axes::L_TRIGGER;
+    constexpr int TELEOP_HOPPER_INVERT_BUTTON_IDX = Buttons::LB;
+    constexpr int TELEOP_HOPPER_ACTUATE_AXIS_IDX = Axes::RIGHTY;
+
+    constexpr int ASSISTED_MINING_TOGGLE_BUTTON_IDX = Buttons::L_STICK;
+    constexpr int ASSISTED_OFFLOAD_TOGGLE_BUTTON_IDX = Buttons::R_STICK;
+
+    constexpr int ASSISTED_HOPPER_ENABLE_BUTTON_IDX = Buttons::BACK;
+    constexpr int ASSISTED_HOPPER_DISABLE_BUTTON_IDX = Buttons::START;
+
+    constexpr int TELEAUTO_MINING_INIT_POV_ID = Axes::DPAD_U_D;
+    constexpr int TELEAUTO_MINING_STOP_POV_ID = Axes::DPAD_U_D;
+    constexpr int TELEAUTO_OFFLOAD_INIT_POV_ID = Axes::DPAD_R_L;
+    constexpr int TELEAUTO_OFFLOAD_STOP_POV_ID = Axes::DPAD_R_L;
+
+    constexpr float TELEAUTO_MINING_INIT_POV_VAL = Axes::DPAD_K::DPAD_UP;
+    constexpr float TELEAUTO_MINING_STOP_POV_VAL = Axes::DPAD_K::DPAD_DOWN;
+    constexpr float TELEAUTO_OFFLOAD_INIT_POV_VAL = Axes::DPAD_K::DPAD_RIGHT;
+    constexpr float TELEAUTO_OFFLOAD_STOP_POV_VAL = Axes::DPAD_K::DPAD_LEFT;
+};
