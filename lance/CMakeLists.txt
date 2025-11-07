@@ -42,7 +42,6 @@ rosidl_get_typesupport_target(lance_custom_types
 # --- Executables --------------------------------------------------------------
 add_executable(robot_control
     src/control_node.cpp
-    src/robot/controller.cpp
     src/robot/collection_state.cpp)
 ament_target_dependencies(robot_control
     rclcpp

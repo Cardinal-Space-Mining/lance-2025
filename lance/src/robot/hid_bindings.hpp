@@ -39,63 +39,43 @@
 
 #pragma once
 
-#include "phoenix_ros_driver/msg/talon_ctrl.hpp"
-#include "phoenix_ros_driver/msg/talon_info.hpp"
+#include "../util/joy_utils.hpp"
+#include "hid_constants.hpp"
 
 
-using TalonCtrlMsg = phoenix_ros_driver::msg::TalonCtrl;
-using TalonInfoMsg = phoenix_ros_driver::msg::TalonInfo;
-
-/** Contains TalonInfo for each motor */
-struct RobotMotorStatus
+namespace Bindings
 {
-    TalonInfoMsg track_right;
-    TalonInfoMsg track_left;
-    TalonInfoMsg trencher;
-    TalonInfoMsg hopper_belt;
-    TalonInfoMsg hopper_actuator;
+using namespace util;
+using namespace LogitechController;
 
-    inline double getHopperActNormalizedValue()
-    {
-        return this->hopper_actuator.position / 1000.;
-    }
-};
+using DisableAllActionsButton = StaticJoyButton<Buttons::A>;
 
-/** Contains TalonCtrl for each motor */
-struct RobotMotorCommands
-{
-    TalonCtrlMsg track_right;
-    TalonCtrlMsg track_left;
-    TalonCtrlMsg trencher;
-    TalonCtrlMsg hopper_belt;
-    TalonCtrlMsg hopper_actuator;
+using TeleopLowSpeedButton = StaticJoyButton<Buttons::B>;
+using TeleopMediumSpeedButton = StaticJoyButton<Buttons::Y>;
+using TeleopHighSpeedButton = StaticJoyButton<Buttons::X>;
 
-    inline void setHopperActPercent(double percent)
-    {
-        this->hopper_actuator.set__mode(TalonCtrlMsg::PERCENT_OUTPUT)
-            .set__value(percent);
-    }
-    inline void setHopperBeltVelocity(double rps)
-    {
-        this->hopper_belt.set__mode(TalonCtrlMsg::VELOCITY).set__value(rps);
-    }
-    inline void setTrencherVelocity(double rps)
-    {
-        this->trencher.set__mode(TalonCtrlMsg::VELOCITY).set__value(rps);
-    }
-    inline void setTracksVelocity(double left_rps, double right_rps)
-    {
-        this->track_left.set__mode(TalonCtrlMsg::VELOCITY).set__value(left_rps);
-        this->track_right.set__mode(TalonCtrlMsg::VELOCITY)
-            .set__value(right_rps);
-    }
+using TeleopDriveXAxis = StaticJoyAxis<Axes::LEFTX>;
+using TeleopDriveYAxis = StaticJoyAxis<Axes::LEFTY>;
 
-    inline void disableAll()
-    {
-        this->track_left.set__mode(TalonCtrlMsg::DISABLED).set__value(0.);
-        this->track_right.set__mode(TalonCtrlMsg::DISABLED).set__value(0.);
-        this->trencher.set__mode(TalonCtrlMsg::DISABLED).set__value(0.);
-        this->hopper_belt.set__mode(TalonCtrlMsg::DISABLED).set__value(0.);
-        this->hopper_actuator.set__mode(TalonCtrlMsg::DISABLED).set__value(0.);
-    }
-};
+using TeleopTrencherSpeedAxis = StaticJoyAxis<Axes::R_TRIGGER>;
+using TeleopTrencherInvertButton = StaticJoyButton<Buttons::RB>;
+
+using TeleopHopperSpeedAxis = StaticJoyAxis<Axes::L_TRIGGER>;
+using TeleopHopperInvertButton = StaticJoyButton<Buttons::LB>;
+using TeleopHopperActuateAxis = StaticJoyAxis<Axes::RIGHTY>;
+
+using AssistedMiningToggleButton = StaticJoyButton<Buttons::L_STICK>;
+using AssistedOffloadToggleButton = StaticJoyButton<Buttons::R_STICK>;
+
+using AssistedHopperEnableButton = StaticJoyButton<Buttons::BACK>;
+using AssistedHopperDisableButton = StaticJoyButton<Buttons::START>;
+
+using PresetMiningStartButton =
+    StaticJoyPov<Axes::DPAD_U_D, Axes::DPAD_K::DPAD_UP>;
+using PresetMiningStopButton =
+    StaticJoyPov<Axes::DPAD_U_D, Axes::DPAD_K::DPAD_DOWN>;
+using PresetOffloadStartButton =
+    StaticJoyPov<Axes::DPAD_R_L, Axes::DPAD_K::DPAD_RIGHT>;
+using PresetOffloadStopButton =
+    StaticJoyPov<Axes::DPAD_R_L, Axes::DPAD_K::DPAD_LEFT>;
+};  // namespace Bindings

@@ -1,9 +1,50 @@
+/*******************************************************************************
+*   Copyright (C) 2024-2025 Cardinal Space Mining Club                         *
+*                                                                              *
+*                                 ;xxxxxxx:                                    *
+*                                ;$$$$$$$$$       ...::..                      *
+*                                $$$$$$$$$$x   .:::::::::::..                  *
+*                             x$$$$$$$$$$$$$$::::::::::::::::.                 *
+*                         :$$$$$&X;      .xX:::::::::::::.::...                *
+*                 .$$Xx++$$$$+  :::.     :;:   .::::::.  ....  :               *
+*                :$$$$$$$$$  ;:      ;xXXXXXXXx  .::.  .::::. .:.              *
+*               :$$$$$$$$: ;      ;xXXXXXXXXXXXXx: ..::::::  .::.              *
+*              ;$$$$$$$$ ::   :;XXXXXXXXXXXXXXXXXX+ .::::.  .:::               *
+*               X$$$$$X : +XXXXXXXXXXXXXXXXXXXXXXXX; .::  .::::.               *
+*                .$$$$ :xXXXXXXXXXXXXXXXXXXXXXXXXXXX.   .:::::.                *
+*                 X$$X XXXXXXXXXXXXXXXXXXXXXXXXXXXXx:  .::::.                  *
+*                 $$$:.XXXXXXXXXXXXXXXXXXXXXXXXXXX  ;; ..:.                    *
+*                 $$& :XXXXXXXXXXXXXXXXXXXXXXXX;  +XX; X$$;                    *
+*                 $$$: XXXXXXXXXXXXXXXXXXXXXX; :XXXXX; X$$;                    *
+*                 X$$X XXXXXXXXXXXXXXXXXXX; .+XXXXXXX; $$$                     *
+*                 $$$$ ;XXXXXXXXXXXXXXX+  +XXXXXXXXx+ X$$$+                    *
+*               x$$$$$X ;XXXXXXXXXXX+ :xXXXXXXXX+   .;$$$$$$                   *
+*              +$$$$$$$$ ;XXXXXXx;;+XXXXXXXXX+    : +$$$$$$$$                  *
+*               +$$$$$$$$: xXXXXXXXXXXXXXX+      ; X$$$$$$$$                   *
+*                :$$$$$$$$$. +XXXXXXXXX;      ;: x$$$$$$$$$                    *
+*                ;x$$$$XX$$$$+ .;+X+      :;: :$$$$$xX$$$X                     *
+*               ;;;;;;;;;;X$$$$$$$+      :X$$$$$$&.                            *
+*               ;;;;;;;:;;;;;x$$$$$$$$$$$$$$$$x.                               *
+*               :;;;;;;;;;;;;.  :$$$$$$$$$$X                                   *
+*                .;;;;;;;;:;;    +$$$$$$$$$                                    *
+*                  .;;;;;;.       X$$$$$$$:                                    *
+*                                                                              *
+*   Unless required by applicable law or agreed to in writing, software        *
+*   distributed under the License is distributed on an "AS IS" BASIS,          *
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   *
+*   See the License for the specific language governing permissions and        *
+*   limitations under the License.                                             *
+*                                                                              *
+*******************************************************************************/
+
 #pragma once
 
-#include "sensor_msgs/msg/joy.hpp"
+#include <rclcpp/rclcpp.hpp>
 
 #include "../motor_interface.hpp"
+#include "../collection_state.hpp"
 #include "../../util/pub_map.hpp"
+#include "../../util/joy_utils.hpp"
 
 #include "mining_controller.hpp"
 #include "offload_controller.hpp"
@@ -13,10 +54,12 @@
 
 class AutoController
 {
-    using JoyMsg = sensor_msgs::msg::Joy;
+    using RclNode = rclcpp::Node;
+    using JoyState = util::JoyState;
+    using GenericPubMap = util::GenericPubMap;
 
 public:
-    AutoController();
+    AutoController(RclNode&, const GenericPubMap&, const HopperState&);
     ~AutoController() = default;
 
 public:
@@ -24,7 +67,7 @@ public:
     void setCancelled();
 
     void iterate(
-        const JoyMsg& joy,
+        const JoyState& joy,
         const RobotMotorStatus& motor_status,
         RobotMotorCommands& commands);
 
@@ -42,7 +85,7 @@ protected:
     };
 
 protected:
-    const util::GenericPubMap& pub_map;
+    const GenericPubMap& pub_map;
 
     Stage stage{Stage::LOCALIZATION};
 
@@ -56,11 +99,15 @@ protected:
 
 // --- Implementation ----------------------------------------------------------
 
-AutoController::AutoController() :
-    mining_controller{},
-    offload_controller{},
-    traversal_controller{},
-    localization_controller{}
+AutoController::AutoController(
+    RclNode& node,
+    const GenericPubMap& pub_map,
+    const HopperState& hopper_state) :
+    pub_map{pub_map},
+    mining_controller{node, pub_map, hopper_state},
+    offload_controller{node, pub_map, hopper_state},
+    traversal_controller{node, pub_map},
+    localization_controller{node, pub_map}
 {
 }
 
@@ -101,11 +148,12 @@ void AutoController::setCancelled()
             this->offload_controller.setCancelled();
             break;
         }
+        default: {}
     }
 }
 
 void AutoController::iterate(
-    const JoyMsg& joy,
+    const JoyState& joy,
     const RobotMotorStatus& motor_status,
     RobotMotorCommands& commands)
 {
@@ -186,5 +234,6 @@ void AutoController::iterate(
             }
             break;
         }
+        default: {}
     }
 }

@@ -6,9 +6,9 @@
 
 #include "sensor_msgs/msg/joy.hpp"
 
-#include "hid_constants.hpp"
-#include "motor_interface.hpp"
-#include "collection_state.hpp"
+#include "../hid_constants.hpp"
+#include "../motor_interface.hpp"
+#include "../collection_state.hpp"
 
 
 using JoyMsg = sensor_msgs::msg::Joy;
