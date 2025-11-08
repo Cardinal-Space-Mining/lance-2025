@@ -41,6 +41,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include "../robot_params.hpp"
 #include "../motor_interface.hpp"
 #include "../collection_state.hpp"
 #include "../../util/pub_map.hpp"
@@ -59,7 +60,7 @@ class AutoController
     using GenericPubMap = util::GenericPubMap;
 
 public:
-    AutoController(RclNode&, const GenericPubMap&, const HopperState&);
+    AutoController(RclNode&, const GenericPubMap&, const RobotParams&, const HopperState&);
     ~AutoController() = default;
 
 public:
@@ -86,6 +87,7 @@ protected:
 
 protected:
     const GenericPubMap& pub_map;
+    const RobotParams& params;
 
     Stage stage{Stage::LOCALIZATION};
 
@@ -102,12 +104,14 @@ protected:
 AutoController::AutoController(
     RclNode& node,
     const GenericPubMap& pub_map,
+    const RobotParams& params,
     const HopperState& hopper_state) :
     pub_map{pub_map},
-    mining_controller{node, pub_map, hopper_state},
-    offload_controller{node, pub_map, hopper_state},
-    traversal_controller{node, pub_map},
-    localization_controller{node, pub_map}
+    params{params},
+    mining_controller{node, pub_map, params, hopper_state},
+    offload_controller{node, pub_map, params, hopper_state},
+    traversal_controller{node, pub_map, params},
+    localization_controller{node, pub_map, params}
 {
 }
 

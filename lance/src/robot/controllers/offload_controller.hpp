@@ -42,6 +42,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include "../hid_bindings.hpp"
+#include "../robot_params.hpp"
 #include "../motor_interface.hpp"
 #include "../collection_state.hpp"
 #include "../../util/pub_map.hpp"
@@ -55,7 +56,7 @@ class OffloadController
     using GenericPubMap = util::GenericPubMap;
 
 public:
-    OffloadController(RclNode&, const GenericPubMap&, const HopperState&);
+    OffloadController(RclNode&, const GenericPubMap&, const RobotParams&, const HopperState&);
     ~OffloadController() = default;
 
 public:
@@ -81,6 +82,7 @@ protected:
 
 protected:
     const GenericPubMap& pub_map;
+    const RobotParams& params;
     const HopperState& hopper_state;
 
     Stage stage{Stage::FINISHED};
@@ -92,8 +94,10 @@ protected:
 OffloadController::OffloadController(
     RclNode& node,
     const GenericPubMap& pub_map,
+    const RobotParams& params,
     const HopperState& hopper_state) :
     pub_map{pub_map},
+    params{params},
     hopper_state{hopper_state}
 {
 }

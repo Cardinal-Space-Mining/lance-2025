@@ -55,7 +55,7 @@ struct RobotMotorStatus
     TalonInfoMsg hopper_belt;
     TalonInfoMsg hopper_actuator;
 
-    inline double getHopperActNormalizedValue()
+    inline double getHopperActNormalizedValue() const
     {
         return this->hopper_actuator.position / 1000.;
     }
@@ -70,32 +70,49 @@ struct RobotMotorCommands
     TalonCtrlMsg hopper_belt;
     TalonCtrlMsg hopper_actuator;
 
-    inline void setHopperActPercent(double percent)
-    {
-        this->hopper_actuator.set__mode(TalonCtrlMsg::PERCENT_OUTPUT)
-            .set__value(percent);
-    }
-    inline void setHopperBeltVelocity(double rps)
-    {
-        this->hopper_belt.set__mode(TalonCtrlMsg::VELOCITY).set__value(rps);
-    }
-    inline void setTrencherVelocity(double rps)
-    {
-        this->trencher.set__mode(TalonCtrlMsg::VELOCITY).set__value(rps);
-    }
     inline void setTracksVelocity(double left_rps, double right_rps)
     {
         this->track_left.set__mode(TalonCtrlMsg::VELOCITY).set__value(left_rps);
         this->track_right.set__mode(TalonCtrlMsg::VELOCITY)
             .set__value(right_rps);
     }
+    inline void setTrencherVelocity(double rps)
+    {
+        this->trencher.set__mode(TalonCtrlMsg::VELOCITY).set__value(rps);
+    }
+    inline void setHopperBeltVelocity(double rps)
+    {
+        this->hopper_belt.set__mode(TalonCtrlMsg::VELOCITY).set__value(rps);
+    }
+    inline void setHopperActPercent(double percent)
+    {
+        this->hopper_actuator.set__mode(TalonCtrlMsg::PERCENT_OUTPUT)
+            .set__value(percent);
+    }
 
-    inline void disableAll()
+    inline void disableTracks()
     {
         this->track_left.set__mode(TalonCtrlMsg::DISABLED).set__value(0.);
         this->track_right.set__mode(TalonCtrlMsg::DISABLED).set__value(0.);
+    }
+    inline void disableTrencher()
+    {
         this->trencher.set__mode(TalonCtrlMsg::DISABLED).set__value(0.);
+    }
+    inline void disableHopperBelt()
+    {
         this->hopper_belt.set__mode(TalonCtrlMsg::DISABLED).set__value(0.);
+    }
+    inline void disableHopperAct()
+    {
         this->hopper_actuator.set__mode(TalonCtrlMsg::DISABLED).set__value(0.);
+    }
+
+    inline void disableAll()
+    {
+        this->disableTracks();
+        this->disableTrencher();
+        this->disableHopperBelt();
+        this->disableHopperAct();
     }
 };

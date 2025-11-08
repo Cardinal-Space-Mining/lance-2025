@@ -46,6 +46,7 @@
 #include "../util/pub_map.hpp"
 #include "../util/joy_utils.hpp"
 
+#include "robot_params.hpp"
 #include "motor_interface.hpp"
 #include "collection_state.hpp"
 
@@ -85,6 +86,7 @@ protected:
 
     ControlMode control_mode{ControlMode::DISABLED};
 
+    RobotParams params;
     CollectionState collection_state;
 
     AutoController auto_controller;
@@ -116,8 +118,9 @@ inline constexpr int transition_v = encodeTransition(FromV, ToV);
 
 RobotController::RobotController(RclNode& node, const GenericPubMap& pub_map) :
     pub_map{pub_map},
-    auto_controller{node, pub_map, this->collection_state.getHopperState()},
-    teleop_controller{node, pub_map, this->collection_state.getHopperState()}
+    params{node},
+    auto_controller{node, pub_map, params, this->collection_state.getHopperState()},
+    teleop_controller{node, pub_map, params, this->collection_state.getHopperState()}
 {
     //
 }

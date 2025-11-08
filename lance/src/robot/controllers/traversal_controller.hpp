@@ -41,6 +41,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include "../robot_params.hpp"
 #include "../motor_interface.hpp"
 #include "../../util/pub_map.hpp"
 
@@ -51,7 +52,7 @@ class TraversalController
     using GenericPubMap = util::GenericPubMap;
 
 public:
-    TraversalController(RclNode&, const GenericPubMap&);
+    TraversalController(RclNode&, const GenericPubMap&, const RobotParams&);
     ~TraversalController() = default;
 
 public:
@@ -73,6 +74,7 @@ protected:
 
 protected:
     const GenericPubMap& pub_map;
+    const RobotParams& params;
 
     State state{State::FINISHED};
 };
@@ -82,8 +84,10 @@ protected:
 
 TraversalController::TraversalController(
     RclNode& node,
-    const GenericPubMap& pub_map) :
-    pub_map{pub_map}
+    const GenericPubMap& pub_map,
+    const RobotParams& params) :
+    pub_map{pub_map},
+    params{params}
 {
 }
 

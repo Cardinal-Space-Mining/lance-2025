@@ -42,6 +42,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include "../hid_bindings.hpp"
+#include "../robot_params.hpp"
 #include "../motor_interface.hpp"
 #include "../collection_state.hpp"
 #include "../../util/pub_map.hpp"
@@ -58,7 +59,11 @@ class TeleopController
     using GenericPubMap = util::GenericPubMap;
 
 public:
-    TeleopController(RclNode&, const GenericPubMap&, const HopperState&);
+    TeleopController(
+        RclNode&,
+        const GenericPubMap&,
+        const RobotParams&,
+        const HopperState&);
     ~TeleopController() = default;
 
 public:
@@ -86,8 +91,10 @@ protected:
 
 protected:
     const GenericPubMap& pub_map;
+    const RobotParams& params;
 
     Operation op_mode{Operation::MANUAL};
+    float driving_rps_scalar;
 
     MiningController mining_controller;
     OffloadController offload_controller;
@@ -100,10 +107,14 @@ protected:
 TeleopController::TeleopController(
     RclNode& node,
     const GenericPubMap& pub_map,
+    const RobotParams& params,
     const HopperState& hopper_state) :
     pub_map{pub_map},
-    mining_controller{node, pub_map, hopper_state},
-    offload_controller{node, pub_map, hopper_state}
+    params{params},
+    driving_rps_scalar{
+        params.driving_medium_scalar * params.tracks_max_velocity_rps},
+    mining_controller{node, pub_map, params, hopper_state},
+    offload_controller{node, pub_map, params, hopper_state}
 {
 }
 
@@ -137,7 +148,7 @@ void TeleopController::iterate(
     RobotMotorCommands& commands)
 {
     // handle "config" setters and "disable all" button
-    if(!this->handleGlobalInputs(joy))
+    if (!this->handleGlobalInputs(joy))
     {
         commands.disableAll();
         return;
@@ -209,29 +220,32 @@ bool TeleopController::handleGlobalInputs(const JoyState& joy)
 {
     using namespace Bindings;
 
-    if(TeleopLowSpeedButton::wasPressed(joy))
+    if (TeleopLowSpeedButton::wasPressed(joy))
     {
-        // set low speed
+        this->driving_rps_scalar = this->params.driving_low_scalar *
+                                   this->params.tracks_max_velocity_rps;
     }
-    if(TeleopMediumSpeedButton::wasPressed(joy))
+    if (TeleopMediumSpeedButton::wasPressed(joy))
     {
-        // set medium speed
+        this->driving_rps_scalar = this->params.driving_medium_scalar *
+                                   this->params.tracks_max_velocity_rps;
     }
-    if(TeleopHighSpeedButton::wasPressed(joy))
+    if (TeleopHighSpeedButton::wasPressed(joy))
     {
-        // set high speed
+        this->driving_rps_scalar = this->params.driving_high_scalar *
+                                   this->params.tracks_max_velocity_rps;
     }
 
-    if(AssistedHopperEnableButton::wasPressed(joy))
+    if (AssistedHopperEnableButton::wasPressed(joy))
     {
         // set state
     }
-    if(AssistedHopperDisableButton::wasPressed(joy))
+    if (AssistedHopperDisableButton::wasPressed(joy))
     {
         // set state
     }
 
-    if(DisableAllActionsButton::rawValue(joy))
+    if (DisableAllActionsButton::rawValue(joy))
     {
         this->mining_controller.setCancelled();
         this->offload_controller.setCancelled();
@@ -246,13 +260,13 @@ void TeleopController::handleTeleopInputs(
 {
     using namespace Bindings;
 
-    if(AssistedMiningToggleButton::wasPressed(joy))
+    if (AssistedMiningToggleButton::wasPressed(joy))
     {
         this->mining_controller.initialize();
         this->op_mode = Operation::ASSISTED_MINING;
         return;
     }
-    if(AssistedOffloadToggleButton::wasPressed(joy))
+    if (AssistedOffloadToggleButton::wasPressed(joy))
     {
         this->offload_controller.initialize();
         this->op_mode = Operation::ASSISTED_OFFLOAD;
@@ -263,43 +277,49 @@ void TeleopController::handleTeleopInputs(
 
     // tracks
     {
-        const double stick_x = TeleopDriveXAxis::rawValue(joy);
-        const double stick_y = TeleopDriveYAxis::rawValue(joy);
-        // deadzone? ^
-
-        // arcade to differential, speed scalar + max rps scaling
-
-        commands.setTracksVelocity(0., 0.);
+        const float x = TeleopDriveXAxis::rawValue(joy);
+        const float y = TeleopDriveYAxis::rawValue(joy);
+        if ((x * x + y * y) < (this->params.driving_magnitude_deadzone *
+                               this->params.driving_magnitude_deadzone))
+        {
+            commands.setTracksVelocity(0., 0.);
+        }
+        else
+        {
+            const float l = y - x;  // y + (-x)
+            const float r = y + x;  // y - (-x)
+            const float s =
+                (this->driving_rps_scalar /
+                 std::max({1.f, std::abs(l), std::abs(r)}));
+            commands.setTracksVelocity((l * s), (r * s));
+        }
     }
     // trencher
     {
-        double trencher_scalar = TeleopTrencherSpeedAxis::triggerValue(joy);
-        if(TeleopTrencherInvertButton::rawValue(joy))
+        float trencher_percent = TeleopTrencherSpeedAxis::triggerValue(joy);
+        if (TeleopTrencherInvertButton::rawValue(joy))
         {
-            trencher_scalar *= -1.;
+            trencher_percent *= -1.f;
         }
 
-        // scale by max rps
-
-        commands.setTrencherVelocity(0.);
+        commands.setTrencherVelocity(
+            trencher_percent * this->params.trencher_max_velocity_rps);
     }
     // hopper
     {
-        double hopper_belt_scalar = TeleopHopperSpeedAxis::triggerValue(joy);
-        if(TeleopHopperInvertButton::rawValue(joy))
+        float hopper_belt_percent = TeleopHopperSpeedAxis::triggerValue(joy);
+        if (TeleopHopperInvertButton::rawValue(joy))
         {
-            hopper_belt_scalar *= -1.;
+            hopper_belt_percent *= -1.;
         }
+        commands.setHopperBeltVelocity(
+            hopper_belt_percent * this->params.hopper_belt_max_velocity_rps);
 
-        // scale by max rps
-
-        commands.setHopperBeltVelocity(0.);
-
-        double hopper_act_scalar = TeleopHopperActuateAxis::rawValue(joy);
-
-        // deadband
-
-        commands.setHopperActPercent(0.);
+        float hopper_act_scalar = TeleopHopperActuateAxis::rawValue(joy);
+        if (std::abs(hopper_act_scalar) < this->params.default_stick_deadzone)
+        {
+            hopper_act_scalar = 0.f;
+        }
+        commands.setHopperActPercent(hopper_act_scalar);
     }
-
 }

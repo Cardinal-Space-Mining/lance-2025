@@ -41,6 +41,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include "../robot_params.hpp"
 #include "../motor_interface.hpp"
 #include "../../util/pub_map.hpp"
 
@@ -51,7 +52,7 @@ class LocalizationController
     using GenericPubMap = util::GenericPubMap;
 
 public:
-    LocalizationController(RclNode&, const GenericPubMap&);
+    LocalizationController(RclNode&, const GenericPubMap&, const RobotParams&);
     ~LocalizationController() = default;
 
 public:
@@ -73,7 +74,8 @@ protected:
     };
 
 protected:
-    const util::GenericPubMap& pub_map;
+    const GenericPubMap& pub_map;
+    const RobotParams& params;
 
     Stage stage{Stage::FINISHED};
 };
@@ -83,8 +85,10 @@ protected:
 
 LocalizationController::LocalizationController(
     RclNode& node,
-    const GenericPubMap& pub_map) :
-    pub_map{pub_map}
+    const GenericPubMap& pub_map,
+    const RobotParams& params) :
+    pub_map{pub_map},
+    params{params}
 {
 }
 
