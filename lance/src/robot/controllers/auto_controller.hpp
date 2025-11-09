@@ -60,7 +60,11 @@ class AutoController
     using GenericPubMap = util::GenericPubMap;
 
 public:
-    AutoController(RclNode&, const GenericPubMap&, const RobotParams&, const HopperState&);
+    AutoController(
+        RclNode&,
+        const GenericPubMap&,
+        const RobotParams&,
+        const HopperState&);
     ~AutoController() = default;
 
 public:
@@ -108,8 +112,18 @@ AutoController::AutoController(
     params{params},
     localization_controller{node, pub_map, params},
     traversal_controller{node, pub_map, params},
-    mining_controller{node, pub_map, params, hopper_state, traversal_controller},
-    offload_controller{node, pub_map, params, hopper_state, traversal_controller}
+    mining_controller{
+        node,
+        pub_map,
+        params,
+        hopper_state,
+        traversal_controller},
+    offload_controller{
+        node,
+        pub_map,
+        params,
+        hopper_state,
+        traversal_controller}
 {
 }
 
@@ -148,7 +162,9 @@ void AutoController::setCancelled()
             this->offload_controller.setCancelled();
             break;
         }
-        default: {}
+        default:
+        {
+        }
     }
 }
 
@@ -174,7 +190,7 @@ void AutoController::iterate(
         MINING_STAGE_L:
         case Stage::MINING:
         {
-            this->mining_controller.iterate(joy, motor_status, commands);
+            this->mining_controller.iterate(motor_status, commands);
             if (!this->mining_controller.isFinished())
             {
                 break;
@@ -223,6 +239,8 @@ void AutoController::iterate(
             this->stage = Stage::MINING;
             goto MINING_STAGE_L;
         }
-        default: {}
+        default:
+        {
+        }
     }
 }

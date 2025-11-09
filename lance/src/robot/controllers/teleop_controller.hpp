@@ -159,19 +159,27 @@ void TeleopController::iterate(
     bool command_finished = false;
     switch (this->op_mode)
     {
-        // same controllers, init determines exec mode
         case Operation::ASSISTED_MINING:
-        case Operation::PRESET_MINING:
         {
             this->mining_controller.iterate(joy, motor_status, commands);
             command_finished = this->mining_controller.isFinished();
             break;
         }
-        // same controllers, init determines exec mode
         case Operation::ASSISTED_OFFLOAD:
-        case Operation::PRESET_OFFLOAD:
         {
             this->offload_controller.iterate(joy, motor_status, commands);
+            command_finished = this->offload_controller.isFinished();
+            break;
+        }
+        case Operation::PRESET_MINING:
+        {
+            this->mining_controller.iterate(motor_status, commands);
+            command_finished = this->mining_controller.isFinished();
+            break;
+        }
+        case Operation::PRESET_OFFLOAD:
+        {
+            this->offload_controller.iterate(motor_status, commands);
             command_finished = this->offload_controller.isFinished();
             break;
         }
@@ -198,12 +206,20 @@ void TeleopController::iterate(
         switch (this->op_mode)
         {
             case Operation::ASSISTED_MINING:
+            {
+                this->mining_controller.iterate(motor_status, commands);
+                break;
+            }
             case Operation::PRESET_MINING:
             {
                 this->mining_controller.iterate(joy, motor_status, commands);
                 break;
             }
             case Operation::ASSISTED_OFFLOAD:
+            {
+                this->offload_controller.iterate(motor_status, commands);
+                break;
+            }
             case Operation::PRESET_OFFLOAD:
             {
                 this->offload_controller.iterate(joy, motor_status, commands);
@@ -236,15 +252,6 @@ bool TeleopController::handleGlobalInputs(const JoyState& joy)
                                    this->params.tracks_max_velocity_rps;
     }
 
-    if (AssistedHopperEnableButton::wasPressed(joy))
-    {
-        // set state
-    }
-    if (AssistedHopperDisableButton::wasPressed(joy))
-    {
-        // set state
-    }
-
     if (DisableAllActionsButton::rawValue(joy))
     {
         this->mining_controller.setCancelled();
@@ -273,7 +280,18 @@ void TeleopController::handleTeleopInputs(
         return;
     }
 
-    // TODO: preset mining, offload
+    if(PresetMiningInitButton::wasPressed(joy))
+    {
+        this->mining_controller.initialize(0.f);    // <-- TODO: param
+        this->op_mode = Operation::PRESET_MINING;
+        return;
+    }
+    if(PresetMiningInitButton::wasPressed(joy))
+    {
+        this->offload_controller.initialize(0.f);   // <-- TODO: param
+        this->op_mode = Operation::PRESET_OFFLOAD;
+        return;
+    }
 
     // tracks
     {

@@ -67,8 +67,8 @@ using TeleopHopperActuateAxis = StaticJoyAxis<Axes::RIGHTY>;
 using AssistedMiningToggleButton = StaticJoyButton<Buttons::L_STICK>;
 using AssistedOffloadToggleButton = StaticJoyButton<Buttons::R_STICK>;
 
-using AssistedHopperEnableButton = StaticJoyButton<Buttons::BACK>;
-using AssistedHopperDisableButton = StaticJoyButton<Buttons::START>;
+using PresetMiningInitButton = StaticJoyButton<Buttons::BACK>;
+using PresetOffloadInitButton = StaticJoyButton<Buttons::START>;
 
 using PresetMiningStartButton =
     StaticJoyPov<Axes::DPAD_U_D, Axes::DPAD_K::DPAD_UP>;

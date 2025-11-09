@@ -52,7 +52,6 @@
 class AutoMiningController
 {
     using RclNode = rclcpp::Node;
-    using JoyState = util::JoyState;
     using GenericPubMap = util::GenericPubMap;
 
 public:
@@ -70,7 +69,6 @@ public:
     void setCancelled();
 
     void iterate(
-        const JoyState& joy,
         const RobotMotorStatus& motor_status,
         RobotMotorCommands& commands);
 
@@ -122,7 +120,6 @@ bool AutoMiningController::isFinished()
 void AutoMiningController::setCancelled() { this->stage = Stage::FINISHED; }
 
 void AutoMiningController::iterate(
-    const JoyState& joy,
     const RobotMotorStatus& motor_status,
     RobotMotorCommands& commands)
 {
@@ -156,14 +153,14 @@ void AutoMiningController::iterate(
             }
 
             // initialize with query result
-            this->mining_controller.initialize();
+            this->mining_controller.initialize(0.f);
             this->stage = Stage::MINING;
             [[fallthrough]];
         }
         case Stage::MINING:
         {
             // this->mining_controller.setRemaining(); // <-- update remaining distance
-            this->mining_controller.iterate(joy, motor_status, commands);
+            this->mining_controller.iterate(motor_status, commands);
             if (!this->mining_controller.isFinished())
             {
                 break;
