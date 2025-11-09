@@ -44,27 +44,29 @@
 #include "../robot_params.hpp"
 #include "../motor_interface.hpp"
 #include "../collection_state.hpp"
-#include "../../util/pub_map.hpp"
-#include "../../util/joy_utils.hpp"
 
-#include "auto_mining_controller.hpp"
-#include "auto_offload_controller.hpp"
+#include "mining_controller.hpp"
 #include "traversal_controller.hpp"
-#include "localization_controller.hpp"
 
 
-class AutoController
+class AutoMiningController
 {
     using RclNode = rclcpp::Node;
     using JoyState = util::JoyState;
     using GenericPubMap = util::GenericPubMap;
 
 public:
-    AutoController(RclNode&, const GenericPubMap&, const RobotParams&, const HopperState&);
-    ~AutoController() = default;
+    AutoMiningController(
+        RclNode&,
+        const GenericPubMap&,
+        const RobotParams&,
+        const HopperState&,
+        TraversalController&);
+    ~AutoMiningController() = default;
 
 public:
     void initialize();
+    bool isFinished();
     void setCancelled();
 
     void iterate(
@@ -75,154 +77,103 @@ public:
 protected:
     enum class Stage
     {
-        LOCALIZATION,
+        INITIALIZATION,
+        PLANNING,
+        TRAVERSING,
         MINING,
-        TRAVERSAL,
-        OFFLOAD,
-        RETRAVERSAL,
-        UNKNOWN
+        FINISHED
     };
 
 protected:
     const GenericPubMap& pub_map;
     const RobotParams& params;
+    const HopperState& hopper_state;
 
-    Stage stage{Stage::LOCALIZATION};
+    Stage stage{Stage::FINISHED};
 
-    LocalizationController localization_controller;
-    TraversalController traversal_controller;
-    AutoMiningController mining_controller;
-    AutoOffloadController offload_controller;
+    TraversalController& traversal_controller;
+    MiningController mining_controller;
 };
-
 
 
 // --- Implementation ----------------------------------------------------------
 
-AutoController::AutoController(
+AutoMiningController::AutoMiningController(
     RclNode& node,
     const GenericPubMap& pub_map,
     const RobotParams& params,
-    const HopperState& hopper_state) :
+    const HopperState& hopper_state,
+    TraversalController& trav_controller) :
     pub_map{pub_map},
     params{params},
-    localization_controller{node, pub_map, params},
-    traversal_controller{node, pub_map, params},
-    mining_controller{node, pub_map, params, hopper_state, traversal_controller},
-    offload_controller{node, pub_map, params, hopper_state, traversal_controller}
+    hopper_state{hopper_state},
+    traversal_controller{trav_controller},
+    mining_controller{node, pub_map, params, hopper_state}
 {
 }
 
-void AutoController::initialize()
+void AutoMiningController::initialize() { this->stage = Stage::INITIALIZATION; }
+
+bool AutoMiningController::isFinished()
 {
-    // if we previously transitioned from LOCALIZATION, and we are initializing
-    // again, then we don't know what the robot state is!
-    if (this->stage != Stage::LOCALIZATION)
-    {
-        this->stage = Stage::UNKNOWN;
-    }
+    return this->stage == Stage::FINISHED;
 }
 
-void AutoController::setCancelled()
-{
-    switch (this->stage)
-    {
-        case Stage::LOCALIZATION:
-        {
-            this->localization_controller.setCancelled();
-            break;
-        }
-        case Stage::MINING:
-        {
-            this->mining_controller.setCancelled();
-            break;
-        }
-        case Stage::TRAVERSAL:
-        case Stage::RETRAVERSAL:
-        {
-            this->traversal_controller.setCancelled();
-            break;
-        }
-        case Stage::OFFLOAD:
-        {
-            this->offload_controller.setCancelled();
-            break;
-        }
-        default: {}
-    }
-}
+void AutoMiningController::setCancelled() { this->stage = Stage::FINISHED; }
 
-void AutoController::iterate(
+void AutoMiningController::iterate(
     const JoyState& joy,
     const RobotMotorStatus& motor_status,
     RobotMotorCommands& commands)
 {
     switch (this->stage)
     {
-        case Stage::LOCALIZATION:
+        case Stage::INITIALIZATION:
         {
-            this->localization_controller.iterate(motor_status, commands);
-            if (!this->localization_controller.isFinished())
+            this->stage = Stage::PLANNING;
+            [[fallthrough]];
+        }
+        case Stage::PLANNING:
+        {
+            if (false)  // *if not finished planning*
+            {
+                // call query service, wait for response, determine best option
+
+                break;  // break if more work is required
+            }
+
+            // init with planned destination
+            this->traversal_controller.initialize();
+            this->stage = Stage::TRAVERSING;
+            [[fallthrough]];
+        }
+        case Stage::TRAVERSING:
+        {
+            this->traversal_controller.iterate(motor_status, commands);
+            if (!this->traversal_controller.isFinished())
             {
                 break;
             }
 
+            // initialize with query result
             this->mining_controller.initialize();
             this->stage = Stage::MINING;
             [[fallthrough]];
         }
-        MINING_STAGE_L:
         case Stage::MINING:
         {
+            // this->mining_controller.setRemaining(); // <-- update remaining distance
             this->mining_controller.iterate(joy, motor_status, commands);
             if (!this->mining_controller.isFinished())
             {
                 break;
             }
 
-            // TODO: pass traversal destination here -->
-            this->traversal_controller.initialize();
-            this->stage = Stage::TRAVERSAL;
+            this->stage = Stage::FINISHED;
             [[fallthrough]];
         }
-        case Stage::TRAVERSAL:
+        case Stage::FINISHED:
         {
-            this->traversal_controller.iterate(motor_status, commands);
-            if (!this->traversal_controller.isFinished())
-            {
-                break;
-            }
-
-            this->offload_controller.initialize();
-            this->stage = Stage::OFFLOAD;
-            [[fallthrough]];
         }
-        case Stage::OFFLOAD:
-        {
-            this->offload_controller.iterate(joy, motor_status, commands);
-            if (!this->offload_controller.isFinished())
-            {
-                break;
-            }
-
-            // TODO: pass traversal destination here -->
-            this->traversal_controller.initialize();
-            this->stage = Stage::RETRAVERSAL;
-            [[fallthrough]];
-        }
-        case Stage::RETRAVERSAL:
-        {
-            this->traversal_controller.iterate(motor_status, commands);
-            if (!this->traversal_controller.isFinished())
-            {
-                break;
-            }
-
-            this->mining_controller.initialize();
-            // chatgpt says I should change this to a while loop that wraps the entire switch-case
-            this->stage = Stage::MINING;
-            goto MINING_STAGE_L;
-        }
-        default: {}
     }
 }
