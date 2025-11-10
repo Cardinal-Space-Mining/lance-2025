@@ -286,11 +286,11 @@ void TeleopController::handleTeleopInputs(
 void TeleopController::publishState()
 {
     static constexpr char const* OP_STRINGS[] = {
-        "Manual",
-        "Assisted Mining",
-        "Assisted Offload",
-        "Preset Mining",
-        "Preset Offload"};
+        "Teleop Manual",
+        "Teleop Assisted Mining",
+        "Teleop Assisted Offload",
+        "Teleop Preset Mining",
+        "Teleop Preset Offload"};
 
     this->pub_map.publish<std_msgs::msg::String, std::string>(
         "/lance/op_status",

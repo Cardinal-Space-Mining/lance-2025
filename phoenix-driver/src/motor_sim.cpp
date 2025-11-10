@@ -24,6 +24,8 @@
 #include "phoenix_ros_driver/msg/talon_info.hpp"
 #include "phoenix_ros_driver/msg/talon_faults.hpp"
 
+#include "ros_utils.hpp"
+
 using namespace std::chrono_literals;
 
 using TalonCtrlMsg = phoenix_ros_driver::msg::TalonCtrl;
@@ -330,7 +332,7 @@ public:
     PhoenixPhysicalSimulator() :
         Node("phoenix_physical_simulator"),
         battery_(16.0, 0.01),  // 10mΩ internal resistance
-        use_gz_track_feedback(this->get_parameter_or("use_gz_track_feedback", false))
+        use_gz_track_feedback(util::declare_and_get_param(*this, "use_gz_track_feedback", false))
     {
         std::array<std::string,4> motor_names_{"track_right", "track_left", "trencher", "hopper_belt"};
         for (const auto& name : motor_names_)

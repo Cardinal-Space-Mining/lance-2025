@@ -67,7 +67,6 @@ bool AutoOffloadController::isFinished()
 void AutoOffloadController::setCancelled() { this->stage = Stage::FINISHED; }
 
 void AutoOffloadController::iterate(
-    const JoyState& joy,
     const RobotMotorStatus& motor_status,
     RobotMotorCommands& commands)
 {

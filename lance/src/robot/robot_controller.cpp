@@ -73,7 +73,12 @@ RobotController::RobotController(RclNode& node, GenericPubMap& pub_map) :
         params,
         this->collection_state.getHopperState()}
 {
-    //
+    this->collection_state.setParams(
+        this->params.collection_model_initial_volume_liters,
+        this->params.collection_model_capacity_volume_liters,
+        this->params.collection_model_initial_belt_footprint_meters,
+        this->params.collection_model_belt_capacity_meters,
+        this->params.collection_model_belt_offload_length_meters);
 }
 
 const HopperState& RobotController::hopperState() const

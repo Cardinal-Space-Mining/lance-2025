@@ -79,7 +79,7 @@ public:
 protected:
     enum class Stage
     {
-        LOCALIZATION,
+        LOCALIZATION = 0,
         MINING,
         TRAVERSAL,
         OFFLOAD,

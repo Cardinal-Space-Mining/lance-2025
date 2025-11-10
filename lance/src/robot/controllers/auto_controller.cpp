@@ -152,7 +152,7 @@ void AutoController::iterate(
         }
         case Stage::OFFLOAD:
         {
-            this->offload_controller.iterate(joy, motor_status, commands);
+            this->offload_controller.iterate(motor_status, commands);
             if (!this->offload_controller.isFinished())
             {
                 break;
@@ -191,7 +191,7 @@ void AutoController::publishState()
         "Auto Mining",
         "Auto Traversal",
         "Auto Offload",
-        "Auto Retraversal"
+        "Auto Retraversal",
         "Auto [unknown]"};
 
     this->pub_map.publish<std_msgs::msg::String, std::string>(

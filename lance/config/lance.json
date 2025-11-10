@@ -77,6 +77,20 @@
                 "foxglove_bridge": "test"
             }
         },
+        "gz_dev":
+        {
+            "pragma:action_overrides":
+            {
+                "joy_node": "xbox",
+                "robot_status": "enabled",
+                "robot_control": "enabled",
+                "phoenix_motor_sim": "gz_sim",
+                "perception": "test",
+                "gz_sim": "motor_sim",
+                "robot_tf": "lance",
+                "foxglove_bridge": "test"
+            }
+        },
         "lidar_dev":
         {
             "pragma:action_overrides":

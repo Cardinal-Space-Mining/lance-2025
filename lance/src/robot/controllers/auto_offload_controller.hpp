@@ -52,7 +52,6 @@
 class AutoOffloadController
 {
     using RclNode = rclcpp::Node;
-    using JoyState = util::JoyState;
     using GenericPubMap = util::GenericPubMap;
 
 public:
@@ -70,7 +69,6 @@ public:
     void setCancelled();
 
     void iterate(
-        const JoyState& joy,
         const RobotMotorStatus& motor_status,
         RobotMotorCommands& commands);
 

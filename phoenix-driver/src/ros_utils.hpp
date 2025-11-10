@@ -31,10 +31,8 @@ inline T declare_and_get_param(
     const std::string param_name,
     const T& default_value)
 {
-    T param;
     node.declare_parameter(param_name, default_value);
-    node.get_parameter(param_name, param);
-    return param;
+    return node.get_parameter_or(param_name, default_value);
 }
 
 };  // namespace util
