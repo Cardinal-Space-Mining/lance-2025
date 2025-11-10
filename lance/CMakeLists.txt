@@ -42,7 +42,17 @@ rosidl_get_typesupport_target(lance_custom_types
 # --- Executables --------------------------------------------------------------
 add_executable(robot_control
     src/control_node.cpp
-    src/robot/collection_state.cpp)
+    src/robot/robot_params.cpp
+    src/robot/collection_state.cpp
+    src/robot/robot_controller.cpp
+    src/robot/controllers/auto_controller.cpp
+    src/robot/controllers/mining_controller.cpp
+    src/robot/controllers/teleop_controller.cpp
+    src/robot/controllers/offload_controller.cpp
+    src/robot/controllers/traversal_controller.cpp
+    src/robot/controllers/auto_mining_controller.cpp
+    src/robot/controllers/auto_offload_controller.cpp
+    src/robot/controllers/localization_controller.cpp)
 ament_target_dependencies(robot_control
     rclcpp
     std_msgs

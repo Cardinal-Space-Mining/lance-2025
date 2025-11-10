@@ -37,45 +37,84 @@
 *                                                                              *
 *******************************************************************************/
 
-#pragma once
-
-#include "../util/joy_utils.hpp"
-#include "hid_constants.hpp"
+#include "auto_mining_controller.hpp"
 
 
-namespace Bindings
+AutoMiningController::AutoMiningController(
+    RclNode& node,
+    const GenericPubMap& pub_map,
+    const RobotParams& params,
+    const HopperState& hopper_state,
+    TraversalController& trav_controller) :
+    pub_map{pub_map},
+    params{params},
+    hopper_state{hopper_state},
+    traversal_controller{trav_controller},
+    mining_controller{node, pub_map, params, hopper_state}
 {
-using namespace util;
-using namespace LogitechController;
+}
 
-using DisableAllActionsButton = StaticJoyButton<Buttons::A>;
+void AutoMiningController::initialize() { this->stage = Stage::INITIALIZATION; }
 
-using TeleopLowSpeedButton = StaticJoyButton<Buttons::B>;
-using TeleopMediumSpeedButton = StaticJoyButton<Buttons::Y>;
-using TeleopHighSpeedButton = StaticJoyButton<Buttons::X>;
+bool AutoMiningController::isFinished()
+{
+    return this->stage == Stage::FINISHED;
+}
 
-using TeleopDriveXAxis = StaticJoyAxis<Axes::LEFTX>;
-using TeleopDriveYAxis = StaticJoyAxis<Axes::LEFTY>;
+void AutoMiningController::setCancelled() { this->stage = Stage::FINISHED; }
 
-using TeleopTrencherSpeedAxis = StaticJoyAxis<Axes::R_TRIGGER>;
-using TeleopTrencherInvertButton = StaticJoyButton<Buttons::RB>;
+void AutoMiningController::iterate(
+    const RobotMotorStatus& motor_status,
+    RobotMotorCommands& commands)
+{
+    switch (this->stage)
+    {
+        case Stage::INITIALIZATION:
+        {
+            this->stage = Stage::PLANNING;
+            [[fallthrough]];
+        }
+        case Stage::PLANNING:
+        {
+            if (false)  // *if not finished planning*
+            {
+                // call query service, wait for response, determine best option
 
-using TeleopHopperSpeedAxis = StaticJoyAxis<Axes::L_TRIGGER>;
-using TeleopHopperInvertButton = StaticJoyButton<Buttons::LB>;
-using TeleopHopperActuateAxis = StaticJoyAxis<Axes::RIGHTY>;
+                break;  // break if more work is required
+            }
 
-using AssistedMiningToggleButton = StaticJoyButton<Buttons::L_STICK>;
-using AssistedOffloadToggleButton = StaticJoyButton<Buttons::R_STICK>;
+            // init with planned destination
+            this->traversal_controller.initialize();
+            this->stage = Stage::TRAVERSING;
+            [[fallthrough]];
+        }
+        case Stage::TRAVERSING:
+        {
+            this->traversal_controller.iterate(motor_status, commands);
+            if (!this->traversal_controller.isFinished())
+            {
+                break;
+            }
 
-using PresetMiningInitButton = StaticJoyButton<Buttons::BACK>;
-using PresetOffloadInitButton = StaticJoyButton<Buttons::START>;
+            // initialize with query result
+            this->mining_controller.initialize(0.f);
+            this->stage = Stage::MINING;
+            [[fallthrough]];
+        }
+        case Stage::MINING:
+        {
+            // this->mining_controller.setRemaining(); // <-- update remaining distance
+            this->mining_controller.iterate(motor_status, commands);
+            if (!this->mining_controller.isFinished())
+            {
+                break;
+            }
 
-// using PresetMiningStartButton =
-//     StaticJoyPov<Axes::DPAD_U_D, Axes::DPAD_K::DPAD_UP>;
-// using PresetMiningStopButton =
-//     StaticJoyPov<Axes::DPAD_U_D, Axes::DPAD_K::DPAD_DOWN>;
-// using PresetOffloadStartButton =
-//     StaticJoyPov<Axes::DPAD_R_L, Axes::DPAD_K::DPAD_RIGHT>;
-// using PresetOffloadStopButton =
-//     StaticJoyPov<Axes::DPAD_R_L, Axes::DPAD_K::DPAD_LEFT>;
-};  // namespace Bindings
+            this->stage = Stage::FINISHED;
+            [[fallthrough]];
+        }
+        case Stage::FINISHED:
+        {
+        }
+    }
+}

@@ -37,45 +37,44 @@
 *                                                                              *
 *******************************************************************************/
 
-#pragma once
-
-#include "../util/joy_utils.hpp"
-#include "hid_constants.hpp"
+#include "traversal_controller.hpp"
 
 
-namespace Bindings
+TraversalController::TraversalController(
+    RclNode& node,
+    const GenericPubMap& pub_map,
+    const RobotParams& params) :
+    pub_map{pub_map},
+    params{params}
 {
-using namespace util;
-using namespace LogitechController;
+}
 
-using DisableAllActionsButton = StaticJoyButton<Buttons::A>;
+void TraversalController::initialize() { this->state = State::INITIALIZATION; }
 
-using TeleopLowSpeedButton = StaticJoyButton<Buttons::B>;
-using TeleopMediumSpeedButton = StaticJoyButton<Buttons::Y>;
-using TeleopHighSpeedButton = StaticJoyButton<Buttons::X>;
+bool TraversalController::isFinished()
+{
+    return this->state == State::FINISHED;
+}
 
-using TeleopDriveXAxis = StaticJoyAxis<Axes::LEFTX>;
-using TeleopDriveYAxis = StaticJoyAxis<Axes::LEFTY>;
+void TraversalController::setCancelled() {}
 
-using TeleopTrencherSpeedAxis = StaticJoyAxis<Axes::R_TRIGGER>;
-using TeleopTrencherInvertButton = StaticJoyButton<Buttons::RB>;
-
-using TeleopHopperSpeedAxis = StaticJoyAxis<Axes::L_TRIGGER>;
-using TeleopHopperInvertButton = StaticJoyButton<Buttons::LB>;
-using TeleopHopperActuateAxis = StaticJoyAxis<Axes::RIGHTY>;
-
-using AssistedMiningToggleButton = StaticJoyButton<Buttons::L_STICK>;
-using AssistedOffloadToggleButton = StaticJoyButton<Buttons::R_STICK>;
-
-using PresetMiningInitButton = StaticJoyButton<Buttons::BACK>;
-using PresetOffloadInitButton = StaticJoyButton<Buttons::START>;
-
-// using PresetMiningStartButton =
-//     StaticJoyPov<Axes::DPAD_U_D, Axes::DPAD_K::DPAD_UP>;
-// using PresetMiningStopButton =
-//     StaticJoyPov<Axes::DPAD_U_D, Axes::DPAD_K::DPAD_DOWN>;
-// using PresetOffloadStartButton =
-//     StaticJoyPov<Axes::DPAD_R_L, Axes::DPAD_K::DPAD_RIGHT>;
-// using PresetOffloadStopButton =
-//     StaticJoyPov<Axes::DPAD_R_L, Axes::DPAD_K::DPAD_LEFT>;
-};  // namespace Bindings
+void TraversalController::iterate(
+    const RobotMotorStatus& motor_status,
+    RobotMotorCommands& commands)
+{
+    switch (this->state)
+    {
+        case State::INITIALIZATION:
+        {
+            //
+        }
+        case State::TRAVERSING:
+        {
+            //
+        }
+        case State::FINISHED:
+        {
+            //
+        }
+    }
+}

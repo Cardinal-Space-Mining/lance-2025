@@ -90,13 +90,13 @@ protected:
 public:
 #define INIT_TALON_PUB_SUB(device_topic, device_var)         \
     device_var##_pub_sub{                                    \
-        this->create_publisher<TalonCtrlMsg>(                   \
+        this->create_publisher<TalonCtrlMsg>(                \
             ROBOT_TOPIC(#device_topic "/ctrl"),              \
             TALON_CTRL_PUB_QOS),                             \
-        this->create_subscription<TalonInfoMsg>(                \
+        this->create_subscription<TalonInfoMsg>(             \
             ROBOT_TOPIC(#device_topic "/info"),              \
             rclcpp::SensorDataQoS{},                         \
-            [this](const TalonInfoMsg& msg)                     \
+            [this](const TalonInfoMsg& msg)                  \
             { this->robot_motor_status.device_var = msg; })}
 
     RobotControlNode() :
@@ -133,19 +133,21 @@ public:
             MOTOR_UPDATE_DT,
             [this]()
             {
-                RobotMotorCommands mc;
+                RobotMotorCommands commands;
                 this->robot_controller.iterate(
                     this->watchdog_status,
                     this->joy_state,
                     this->robot_motor_status,
-                    mc);
+                    commands);
 
-                this->track_right_pub_sub.ctrl_pub->publish(mc.track_right);
-                this->track_left_pub_sub.ctrl_pub->publish(mc.track_left);
-                this->trencher_pub_sub.ctrl_pub->publish(mc.trencher);
-                this->hopper_belt_pub_sub.ctrl_pub->publish(mc.hopper_belt);
+                this->track_right_pub_sub.ctrl_pub->publish(
+                    commands.track_right);
+                this->track_left_pub_sub.ctrl_pub->publish(commands.track_left);
+                this->trencher_pub_sub.ctrl_pub->publish(commands.trencher);
+                this->hopper_belt_pub_sub.ctrl_pub->publish(
+                    commands.hopper_belt);
                 this->hopper_actuator_pub_sub.ctrl_pub->publish(
-                    mc.hopper_actuator);
+                    commands.hopper_actuator);
 
                 this->publishHopperJoint();
                 this->publishCollectionState();

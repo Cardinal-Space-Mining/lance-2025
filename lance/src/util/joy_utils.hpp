@@ -177,6 +177,11 @@ struct JoyAxis
     {
         return joy.getRawAxis(this->idx);
     }
+    inline float deadzoneValue(const JoyState& joy, float deadzone) const
+    {
+        float v = this->rawValue(joy);
+        return std::abs(v) >= deadzone ? v : 0.f;
+    }
     inline float triggerValue(const JoyState& joy) const
     {
         return (1.f - this->rawValue(joy)) / 2.f;
@@ -232,6 +237,11 @@ struct StaticJoyAxis
     static inline float rawValue(const JoyState& joy)
     {
         return joy.getRawAxis(Idx);
+    }
+    static inline float deadzoneValue(const JoyState& joy, float deadzone)
+    {
+        float v = rawValue(joy);
+        return std::abs(v) >= deadzone ? v : 0.f;
     }
     static inline float triggerValue(const JoyState& joy)
     {

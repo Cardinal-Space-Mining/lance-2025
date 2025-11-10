@@ -37,45 +37,101 @@
 *                                                                              *
 *******************************************************************************/
 
-#pragma once
-
-#include "../util/joy_utils.hpp"
-#include "hid_constants.hpp"
+#include "robot_controller.hpp"
 
 
-namespace Bindings
+inline constexpr RobotController::ControlMode getMode(int32_t watchdog)
 {
-using namespace util;
-using namespace LogitechController;
+    return watchdog > 0
+               ? RobotController::ControlMode::TELEOP
+               : (watchdog < 0 ? RobotController::ControlMode::AUTO
+                               : RobotController::ControlMode::DISABLED);
+}
+inline constexpr int encodeTransition(
+    RobotController::ControlMode from,
+    RobotController::ControlMode to)
+{
+    return (static_cast<int>(from) << 2) | static_cast<int>(to);
+}
 
-using DisableAllActionsButton = StaticJoyButton<Buttons::A>;
+template<RobotController::ControlMode FromV, RobotController::ControlMode ToV>
+inline constexpr int transition_v = encodeTransition(FromV, ToV);
 
-using TeleopLowSpeedButton = StaticJoyButton<Buttons::B>;
-using TeleopMediumSpeedButton = StaticJoyButton<Buttons::Y>;
-using TeleopHighSpeedButton = StaticJoyButton<Buttons::X>;
 
-using TeleopDriveXAxis = StaticJoyAxis<Axes::LEFTX>;
-using TeleopDriveYAxis = StaticJoyAxis<Axes::LEFTY>;
 
-using TeleopTrencherSpeedAxis = StaticJoyAxis<Axes::R_TRIGGER>;
-using TeleopTrencherInvertButton = StaticJoyButton<Buttons::RB>;
+RobotController::RobotController(RclNode& node, const GenericPubMap& pub_map) :
+    pub_map{pub_map},
+    params{node},
+    auto_controller{node, pub_map, params, this->collection_state.getHopperState()},
+    teleop_controller{node, pub_map, params, this->collection_state.getHopperState()}
+{
+    //
+}
 
-using TeleopHopperSpeedAxis = StaticJoyAxis<Axes::L_TRIGGER>;
-using TeleopHopperInvertButton = StaticJoyButton<Buttons::LB>;
-using TeleopHopperActuateAxis = StaticJoyAxis<Axes::RIGHTY>;
+const HopperState& RobotController::hopperState() const
+{
+    return this->collection_state.getHopperState();
+}
 
-using AssistedMiningToggleButton = StaticJoyButton<Buttons::L_STICK>;
-using AssistedOffloadToggleButton = StaticJoyButton<Buttons::R_STICK>;
+void RobotController::iterate(
+    int32_t watchdog,
+    const JoyState& joy,
+    const RobotMotorStatus& motor_status,
+    RobotMotorCommands& commands)
+{
+    const ControlMode prev_mode = this->control_mode;
+    this->control_mode = getMode(watchdog);
 
-using PresetMiningInitButton = StaticJoyButton<Buttons::BACK>;
-using PresetOffloadInitButton = StaticJoyButton<Buttons::START>;
+    // process transition actions
+    switch (encodeTransition(prev_mode, this->control_mode))
+    {
+        case transition_v<ControlMode::DISABLED, ControlMode::TELEOP>:
+        {
+            this->teleop_controller.initialize();
+            break;
+        }
+        case transition_v<ControlMode::DISABLED, ControlMode::AUTO>:
+        {
+            this->auto_controller.initialize();
+            break;
+        }
+        case transition_v<ControlMode::TELEOP, ControlMode::DISABLED>:
+        {
+            this->teleop_controller.setCancelled();
+            break;
+        }
+        case transition_v<ControlMode::TELEOP, ControlMode::AUTO>:
+        {
+            this->teleop_controller.setCancelled();
+            this->auto_controller.initialize();
+            break;
+        }
+        case transition_v<ControlMode::AUTO, ControlMode::DISABLED>:
+        {
+            this->auto_controller.setCancelled();
+            break;
+        }
+        case transition_v<ControlMode::AUTO, ControlMode::TELEOP>:
+        {
+            this->auto_controller.setCancelled();
+            this->teleop_controller.initialize();
+            break;
+        }
+        default: {}
+    }
 
-// using PresetMiningStartButton =
-//     StaticJoyPov<Axes::DPAD_U_D, Axes::DPAD_K::DPAD_UP>;
-// using PresetMiningStopButton =
-//     StaticJoyPov<Axes::DPAD_U_D, Axes::DPAD_K::DPAD_DOWN>;
-// using PresetOffloadStartButton =
-//     StaticJoyPov<Axes::DPAD_R_L, Axes::DPAD_K::DPAD_RIGHT>;
-// using PresetOffloadStopButton =
-//     StaticJoyPov<Axes::DPAD_R_L, Axes::DPAD_K::DPAD_LEFT>;
-};  // namespace Bindings
+    // process current state actions
+    switch (this->control_mode)
+    {
+        case ControlMode::TELEOP:
+        {
+            this->teleop_controller.iterate(joy, motor_status, commands);
+            break;
+        }
+        case ControlMode::AUTO:
+        {
+            this->auto_controller.iterate(joy, motor_status, commands);
+        }
+        default: {}
+    }
+}
