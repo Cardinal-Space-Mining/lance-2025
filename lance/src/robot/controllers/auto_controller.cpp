@@ -42,7 +42,7 @@
 
 AutoController::AutoController(
     RclNode& node,
-    const GenericPubMap& pub_map,
+    GenericPubMap& pub_map,
     const RobotParams& params,
     const HopperState& hopper_state) :
     pub_map{pub_map},
@@ -180,4 +180,21 @@ void AutoController::iterate(
         {
         }
     }
+
+    this->publishState();
+}
+
+void AutoController::publishState()
+{
+    static constexpr char const* STAGE_STRINGS[] = {
+        "Auto Localization",
+        "Auto Mining",
+        "Auto Traversal",
+        "Auto Offload",
+        "Auto Retraversal"
+        "Auto [unknown]"};
+
+    this->pub_map.publish<std_msgs::msg::String, std::string>(
+        "/lance/op_status",
+        STAGE_STRINGS[static_cast<size_t>(this->stage)]);
 }

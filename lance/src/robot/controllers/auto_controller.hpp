@@ -62,7 +62,7 @@ class AutoController
 public:
     AutoController(
         RclNode&,
-        const GenericPubMap&,
+        GenericPubMap&,
         const RobotParams&,
         const HopperState&);
     ~AutoController() = default;
@@ -88,7 +88,10 @@ protected:
     };
 
 protected:
-    const GenericPubMap& pub_map;
+    void publishState();
+
+protected:
+    GenericPubMap& pub_map;
     const RobotParams& params;
 
     Stage stage{Stage::LOCALIZATION};

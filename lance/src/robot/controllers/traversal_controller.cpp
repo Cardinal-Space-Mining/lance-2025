@@ -42,7 +42,7 @@
 
 TraversalController::TraversalController(
     RclNode& node,
-    const GenericPubMap& pub_map,
+    GenericPubMap& pub_map,
     const RobotParams& params) :
     pub_map{pub_map},
     params{params}

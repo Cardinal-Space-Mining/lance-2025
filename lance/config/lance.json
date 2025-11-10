@@ -19,7 +19,7 @@
         {
             "pragma:action_overrides":
             {
-                "teleop_control": "enabled",
+                "robot_control": "enabled",
                 "phoenix6_driver": "enabled",
                 "robot_tf": "lance",
                 "bag_record": "telemetry"
@@ -47,7 +47,7 @@
         {
             "pragma:action_overrides":
             {
-                "teleop_control": "enabled",
+                "robot_control": "enabled",
                 "phoenix5_driver": "enabled",
                 "phoenix6_driver": "enabled",
                 "robot_tf": "lance",
@@ -71,7 +71,7 @@
             {
                 "joy_node": "xbox",
                 "robot_status": "enabled",
-                "teleop_control": "enabled",
+                "robot_control": "enabled",
                 "phoenix_motor_sim": "enabled",
                 "robot_tf": "lance",
                 "foxglove_bridge": "test"
@@ -519,10 +519,63 @@
 
 
 
-    "teleop_control":
+    "robot_control":
     {
         "pragma:default": null,
-        "enabled": {}
+        "enabled":
+        {
+            "default_stick_deadzone": 0.05,
+            "driving_magnitude_deadzone": 0.1,
+            "driving_low_scalar": 0.3,
+            "driving_medium_scalar": 0.7,
+            "driving_high_scalar": 1.0,
+
+            "trencher":
+            {
+                "max_velocity_rps": 80.0,
+                "mining_velocity_rps": 80.0
+            },
+
+            "hopper_belt":
+            {
+                "max_velocity_rps": 45.0,
+                "mining_velocity_rps": 10.0,
+                "mining_duty_cycle_base_seconds": 1.0
+            },
+
+            "tracks":
+            {
+                "max_velocity_rps": 125.0,
+                "mining_velocity_rps": 8.0,
+                "mining_adjustment_range_rps": 6.0,
+                "offload_velocity_rps": 30.0
+            },
+
+            "hopper_actuator":
+            {
+                "max_speed": 1.0,
+                "plunge_speed": 0.4,
+                "extract_speed": 0.8,
+                "offload_target_val": 0.95,
+                "traversal_target_val": 0.6,
+                "transport_target_val": 0.55,
+                "mining_target_val": 0.21,
+                "mining_min_val": 0.03,
+                "targetting_thresh": 0.01
+            },
+
+            "collection_model":
+            {
+                "initial_volume_liters": 0.6,
+                "capacity_volume_liters": 25.0,
+                "initial_belt_footprint_meters": 0.2,
+                "belt_capacity_meters": 0.6,
+                "belt_offload_length_meters": 0.7
+            },
+
+            "preset_mining_traversal_dist_meters": 0.25,
+            "preset_offload_backup_dist_meters": 0.25
+        }
     },
     "phoenix5_driver":
     {
@@ -559,7 +612,14 @@
     "phoenix_motor_sim":
     {
         "pragma:default": null,
-        "enabled": {}
+        "enabled":
+        {
+            "use_gz_track_feedback": false
+        },
+        "gz_sim":
+        {
+            "use_gz_track_feedback": true
+        }
     },
     "robot_status":
     {

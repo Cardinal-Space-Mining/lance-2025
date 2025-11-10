@@ -59,7 +59,7 @@ class OffloadController
 public:
     OffloadController(
         RclNode&,
-        const GenericPubMap&,
+        GenericPubMap&,
         const RobotParams&,
         const HopperState&);
     ~OffloadController() = default;
@@ -108,7 +108,7 @@ protected:
         RobotMotorCommands& commands);
 
 protected:
-    const GenericPubMap& pub_map;
+    GenericPubMap& pub_map;
     const RobotParams& params;
     const HopperState& hopper_state;
 

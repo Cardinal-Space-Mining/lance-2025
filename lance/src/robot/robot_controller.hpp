@@ -69,7 +69,7 @@ public:
     };
 
 public:
-    RobotController(RclNode&, const GenericPubMap&);
+    RobotController(RclNode&, GenericPubMap&);
     ~RobotController() = default;
 
 public:
@@ -82,7 +82,7 @@ public:
         RobotMotorCommands& commands);
 
 protected:
-    const GenericPubMap& pub_map;
+    GenericPubMap& pub_map;
 
     ControlMode control_mode{ControlMode::DISABLED};
 

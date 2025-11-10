@@ -42,7 +42,7 @@
 
 TeleopController::TeleopController(
     RclNode& node,
-    const GenericPubMap& pub_map,
+    GenericPubMap& pub_map,
     const RobotParams& params,
     const HopperState& hopper_state) :
     pub_map{pub_map},
@@ -166,6 +166,8 @@ void TeleopController::iterate(
             }
         }
     }
+
+    this->publishState();
 }
 
 bool TeleopController::handleGlobalInputs(const JoyState& joy)
@@ -197,6 +199,7 @@ bool TeleopController::handleGlobalInputs(const JoyState& joy)
 
     return true;
 }
+
 void TeleopController::handleTeleopInputs(
     const JoyState& joy,
     RobotMotorCommands& commands)
@@ -223,7 +226,7 @@ void TeleopController::handleTeleopInputs(
         this->op_mode = Operation::PRESET_MINING;
         return;
     }
-    if (PresetMiningInitButton::wasPressed(joy))
+    if (PresetOffloadInitButton::wasPressed(joy))
     {
         this->offload_controller.initialize(
             this->params.preset_offload_backup_dist_meters);
@@ -278,4 +281,18 @@ void TeleopController::handleTeleopInputs(
         }
         commands.setHopperActPercent(hopper_act_scalar);
     }
+}
+
+void TeleopController::publishState()
+{
+    static constexpr char const* OP_STRINGS[] = {
+        "Manual",
+        "Assisted Mining",
+        "Assisted Offload",
+        "Preset Mining",
+        "Preset Offload"};
+
+    this->pub_map.publish<std_msgs::msg::String, std::string>(
+        "/lance/op_status",
+        OP_STRINGS[static_cast<size_t>(this->op_mode)]);
 }

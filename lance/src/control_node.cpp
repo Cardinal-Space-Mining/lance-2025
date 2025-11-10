@@ -122,7 +122,8 @@ public:
         joy_sub{this->create_subscription<JoyMsg>(
             "/joy",
             rclcpp::SensorDataQoS{},
-            [this](const JoyMsg& joy) { this->joy_state.update(joy); })},
+            [this](const JoyMsg::ConstSharedPtr& msg)
+            { this->last_joy_msg = msg; })},
         watchdog_sub{this->create_subscription<Int32Msg>(
             ROBOT_TOPIC("watchdog_status"),
             rclcpp::SensorDataQoS{},
@@ -133,6 +134,12 @@ public:
             MOTOR_UPDATE_DT,
             [this]()
             {
+                if (this->last_joy_msg)
+                {
+                    this->joy_state.update(*this->last_joy_msg);
+                    this->last_joy_msg = nullptr;
+                }
+
                 RobotMotorCommands commands;
                 this->robot_controller.iterate(
                     this->watchdog_status,
@@ -216,6 +223,7 @@ private:
     RobotController robot_controller;
 
     RobotMotorStatus robot_motor_status;
+    JoyMsg::ConstSharedPtr last_joy_msg{nullptr};
     JoyState joy_state;
     int32_t watchdog_status{0};
 };

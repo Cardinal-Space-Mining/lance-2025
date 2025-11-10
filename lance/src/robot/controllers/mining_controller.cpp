@@ -42,7 +42,7 @@
 
 MiningController::MiningController(
     RclNode& node,
-    const GenericPubMap& pub_map,
+    GenericPubMap& pub_map,
     const RobotParams& params,
     const HopperState& hopper_state) :
     pub_map{pub_map},

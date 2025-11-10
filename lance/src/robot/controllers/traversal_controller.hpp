@@ -52,7 +52,7 @@ class TraversalController
     using GenericPubMap = util::GenericPubMap;
 
 public:
-    TraversalController(RclNode&, const GenericPubMap&, const RobotParams&);
+    TraversalController(RclNode&, GenericPubMap&, const RobotParams&);
     ~TraversalController() = default;
 
 public:
@@ -73,7 +73,7 @@ protected:
     };
 
 protected:
-    const GenericPubMap& pub_map;
+    GenericPubMap& pub_map;
     const RobotParams& params;
 
     State state{State::FINISHED};

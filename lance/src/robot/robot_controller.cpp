@@ -59,11 +59,19 @@ inline constexpr int transition_v = encodeTransition(FromV, ToV);
 
 
 
-RobotController::RobotController(RclNode& node, const GenericPubMap& pub_map) :
+RobotController::RobotController(RclNode& node, GenericPubMap& pub_map) :
     pub_map{pub_map},
     params{node},
-    auto_controller{node, pub_map, params, this->collection_state.getHopperState()},
-    teleop_controller{node, pub_map, params, this->collection_state.getHopperState()}
+    auto_controller{
+        node,
+        pub_map,
+        params,
+        this->collection_state.getHopperState()},
+    teleop_controller{
+        node,
+        pub_map,
+        params,
+        this->collection_state.getHopperState()}
 {
     //
 }
@@ -79,6 +87,8 @@ void RobotController::iterate(
     const RobotMotorStatus& motor_status,
     RobotMotorCommands& commands)
 {
+    this->collection_state.update(motor_status);
+
     const ControlMode prev_mode = this->control_mode;
     this->control_mode = getMode(watchdog);
 
@@ -117,7 +127,9 @@ void RobotController::iterate(
             this->teleop_controller.initialize();
             break;
         }
-        default: {}
+        default:
+        {
+        }
     }
 
     // process current state actions
@@ -131,7 +143,13 @@ void RobotController::iterate(
         case ControlMode::AUTO:
         {
             this->auto_controller.iterate(joy, motor_status, commands);
+            break;
         }
-        default: {}
+        case ControlMode::DISABLED:
+        {
+            this->pub_map.publish<std_msgs::msg::String, std::string>(
+                "lance/op_status",
+                "Disabled");
+        }
     }
 }

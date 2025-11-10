@@ -57,7 +57,7 @@ class AutoMiningController
 public:
     AutoMiningController(
         RclNode&,
-        const GenericPubMap&,
+        GenericPubMap&,
         const RobotParams&,
         const HopperState&,
         TraversalController&);
@@ -83,7 +83,7 @@ protected:
     };
 
 protected:
-    const GenericPubMap& pub_map;
+    GenericPubMap& pub_map;
     const RobotParams& params;
     const HopperState& hopper_state;
 

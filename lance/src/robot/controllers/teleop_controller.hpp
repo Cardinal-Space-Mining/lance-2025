@@ -61,7 +61,7 @@ class TeleopController
 public:
     TeleopController(
         RclNode&,
-        const GenericPubMap&,
+        GenericPubMap&,
         const RobotParams&,
         const HopperState&);
     ~TeleopController() = default;
@@ -78,7 +78,7 @@ public:
 protected:
     enum class Operation
     {
-        MANUAL,
+        MANUAL = 0,
         ASSISTED_MINING,
         ASSISTED_OFFLOAD,
         PRESET_MINING,
@@ -88,9 +88,10 @@ protected:
 protected:
     bool handleGlobalInputs(const JoyState& joy);
     void handleTeleopInputs(const JoyState& joy, RobotMotorCommands& commands);
+    void publishState();
 
 protected:
-    const GenericPubMap& pub_map;
+    GenericPubMap& pub_map;
     const RobotParams& params;
 
     Operation op_mode{Operation::MANUAL};

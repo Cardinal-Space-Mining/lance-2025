@@ -52,7 +52,7 @@ class LocalizationController
     using GenericPubMap = util::GenericPubMap;
 
 public:
-    LocalizationController(RclNode&, const GenericPubMap&, const RobotParams&);
+    LocalizationController(RclNode&, GenericPubMap&, const RobotParams&);
     ~LocalizationController() = default;
 
 public:
@@ -74,7 +74,7 @@ protected:
     };
 
 protected:
-    const GenericPubMap& pub_map;
+    GenericPubMap& pub_map;
     const RobotParams& params;
 
     Stage stage{Stage::FINISHED};

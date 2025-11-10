@@ -62,7 +62,7 @@ class MiningController
 public:
     MiningController(
         RclNode&,
-        const GenericPubMap&,
+        GenericPubMap&,
         const RobotParams&,
         const HopperState&);
     ~MiningController() = default;
@@ -134,7 +134,7 @@ protected:
         RobotMotorCommands& commands);
 
 protected:
-    const GenericPubMap& pub_map;
+    GenericPubMap& pub_map;
     const RobotParams& params;
     const HopperState& hopper_state;
 

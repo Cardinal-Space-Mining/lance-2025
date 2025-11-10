@@ -42,7 +42,7 @@
 
 AutoMiningController::AutoMiningController(
     RclNode& node,
-    const GenericPubMap& pub_map,
+    GenericPubMap& pub_map,
     const RobotParams& params,
     const HopperState& hopper_state,
     TraversalController& trav_controller) :
