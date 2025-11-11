@@ -41,6 +41,12 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <tf2_ros/buffer.h>
+
+#include <std_srvs/srv/set_bool.hpp>
+
+#include <cardinal_perception/msg/reflector_hint.hpp>
+
 #include "../robot_params.hpp"
 #include "../motor_interface.hpp"
 #include "../../util/pub_map.hpp"
@@ -49,10 +55,18 @@
 class LocalizationController
 {
     using RclNode = rclcpp::Node;
+    using Tf2Buffer = tf2_ros::Buffer;
+    using SetBoolSrv = std_srvs::srv::SetBool;
+    using ReflectorHintMsg = cardinal_perception::msg::ReflectorHint;
     using GenericPubMap = util::GenericPubMap;
 
+    template<typename T>
+    using RclSubPtr = typename rclcpp::Subscription<T>::SharedPtr;
+    template<typename T>
+    using RclClientPtr = typename rclcpp::Client<T>::SharedPtr;
+
 public:
-    LocalizationController(RclNode&, GenericPubMap&, const RobotParams&);
+    LocalizationController(RclNode&, GenericPubMap&, const RobotParams&, const Tf2Buffer&);
     ~LocalizationController() = default;
 
 public:
@@ -74,8 +88,16 @@ protected:
     };
 
 protected:
+    void setLfdControl(bool enabled);
+
+protected:
     GenericPubMap& pub_map;
     const RobotParams& params;
+    const Tf2Buffer& tf_buffer;
+
+    RclSubPtr<ReflectorHintMsg> hint_sub;
+    RclClientPtr<SetBoolSrv> lfd_control_client;
 
     Stage stage{Stage::FINISHED};
+    ReflectorHintMsg::ConstSharedPtr last_hint{nullptr};
 };

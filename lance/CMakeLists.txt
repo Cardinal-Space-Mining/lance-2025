@@ -6,13 +6,16 @@ find_package(rosidl_default_generators REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
+
 find_package(phoenix_ros_driver REQUIRED)
 find_package(cardinal_perception REQUIRED)
+find_package(csm_metrics REQUIRED)
 
 find_package(Eigen3 REQUIRED)
 
@@ -53,16 +56,21 @@ add_executable(robot_control
     src/robot/controllers/auto_mining_controller.cpp
     src/robot/controllers/auto_offload_controller.cpp
     src/robot/controllers/localization_controller.cpp)
+target_link_libraries(robot_control
+    csm_metrics::profiling
+    Eigen3::Eigen)
 ament_target_dependencies(robot_control
     rclcpp
     std_msgs
+    std_srvs
     nav_msgs
     sensor_msgs
     geometry_msgs
     tf2_ros
     tf2_geometry_msgs
     phoenix_ros_driver
-    cardinal_perception)
+    cardinal_perception
+    csm_metrics)
 
 add_executable(robot_status src/watchdog_node.cpp)
 target_link_libraries(robot_status "${lance_custom_types}")
@@ -75,13 +83,15 @@ ament_export_dependencies(
     rosidl_default_runtime
     rclcpp
     std_msgs
+    std_srvs
     nav_msgs
     sensor_msgs
     geometry_msgs
     tf2_ros
     tf2_geometry_msgs
     phoenix_ros_driver
-    cardinal_perception)
+    cardinal_perception
+    csm_metrics)
 ament_package()
 
 install(TARGETS

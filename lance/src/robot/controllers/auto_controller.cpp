@@ -39,6 +39,8 @@
 
 #include "auto_controller.hpp"
 
+#include <memory>
+
 
 AutoController::AutoController(
     RclNode& node,
@@ -47,7 +49,9 @@ AutoController::AutoController(
     const HopperState& hopper_state) :
     pub_map{pub_map},
     params{params},
-    localization_controller{node, pub_map, params},
+    tf_buffer{std::make_shared<rclcpp::Clock>(RCL_ROS_TIME)},
+    tf_listener{tf_buffer, &node},
+    localization_controller{node, pub_map, params, tf_buffer},
     traversal_controller{node, pub_map, params},
     mining_controller{
         node,
@@ -71,6 +75,10 @@ void AutoController::initialize()
     if (this->stage != Stage::LOCALIZATION)
     {
         this->stage = Stage::UNKNOWN;
+    }
+    else
+    {
+        this->localization_controller.initialize();
     }
 }
 
@@ -112,6 +120,12 @@ void AutoController::iterate(
 {
     switch (this->stage)
     {
+        case Stage::UNKNOWN:
+        {
+            // algo to determine what stage we should be in...
+            this->stage = Stage::LOCALIZATION;
+            [[fallthrough]];
+        }
         case Stage::LOCALIZATION:
         {
             this->localization_controller.iterate(motor_status, commands);

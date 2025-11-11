@@ -41,6 +41,9 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+
 #include "../robot_params.hpp"
 #include "../motor_interface.hpp"
 #include "../collection_state.hpp"
@@ -56,6 +59,8 @@
 class AutoController
 {
     using RclNode = rclcpp::Node;
+    using Tf2Buffer = tf2_ros::Buffer;
+    using Tf2Listener = tf2_ros::TransformListener;
     using JoyState = util::JoyState;
     using GenericPubMap = util::GenericPubMap;
 
@@ -93,6 +98,9 @@ protected:
 protected:
     GenericPubMap& pub_map;
     const RobotParams& params;
+
+    Tf2Buffer tf_buffer;
+    Tf2Listener tf_listener;
 
     Stage stage{Stage::LOCALIZATION};
 

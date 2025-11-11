@@ -47,6 +47,8 @@
 #include <sensor_msgs/msg/joy.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 
+#include <csm_metrics/profiling.hpp>
+
 #include "util/pub_map.hpp"
 #include "util/joy_utils.hpp"
 
@@ -109,16 +111,6 @@ public:
         INIT_TALON_PUB_SUB(hopper_belt, hopper_belt),
         INIT_TALON_PUB_SUB(hopper_act, hopper_actuator),
 
-        // control_level_pub{this->create_publisher<StringMsg>(
-        //     ROBOT_TOPIC("control_level"),
-        //     rclcpp::SensorDataQoS{})},
-        // mining_status_pub{this->create_publisher<StringMsg>(
-        //     ROBOT_TOPIC("mining_status"),
-        //     rclcpp::SensorDataQoS{})},
-        // offload_status_pub{this->create_publisher<StringMsg>(
-        //     ROBOT_TOPIC("offload_status"),
-        //     rclcpp::SensorDataQoS{})},
-
         joy_sub{this->create_subscription<JoyMsg>(
             "/joy",
             rclcpp::SensorDataQoS{},
@@ -134,6 +126,9 @@ public:
             MOTOR_UPDATE_DT,
             [this]()
             {
+                PROFILING_SYNC();
+                PROFILING_NOTIFY_ALWAYS(iterate_control);
+
                 if (this->last_joy_msg)
                 {
                     this->joy_state.update(*this->last_joy_msg);
@@ -158,6 +153,9 @@ public:
 
                 this->publishHopperJoint();
                 this->publishCollectionState();
+
+                PROFILING_NOTIFY_ALWAYS(iterate_control);
+                PROFILING_FLUSH();
             })},
 
         robot_controller{*this, this->pub_map}
@@ -232,7 +230,9 @@ private:
 int main(int argc, char* argv[])
 {
     rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<RobotControlNode>());
+    auto node = std::make_shared<RobotControlNode>();
+    PROFILING_INIT(*node, PROFILING_DEFAULT_TOPIC, PROFILING_DEFAULT_QOS);
+    rclcpp::spin(node);
     rclcpp::shutdown();
 
     return 0;
