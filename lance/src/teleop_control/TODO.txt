@@ -1,4 +1,0 @@
-1. export control params to launch system
-2. use material collection model for automatic belt incrementation
-3. separate robot control public interface from internal state interface (wrapper + impl)
-4. export phx6 motor configs to ros params

@@ -24,6 +24,8 @@
 #include "phoenix_ros_driver/msg/talon_info.hpp"
 #include "phoenix_ros_driver/msg/talon_faults.hpp"
 
+#include "ros_utils.hpp"
+
 using namespace std::chrono_literals;
 
 using TalonCtrlMsg = phoenix_ros_driver::msg::TalonCtrl;
@@ -329,7 +331,8 @@ class PhoenixPhysicalSimulator : public rclcpp::Node
 public:
     PhoenixPhysicalSimulator() :
         Node("phoenix_physical_simulator"),
-        battery_(16.0, 0.01)  // 10mΩ internal resistance
+        battery_(16.0, 0.01),  // 10mΩ internal resistance
+        use_gz_track_feedback(util::declare_and_get_param(*this, "use_gz_track_feedback", false))
     {
         std::array<std::string,4> motor_names_{"track_right", "track_left", "trencher", "hopper_belt"};
         for (const auto& name : motor_names_)
@@ -487,14 +490,20 @@ private:
         faults_msg.header.stamp = now;
 
         motors_["track_right"]->fill_talon_info(info_msg, last_bus_voltage_);
-        info_msg.position = gz_right_track_pos;
-        info_msg.velocity = gz_right_track_vel;
+        if(this->use_gz_track_feedback)
+        {
+            info_msg.position = gz_right_track_pos;
+            info_msg.velocity = gz_right_track_vel;
+        }
         publisher_info_["track_right"]->publish(info_msg);
         publisher_faults_["track_right"]->publish(faults_msg);
 
         motors_["track_left"]->fill_talon_info(info_msg, last_bus_voltage_);
-        info_msg.position = gz_left_track_pos;
-        info_msg.velocity = gz_left_track_vel;
+        if(this->use_gz_track_feedback)
+        {
+            info_msg.position = gz_left_track_pos;
+            info_msg.velocity = gz_left_track_vel;
+        }
         publisher_info_["track_left"]->publish(info_msg);
         publisher_faults_["track_left"]->publish(faults_msg);
 
@@ -519,6 +528,7 @@ private:
     double gz_left_track_vel = 0.0;
     double gz_right_track_pos = 0.0;
     double gz_right_track_vel = 0.0;
+    bool use_gz_track_feedback = false;
 
     std::unordered_map<std::string, std::shared_ptr<FalconMotorSim>> motors_;
     std::shared_ptr<LinearActuatorSim> linear_act_;

@@ -6,8 +6,18 @@ find_package(rosidl_default_generators REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+
 find_package(phoenix_ros_driver REQUIRED)
+find_package(cardinal_perception REQUIRED)
+find_package(csm_metrics REQUIRED)
+
+find_package(Eigen3 REQUIRED)
 
 # --- Presets ------------------------------------------------------------------
 if(NOT CMAKE_CXX_STANDARD)
@@ -33,17 +43,36 @@ rosidl_get_typesupport_target(lance_custom_types
     ${PROJECT_NAME} rosidl_typesupport_cpp)
 
 # --- Executables --------------------------------------------------------------
-add_executable(teleop_control
-    src/teleop_control/main.cpp
-    src/teleop_control/controller.cpp
-    src/teleop_control/collection_state.cpp)
-ament_target_dependencies(teleop_control
+add_executable(robot_control
+    src/control_node.cpp
+    src/robot/robot_params.cpp
+    src/robot/collection_state.cpp
+    src/robot/robot_controller.cpp
+    src/robot/controllers/auto_controller.cpp
+    src/robot/controllers/mining_controller.cpp
+    src/robot/controllers/teleop_controller.cpp
+    src/robot/controllers/offload_controller.cpp
+    src/robot/controllers/traversal_controller.cpp
+    src/robot/controllers/auto_mining_controller.cpp
+    src/robot/controllers/auto_offload_controller.cpp
+    src/robot/controllers/localization_controller.cpp)
+target_link_libraries(robot_control
+    csm_metrics::profiling
+    Eigen3::Eigen)
+ament_target_dependencies(robot_control
     rclcpp
-    sensor_msgs
     std_msgs
-    phoenix_ros_driver)
+    std_srvs
+    nav_msgs
+    sensor_msgs
+    geometry_msgs
+    tf2_ros
+    tf2_geometry_msgs
+    phoenix_ros_driver
+    cardinal_perception
+    csm_metrics)
 
-add_executable(robot_status src/robot_status.cpp)
+add_executable(robot_status src/watchdog_node.cpp)
 target_link_libraries(robot_status "${lance_custom_types}")
 ament_target_dependencies(robot_status
     rclcpp
@@ -51,15 +80,22 @@ ament_target_dependencies(robot_status
 
 # --- Export -------------------------------------------------------------------
 ament_export_dependencies(
-    rclcpp
     rosidl_default_runtime
+    rclcpp
     std_msgs
+    std_srvs
+    nav_msgs
     sensor_msgs
-    phoenix_ros_driver)
+    geometry_msgs
+    tf2_ros
+    tf2_geometry_msgs
+    phoenix_ros_driver
+    cardinal_perception
+    csm_metrics)
 ament_package()
 
 install(TARGETS
-    teleop_control
+    robot_control
     robot_status
     DESTINATION lib/${PROJECT_NAME} )
 install(DIRECTORY
