@@ -3,7 +3,10 @@
 #ifndef Phoenix_No_WPI
 #define Phoenix_No_WPI
 #endif
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <ctre/Phoenix.h>
+#pragma GCC diagnostic pop
 
 #include <phoenix_ros_driver/msg/talon_ctrl.hpp>
 #include <phoenix_ros_driver/msg/talon_info.hpp>
@@ -32,6 +35,7 @@ inline TalonInfoMsg& operator<<(TalonInfoMsg& info, TalonSRX& m)
     info.output_current = m.GetOutputCurrent();
 
     info.control_mode = static_cast<uint8_t>(m.GetControlMode());
+    info.status = static_cast<uint8_t>(m.HasResetOccurred()) << 2;
 
     return info;
 }

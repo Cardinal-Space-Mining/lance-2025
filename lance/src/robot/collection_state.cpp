@@ -1,3 +1,42 @@
+/*******************************************************************************
+*   Copyright (C) 2024-2025 Cardinal Space Mining Club                         *
+*                                                                              *
+*                                 ;xxxxxxx:                                    *
+*                                ;$$$$$$$$$       ...::..                      *
+*                                $$$$$$$$$$x   .:::::::::::..                  *
+*                             x$$$$$$$$$$$$$$::::::::::::::::.                 *
+*                         :$$$$$&X;      .xX:::::::::::::.::...                *
+*                 .$$Xx++$$$$+  :::.     :;:   .::::::.  ....  :               *
+*                :$$$$$$$$$  ;:      ;xXXXXXXXx  .::.  .::::. .:.              *
+*               :$$$$$$$$: ;      ;xXXXXXXXXXXXXx: ..::::::  .::.              *
+*              ;$$$$$$$$ ::   :;XXXXXXXXXXXXXXXXXX+ .::::.  .:::               *
+*               X$$$$$X : +XXXXXXXXXXXXXXXXXXXXXXXX; .::  .::::.               *
+*                .$$$$ :xXXXXXXXXXXXXXXXXXXXXXXXXXXX.   .:::::.                *
+*                 X$$X XXXXXXXXXXXXXXXXXXXXXXXXXXXXx:  .::::.                  *
+*                 $$$:.XXXXXXXXXXXXXXXXXXXXXXXXXXX  ;; ..:.                    *
+*                 $$& :XXXXXXXXXXXXXXXXXXXXXXXX;  +XX; X$$;                    *
+*                 $$$: XXXXXXXXXXXXXXXXXXXXXX; :XXXXX; X$$;                    *
+*                 X$$X XXXXXXXXXXXXXXXXXXX; .+XXXXXXX; $$$                     *
+*                 $$$$ ;XXXXXXXXXXXXXXX+  +XXXXXXXXx+ X$$$+                    *
+*               x$$$$$X ;XXXXXXXXXXX+ :xXXXXXXXX+   .;$$$$$$                   *
+*              +$$$$$$$$ ;XXXXXXx;;+XXXXXXXXX+    : +$$$$$$$$                  *
+*               +$$$$$$$$: xXXXXXXXXXXXXXX+      ; X$$$$$$$$                   *
+*                :$$$$$$$$$. +XXXXXXXXX;      ;: x$$$$$$$$$                    *
+*                ;x$$$$XX$$$$+ .;+X+      :;: :$$$$$xX$$$X                     *
+*               ;;;;;;;;;;X$$$$$$$+      :X$$$$$$&.                            *
+*               ;;;;;;;:;;;;;x$$$$$$$$$$$$$$$$x.                               *
+*               :;;;;;;;;;;;;.  :$$$$$$$$$$X                                   *
+*                .;;;;;;;;:;;    +$$$$$$$$$                                    *
+*                  .;;;;;;.       X$$$$$$$:                                    *
+*                                                                              *
+*   Unless required by applicable law or agreed to in writing, software        *
+*   distributed under the License is distributed on an "AS IS" BASIS,          *
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   *
+*   See the License for the specific language governing permissions and        *
+*   limitations under the License.                                             *
+*                                                                              *
+*******************************************************************************/
+
 #include "collection_state.hpp"
 
 #include "robot_math.hpp"
@@ -128,10 +167,11 @@ void CollectionState::setParams(
 
 void CollectionState::update(const RobotMotorStatus& motors_status)
 {
-    const double& trencher_rotations = motors_status.trencher.position;
-    const double& belt_rotations = motors_status.hopper_belt.position;
-    const double& ltrack_rotations = motors_status.track_left.position;
-    const double& rtrack_rotations = motors_status.track_right.position;
+    const double trencher_rotations = motors_status.trencher.position;
+    const double belt_rotations = motors_status.hopper_belt.position;
+    const double ltrack_rotations = motors_status.track_left.position;
+    const double rtrack_rotations = motors_status.track_right.position;
+
     double curr_mining_depth_m = linear_actuator_to_mining_depth_clamped(
         motors_status.hopper_actuator.position / 1000.);
     double curr_impact_volume =
@@ -144,7 +184,7 @@ void CollectionState::update(const RobotMotorStatus& motors_status)
         trencher_rotations - this->prev_trencher_rotations;
     double trencher_max_delta_volume =
         trencher_motor_rps_to_max_volume_rate(delta_trencher_rotations);
-    // ^ f(r/s) -> l/s <=> f(r) -> l
+    // ^ f(r/s) -> L/s <=> f(r) -> L
 
     // calculate maximum possible volume material 'swept' given change in track rotations (linear distance)
     double avg_mining_depth_m =
@@ -156,7 +196,7 @@ void CollectionState::update(const RobotMotorStatus& motors_status)
     double delta_sweep_volume = track_motor_rps_to_volume_rate(
         avg_track_delta_rotations,
         avg_mining_depth_m);
-    // ^ f(m/s) -> l/s <=> f(m) -> l
+    // ^ f(m/s) -> L/s <=> f(m) -> L
 
     // calculate the volume which we have dug into the ground just by lowering the trencher
     double delta_impact_volume =

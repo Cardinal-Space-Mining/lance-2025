@@ -5,6 +5,7 @@ project(phoenix_ros_driver)
 find_package(rosidl_default_generators REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
@@ -17,7 +18,7 @@ if(NOT CMAKE_C_STANDARD)
 endif()
 
 if(NOT CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 17)
+    set(CMAKE_CXX_STANDARD 20)
 endif()
 
 if(NOT MSVC)
@@ -27,7 +28,7 @@ if(NOT MSVC)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    add_compile_options(-Wall -Wextra -Wpedantic)
+    add_compile_options(-Wall -Wextra -Wpedantic -Wno-psabi)
 endif()
 
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
@@ -78,28 +79,21 @@ ament_target_dependencies(phx6_driver
     phoenix6)
 target_compile_features(phx6_driver PUBLIC c_std_99 cxx_std_20)     # not necessary but silences a lot of warnings
 
-# --- Falcon Test Node ---------------------------------------------------------
-add_executable(falcon_test src/falcon_test.cpp)
-target_link_libraries(falcon_test
-    ${phoenix_ros_driver_custom_types})
-ament_target_dependencies(falcon_test
-    rclcpp
-    std_msgs
-    sensor_msgs
-    phoenix6)
-
 # --- Motor Sim Node -----------------------------------------------------------
 add_executable(motor_sim src/motor_sim.cpp)
 target_link_libraries(motor_sim
     ${phoenix_ros_driver_custom_types})
 ament_target_dependencies(motor_sim
     rclcpp
+    nav_msgs
     std_msgs
-    sensor_msgs)
+    sensor_msgs
+    geometry_msgs)
 
 # --- Export -------------------------------------------------------------------
 ament_export_dependencies(
     rclcpp
+    nav_msgs
     std_msgs
     sensor_msgs
     geometry_msgs
@@ -109,7 +103,6 @@ ament_package()
 install(TARGETS
     phx5_driver
     phx6_driver
-    falcon_test
     motor_sim
     DESTINATION lib/${PROJECT_NAME} )
 install(DIRECTORY

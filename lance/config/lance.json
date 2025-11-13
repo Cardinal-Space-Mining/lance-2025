@@ -19,13 +19,13 @@
         {
             "pragma:action_overrides":
             {
-                "teleop_control": "enabled",
+                "robot_control": "enabled",
                 "phoenix6_driver": "enabled",
                 "robot_tf": "lance",
                 "bag_record": "telemetry"
             }
         },
-        "mocha-perception":
+        "mocha_perception":
         {
             "pragma:derived": "mocha",
             "pragma:action_overrides":
@@ -47,14 +47,14 @@
         {
             "pragma:action_overrides":
             {
-                "teleop_control": "enabled",
+                "robot_control": "enabled",
                 "phoenix5_driver": "enabled",
                 "phoenix6_driver": "enabled",
                 "robot_tf": "lance",
                 "bag_record": "telemetry"
             }
         },
-        "system-test":
+        "system_test":
         {
             "pragma:derived": "robot",
             "pragma:action_overrides":
@@ -65,16 +65,52 @@
                 "foxglove_bridge": "test"
             }
         },
-        "motor-dev":
+        "motor_dev":
         {
             "pragma:action_overrides":
             {
                 "joy_node": "xbox",
                 "robot_status": "enabled",
-                "teleop_control": "enabled",
+                "robot_control": "enabled",
                 "phoenix_motor_sim": "enabled",
                 "robot_tf": "lance",
                 "foxglove_bridge": "test"
+            }
+        },
+        "gz_dev":
+        {
+            "pragma:action_overrides":
+            {
+                "joy_node": "xbox",
+                "robot_status": "enabled",
+                "robot_control": "enabled",
+                "phoenix_motor_sim": "gz_sim",
+                "perception": "test",
+                "gz_sim": "motor_sim",
+                "robot_tf": "lance",
+                "foxglove_bridge": "test"
+            }
+        },
+        "lidar_dev":
+        {
+            "pragma:action_overrides":
+            {
+                "multiscan_driver": "robot",
+                "perception": "lidar_only",
+                "pplan_client": "enabled",
+                "foxglove_bride": "test",
+                "foxglove_gui": "local"
+            }
+        },
+        "lidar_bag":
+        {
+            "pragma:action_overrides":
+            {
+                "perception": "test",
+                "pplan_client": "enabled",
+                "robot_tf": "lance",
+                "foxglove_bridge": "test",
+                "foxglove_gui": "local"
             }
         }
     },
@@ -183,10 +219,10 @@
                     "s2s":
                     {
                         "k_correspondences": 10,
-                        "max_correspondence_distance": 0.4,
+                        "max_correspondence_distance": 0.5,
                         "max_iterations": 32,
-                        "transformation_epsilon": 0.01,
-                        "euclidean_fitness_epsilon": 0.01,
+                        "transformation_epsilon": 0.001,
+                        "euclidean_fitness_epsilon": 0.001,
                         "ransac":
                         {
                             "iterations": 5,
@@ -198,8 +234,8 @@
                         "k_correspondences": 15,
                         "max_correspondence_distance": 0.5,
                         "max_iterations": 32,
-                        "transformation_epsilon": 0.0009,
-                        "euclidean_fitness_epsilon": 0.005,
+                        "transformation_epsilon": 0.0005,
+                        "euclidean_fitness_epsilon": 0.001,
                         "ransac":
                         {
                             "iterations": 6,
@@ -222,17 +258,37 @@
             },
             "mapping":
             {
-                "frustum_search_radius": 0.04,
-                "radial_distance_thresh": 0.05,
-                "delete_delta_coeff": 0.08,
-                "delete_max_range": 3.5,
-                "add_max_range": 3.5,
-                "voxel_size": 0.1
+                "crop_horizontal_range": 5.0,
+                "crop_vertical_range": 1.0,
+                "frustum_search_radius": 0.015,
+                "radial_distance_thresh": 0.008,
+                "surface_width": 0.02,
+                "delete_max_range": 2.5,
+                "add_max_range": 2.5,
+                "voxel_size": 0.02
             },
             "traversibility":
             {
-                "chunk_horizontal_range": 3.5,
-                "chunk_vertical_range": 1.0
+                "chunk_horizontal_range": 2.5,
+                "chunk_vertical_range": 1.0,
+                "normal_estimation_radius": 0.2,
+                "output_res": 0.1,
+                "grad_search_radius": 0.3,
+                "min_grad_diff": 0.15,
+                "non_trav_grad_angle": 45.0,
+                "avoidance_radius": 0.35,
+                "trav_score_curvature_weight": 5.0,
+                "trav_score_grad_weight": 1.0,
+                "interp_point_samples": 7
+            },
+            "pplan":
+            {
+                "boundary_radius": 0.15,
+                "goal_threshold": 0.1,
+                "search_radius": 0.5,
+                "lambda_distance": 1.0,
+                "lambda_penalty": 1.0,
+                "max_neighbors": 11
             }
         },
         "sim":
@@ -256,7 +312,7 @@
                 "prefix": ["xterm -e gdb -ex run --args"]
             }
         },
-        "lidar-only":
+        "lidar_only":
         {
             "pragma:derived": "test",
             "base_frame_id": "lidar_link",
@@ -477,17 +533,71 @@
 
 
 
-    "teleop_control":
+    "robot_control":
     {
         "pragma:default": null,
-        "enabled": {}
+        "enabled":
+        {
+            "default_stick_deadzone": 0.05,
+            "driving_magnitude_deadzone": 0.1,
+            "driving_low_scalar": 0.3,
+            "driving_medium_scalar": 0.7,
+            "driving_high_scalar": 1.0,
+
+            "trencher":
+            {
+                "max_velocity_rps": 80.0,
+                "mining_velocity_rps": 80.0
+            },
+
+            "hopper_belt":
+            {
+                "max_velocity_rps": 45.0,
+                "mining_velocity_rps": 10.0,
+                "mining_duty_cycle_base_seconds": 1.0
+            },
+
+            "tracks":
+            {
+                "max_velocity_rps": 125.0,
+                "mining_velocity_rps": 8.0,
+                "mining_adjustment_range_rps": 6.0,
+                "offload_velocity_rps": 30.0
+            },
+
+            "hopper_actuator":
+            {
+                "max_speed": 1.0,
+                "plunge_speed": 0.4,
+                "extract_speed": 0.8,
+                "offload_target_val": 0.95,
+                "traversal_target_val": 0.6,
+                "transport_target_val": 0.55,
+                "mining_target_val": 0.21,
+                "mining_min_val": 0.03,
+                "targetting_thresh": 0.01
+            },
+
+            "collection_model":
+            {
+                "initial_volume_liters": 0.6,
+                "capacity_volume_liters": 25.0,
+                "initial_belt_footprint_meters": 0.2,
+                "belt_capacity_meters": 0.6,
+                "belt_offload_length_meters": 0.7
+            },
+
+            "preset_mining_traversal_dist_meters": 0.25,
+            "preset_offload_backup_dist_meters": 0.25
+        }
     },
     "phoenix5_driver":
     {
         "pragma:default": null,
         "enabled":
         {
-            "diagnostics_server_port": 1251
+            "diagnostics_port": 1250,
+            "canbus": "can_phx5"
         }
     },
     "phoenix6_driver":
@@ -495,16 +605,20 @@
         "pragma:default": null,
         "enabled":
         {
+            "diagnostics_port": 0,
+            "canbus": "can_phx6",
+            "arduino_device": "",
+            "power_cycle_fault_thresh_s": 1.5,
             "common":
             {
-                "kP": 0.2,
+                "kP": 0.4,
                 "kI": 0.05,
                 "kD": 0.0001,
                 "kV": 0.12,
                 "neutral_deadband": 0.05,
                 "neutral_brake": false,
-                "stator_current_limit": 30.0,
-                "supply_current_limit": 20.0,
+                "stator_current_limit": 10.0,
+                "supply_current_limit": 2.0,
                 "voltage_limit": 12.0
             }
         }
@@ -512,7 +626,14 @@
     "phoenix_motor_sim":
     {
         "pragma:default": null,
-        "enabled": {}
+        "enabled":
+        {
+            "use_gz_track_feedback": false
+        },
+        "gz_sim":
+        {
+            "use_gz_track_feedback": true
+        }
     },
     "robot_status":
     {
@@ -520,6 +641,26 @@
         "enabled": {}
     },
 
+
+
+    "gz_sim":
+    {
+        "pragma:default": null,
+        "enabled": {},
+        "motor_sim":
+        {
+            "bridge_remappings":
+            {
+                "/joint_states": "/gz_joint_states"
+            },
+            "hid_control": false
+        }
+    },
+    "gz_gui" :
+    {
+        "pragma:default": null,
+        "enabled": {}
+    },
 
 
     "foxglove_bridge":
@@ -538,8 +679,8 @@
             "client_topic_whitelist": [ ".*" ],
             "min_qos_depth": 1,
             "max_qos_depth": 10,
-            "num_threads": 0,
-            "send_buffer_limit": 50000000,
+            "num_threads": 4,
+            "send_buffer_limit": 5000000000,
             "capabilities": [
                 "clientPublish",
                 "parameters",
@@ -569,11 +710,15 @@
                 "/cardinal_perception/filtered_scan",
                 "/cardinal_perception/traversability_points",
                 "/cardinal_perception/trav_interp_points",
+
                 "/joy",
+
                 "/lance/watchdog_status",
                 "/lance/control_level",
                 "/lance/mining_status",
                 "/lance/offload_status",
+                "/lance/relay_status",
+
                 "/lance/track_left/ctrl",
                 "/lance/track_left/faults",
                 "/lance/track_left/info",
@@ -588,7 +733,17 @@
                 "/lance/hopper_belt/info",
                 "/lance/hopper_act/ctrl",
                 "/lance/hopper_act/faults",
-                "/lance/hopper_act/info"
+                "/lance/hopper_act/info",
+
+                "/collection_state/is_full_volume",
+                "/collection_state/is_full_occ",
+                "/collection_state/volume",
+                "/collection_state/mining_target",
+                "/collection_state/offload_target",
+                "/collection_state/belt_pos_m",
+                "/collection_state/high_pos_m",
+                "/collection_state/low_pos_m",
+                "/collection_state/belt_usage_m"
             ],
             "send_buffer_limit": 10000000,
             "capabilities": [
@@ -829,6 +984,34 @@
                 "/tf",
                 "/tf_static"
             ]
+        },
+        "cosmic_bag":
+        {
+            "topics": [
+                "/multiscan/lidar_scan",
+                "/multiscan/imu",
+                "/lance/watchdog_status",
+                "/lance/control_level",
+                "/lance/mining_status",
+                "/lance/offload_status",
+                "/lance/hopper_act/info",
+                "/lance/hopper_belt/info",
+                "/lance/track_left/info",
+                "/lance/track_right/info",
+                "/lance/trencher/info"
+            ],
+            "start_paused": true,
+            "start_time": 359.0,
+            "loop": false
+        },
+        "ksc_bag":
+        {
+            "topics": [
+                "/multiscan/lidar_scan"
+            ],
+            "start_paused": true,
+            "start_time": 250.0,
+            "loop": false
         }
     },
     "bag_record":
@@ -857,6 +1040,7 @@
                 "/lance/control_level",
                 "/lance/mining_status",
                 "/lance/offload_status",
+                "/lance/relay_status",
 
                 "/lance/track_left/ctrl",
                 "/lance/track_left/faults",
