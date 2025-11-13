@@ -80,7 +80,11 @@ bool LocalizationController::isFinished()
     return this->stage == Stage::FINISHED;
 }
 
-void LocalizationController::setCancelled() { this->stage = Stage::FINISHED; }
+void LocalizationController::setCancelled()
+{
+    this->stage = Stage::FINISHED;
+    this->setLfdControl(false);
+}
 
 void LocalizationController::iterate(
     const RobotMotorStatus& motor_status,

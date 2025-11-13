@@ -66,7 +66,11 @@ class LocalizationController
     using RclClientPtr = typename rclcpp::Client<T>::SharedPtr;
 
 public:
-    LocalizationController(RclNode&, GenericPubMap&, const RobotParams&, const Tf2Buffer&);
+    LocalizationController(
+        RclNode&,
+        GenericPubMap&,
+        const RobotParams&,
+        const Tf2Buffer&);
     ~LocalizationController() = default;
 
 public:
