@@ -178,6 +178,11 @@ void TraversalController::stopPlanningService()
 
 void TraversalController::computeTraversal(RobotMotorCommands& commands)
 {
+    constexpr float LOOKAHEAD_PATH_DISTANCE = 0.25f;
+    constexpr float TARGETTING_HEADING_THRESH = std::numbers::pi_v<float> / 4.f;
+    constexpr float KEYPOINT_THRESH = 0.05f;
+    constexpr float NOMINAL_VELOCITY = 0.25f;
+
     // 1. OBTAIN KEYPOINTS RELATIVE TO BASE LINK
     std::vector<Vec3f> keypoints_local;
     keypoints_local.resize(this->last_path->poses.size());
@@ -211,7 +216,7 @@ void TraversalController::computeTraversal(RobotMotorCommands& commands)
         }
     }
 
-    // 2. ???
+    // 2. SEGMENT LOOKAHEAD KEYPOINTS
     float dist = 0.f;
     size_t beg_idx = 0;
     size_t end_idx = 0;
@@ -220,6 +225,60 @@ void TraversalController::computeTraversal(RobotMotorCommands& commands)
         const Vec2f& prev = keypoints_local[i - 1];
         const Vec2f& curr = keypoints_local[i];
 
-        
+        if(beg_idx == end_idx)
+        {
+            Vec2f diff = curr - prev;
+            float rel = (diff.dot(-prev)) / diff.squaredNorm();
+
+            // the first segment where the robot base is
+            // inbetween or before the two keypoints
+            if(rel < 1.f)
+            {
+                beg_idx = i;
+                // if we are on the last keypoint, the loop won't
+                // iterate again anyway
+                end_idx = keypoints_local.size() - 1;
+                dist += curr.norm();
+            }
+            else
+            {
+                beg_idx = end_idx = i;
+            }
+        }
+        else
+        {
+            end_idx = i;
+            dist += (curr - prev).norm();
+            if(dist >= LOOKAHEAD_PATH_DISTANCE)
+            {
+                break;
+            }
+        }
+    }
+
+    // 3. ???
+    size_t target_kp_idx = beg_idx;
+    float dist_next_kp = 0.f;
+    for(size_t i = beg_idx; i <= end_idx; i++)
+    {
+        target_kp_idx = i;
+        const Vec2f& kp = keypoints_local[i];
+        if((dist_next_kp = kp.norm()) > KEYPOINT_THRESH)
+        {
+            break;
+        }
+    }
+
+    const Vec2f& next_kp = keypoints_local[target_kp_idx];
+    dist_next_kp = next_kp.norm();
+    float cos_theta = next_kp.x() / dist_next_kp;
+
+    if(cos_theta < std::cos(TARGETTING_HEADING_THRESH))
+    {
+        // turn in place
+    }
+    else
+    {
+        // target the next point
     }
 }
