@@ -85,10 +85,10 @@ protected:
     enum class Stage
     {
         LOCALIZATION = 0,
+        TRAVERSE_TO_MINING,
         MINING,
-        TRAVERSAL,
+        TRAVERSE_TO_OFFLOAD,
         OFFLOAD,
-        RETRAVERSAL,
         UNKNOWN
     };
 

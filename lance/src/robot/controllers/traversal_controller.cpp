@@ -75,40 +75,32 @@ TraversalController::TraversalController(
 {
 }
 
-void TraversalController::initialize(const Vec2f& dest)
+void TraversalController::initializePoint(const Vec2f& dest, const Vec2f& dir)
 {
-    this->using_zone = false;
+    this->last_path = nullptr;
+    this->arena_dest_direction = dir.normalized();
+    this->destination_type = dir.squaredNorm() > 0.f ? DestinationType::POSE
+                                                     : DestinationType::POINT;
 
     this->initPlanningService(Vec3f{dest.x(), dest.y(), 0.f});
-    this->last_path = nullptr;
 
     this->state = State::INITIALIZATION;
 }
-void TraversalController::initialize(
+void TraversalController::initializeZone(
     const Vec2f& dest_min,
     const Vec2f& dest_max)
 {
-    this->dest_zone.min().template head<2>() = dest_min;
-    this->dest_zone.min().z() = -std::numeric_limits<float>::infinity();
-    this->dest_zone.max().template head<2>() = dest_max;
-    this->dest_zone.max().z() = std::numeric_limits<float>::infinity();
-    this->using_zone = true;
+    this->last_path = nullptr;
+    this->arena_dest_zone.min() = dest_min;
+    this->arena_dest_zone.max() = dest_max;
+    this->arena_dest_direction = Vec2f::Zero();
+    this->destination_type = DestinationType::ZONE;
 
     this->initPlanningService(
         Vec3f{
             (dest_min.x() + dest_max.x()) * 0.5f,
             (dest_min.y() + dest_max.y()) * 0.5f,
             0.f});
-    this->last_path = nullptr;
-
-    this->state = State::INITIALIZATION;
-}
-void TraversalController::initialize(const Vec3f& dest)
-{
-    this->using_zone = false;
-
-    this->initPlanningService(dest);
-    this->last_path = nullptr;
 
     this->state = State::INITIALIZATION;
 }
@@ -144,6 +136,7 @@ void TraversalController::iterate(
         case State::TRAVERSING:
         {
             this->computeTraversal(commands);
+            break;
         }
         case State::FINISHED:
         {
@@ -220,19 +213,19 @@ void TraversalController::computeTraversal(RobotMotorCommands& commands)
     float dist = 0.f;
     size_t beg_idx = 0;
     size_t end_idx = 0;
-    for(size_t i = 1; i < keypoints_local.size(); i++)
+    for (size_t i = 1; i < keypoints_local.size(); i++)
     {
-        const Vec2f& prev = keypoints_local[i - 1];
-        const Vec2f& curr = keypoints_local[i];
+        const Vec2f prev = keypoints_local[i - 1].template head<2>();
+        const Vec2f curr = keypoints_local[i].template head<2>();
 
-        if(beg_idx == end_idx)
+        if (beg_idx == end_idx)
         {
             Vec2f diff = curr - prev;
             float rel = (diff.dot(-prev)) / diff.squaredNorm();
 
             // the first segment where the robot base is
             // inbetween or before the two keypoints
-            if(rel < 1.f)
+            if (rel < 1.f)
             {
                 beg_idx = i;
                 // if we are on the last keypoint, the loop won't
@@ -249,7 +242,7 @@ void TraversalController::computeTraversal(RobotMotorCommands& commands)
         {
             end_idx = i;
             dist += (curr - prev).norm();
-            if(dist >= LOOKAHEAD_PATH_DISTANCE)
+            if (dist >= LOOKAHEAD_PATH_DISTANCE)
             {
                 break;
             }
@@ -259,21 +252,21 @@ void TraversalController::computeTraversal(RobotMotorCommands& commands)
     // 3. ???
     size_t target_kp_idx = beg_idx;
     float dist_next_kp = 0.f;
-    for(size_t i = beg_idx; i <= end_idx; i++)
+    for (size_t i = beg_idx; i <= end_idx; i++)
     {
         target_kp_idx = i;
-        const Vec2f& kp = keypoints_local[i];
-        if((dist_next_kp = kp.norm()) > KEYPOINT_THRESH)
+        const Vec2f kp = keypoints_local[i].template head<2>();
+        if ((dist_next_kp = kp.norm()) > KEYPOINT_THRESH)
         {
             break;
         }
     }
 
-    const Vec2f& next_kp = keypoints_local[target_kp_idx];
+    const Vec2f next_kp = keypoints_local[target_kp_idx].template head<2>();
     dist_next_kp = next_kp.norm();
     float cos_theta = next_kp.x() / dist_next_kp;
 
-    if(cos_theta < std::cos(TARGETTING_HEADING_THRESH))
+    if (cos_theta < std::cos(TARGETTING_HEADING_THRESH))
     {
         // turn in place
     }

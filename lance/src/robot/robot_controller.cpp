@@ -86,6 +86,11 @@ const HopperState& RobotController::hopperState() const
     return this->collection_state.getHopperState();
 }
 
+const RobotParams& RobotController::getParams() const
+{
+    return this->params;
+}
+
 void RobotController::iterate(
     int32_t watchdog,
     const JoyState& joy,

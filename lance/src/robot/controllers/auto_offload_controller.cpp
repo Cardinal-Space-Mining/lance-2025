@@ -39,6 +39,8 @@
 
 #include "auto_offload_controller.hpp"
 
+#include <Eigen/Core>
+
 
 AutoOffloadController::AutoOffloadController(
     RclNode& node,
@@ -87,7 +89,7 @@ void AutoOffloadController::iterate(
             }
 
             // init with planned destination
-            this->traversal_controller.initialize();
+            this->traversal_controller.initializePoint(Eigen::Vector2f::Zero());
             this->stage = Stage::TRAVERSING;
             [[fallthrough]];
         }

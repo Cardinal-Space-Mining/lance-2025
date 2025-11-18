@@ -44,6 +44,7 @@
 
 static constexpr double TRACK_GEARING = 64.;
 static constexpr double TRACK_EFFECTIVE_OUTPUT_RADIUS_M = 0.07032851;
+static constexpr double TRACK_SEPARATION_M = 0.636;
 
 static constexpr double TRENCHER_WIDTH_M = 0.254;
 static constexpr double TRENCHER_GEARING = 32.;

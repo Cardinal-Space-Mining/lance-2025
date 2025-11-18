@@ -52,7 +52,7 @@ AutoController::AutoController(
     tf_buffer{std::make_shared<rclcpp::Clock>(RCL_ROS_TIME)},
     tf_listener{tf_buffer, &node},
     localization_controller{node, pub_map, params, tf_buffer},
-    traversal_controller{node, pub_map, params},
+    traversal_controller{node, pub_map, params, tf_buffer},
     mining_controller{
         node,
         pub_map,
@@ -91,15 +91,15 @@ void AutoController::setCancelled()
             this->localization_controller.setCancelled();
             break;
         }
+        case Stage::TRAVERSE_TO_MINING:
+        case Stage::TRAVERSE_TO_OFFLOAD:
+        {
+            this->traversal_controller.setCancelled();
+            break;
+        }
         case Stage::MINING:
         {
             this->mining_controller.setCancelled();
-            break;
-        }
-        case Stage::TRAVERSAL:
-        case Stage::RETRAVERSAL:
-        {
-            this->traversal_controller.setCancelled();
             break;
         }
         case Stage::OFFLOAD:
@@ -134,11 +134,26 @@ void AutoController::iterate(
                 break;
             }
 
+            this->traversal_controller.initializeZone(
+                this->params.mining_zone_bounds.min(),
+                this->params.mining_zone_bounds.max());
+            this->stage = Stage::TRAVERSE_TO_MINING;
+            [[fallthrough]];
+        }
+        TRAVERSE_TO_MINING_L:
+        case Stage::TRAVERSE_TO_MINING:
+        {
+            this->traversal_controller.iterate(motor_status, commands);
+            if (!this->traversal_controller.isFinished())
+            {
+                break;
+            }
+
             this->mining_controller.initialize();
             this->stage = Stage::MINING;
             [[fallthrough]];
         }
-        MINING_STAGE_L:
+        // MINING_STAGE_L:
         case Stage::MINING:
         {
             this->mining_controller.iterate(motor_status, commands);
@@ -147,12 +162,13 @@ void AutoController::iterate(
                 break;
             }
 
-            // TODO: pass traversal destination here -->
-            this->traversal_controller.initialize();
-            this->stage = Stage::TRAVERSAL;
+            this->traversal_controller.initializeZone(
+                this->params.offload_zone_bounds.min(),
+                this->params.offload_zone_bounds.max());
+            this->stage = Stage::TRAVERSE_TO_OFFLOAD;
             [[fallthrough]];
         }
-        case Stage::TRAVERSAL:
+        case Stage::TRAVERSE_TO_OFFLOAD:
         {
             this->traversal_controller.iterate(motor_status, commands);
             if (!this->traversal_controller.isFinished())
@@ -172,23 +188,12 @@ void AutoController::iterate(
                 break;
             }
 
-            // TODO: pass traversal destination here -->
-            this->traversal_controller.initialize();
-            this->stage = Stage::RETRAVERSAL;
-            [[fallthrough]];
-        }
-        case Stage::RETRAVERSAL:
-        {
-            this->traversal_controller.iterate(motor_status, commands);
-            if (!this->traversal_controller.isFinished())
-            {
-                break;
-            }
-
-            this->mining_controller.initialize();
+            this->traversal_controller.initializeZone(
+                this->params.mining_zone_bounds.min(),
+                this->params.mining_zone_bounds.max());
             // chatgpt says I should change this to a while loop that wraps the entire switch-case
-            this->stage = Stage::MINING;
-            goto MINING_STAGE_L;
+            this->stage = Stage::TRAVERSE_TO_MINING;
+            goto TRAVERSE_TO_MINING_L;
         }
         default:
         {
@@ -202,10 +207,10 @@ void AutoController::publishState()
 {
     static constexpr char const* STAGE_STRINGS[] = {
         "Auto Localization",
+        "Auto Traverse To Mining",
         "Auto Mining",
-        "Auto Traversal",
+        "Auto Traverse To Offload",
         "Auto Offload",
-        "Auto Retraversal",
         "Auto [unknown]"};
 
     this->pub_map.publish<std_msgs::msg::String, std::string>(

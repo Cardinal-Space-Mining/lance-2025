@@ -133,7 +133,39 @@ RobotParams::RobotParams(rclcpp::Node& node) :
         node,
         "preset_mining_traversal_dist_meters",
         0.25f)},
-    preset_offload_backup_dist_meters{
-        declare_and_get_param(node, "preset_offload_backup_dist_meters", 0.25f)}
+    preset_offload_backup_dist_meters{declare_and_get_param(
+        node,
+        "preset_offload_backup_dist_meters",
+        0.25f)},
+
+    iteration_period_seconds{
+        declare_and_get_param(node, "iteration_period_seconds", 0.05f)},
+    robot_frame_id{declare_and_get_param<std::string>(
+        node,
+        "robot_frame_id",
+        "base_link")},
+    odom_frame_id{
+        declare_and_get_param<std::string>(node, "odom_frame_id", "odom")},
+    arena_frame_id{
+        declare_and_get_param<std::string>(node, "arena_frame_id", "map")}
 {
+    std::vector<double> buff;
+
+    declare_param(node, "mining_zone_bounds.min", buff, {0., 0.});
+    assert(buff.size() > 1);
+    this->mining_zone_bounds.min().x() = static_cast<float>(buff[0]);
+    this->mining_zone_bounds.min().y() = static_cast<float>(buff[1]);
+    declare_param(node, "mining_zone_bounds.max", buff, {0., 0.});
+    assert(buff.size() > 1);
+    this->mining_zone_bounds.max().x() = static_cast<float>(buff[0]);
+    this->mining_zone_bounds.max().y() = static_cast<float>(buff[1]);
+
+    declare_param(node, "offload_zone_bounds.min", buff, {0., 0.});
+    assert(buff.size() > 1);
+    this->offload_zone_bounds.min().x() = static_cast<float>(buff[0]);
+    this->offload_zone_bounds.min().y() = static_cast<float>(buff[1]);
+    declare_param(node, "offload_zone_bounds.max", buff, {0., 0.});
+    assert(buff.size() > 1);
+    this->offload_zone_bounds.max().x() = static_cast<float>(buff[0]);
+    this->offload_zone_bounds.max().y() = static_cast<float>(buff[1]);
 }

@@ -39,6 +39,8 @@
 
 #include "auto_mining_controller.hpp"
 
+#include <Eigen/Core>
+
 
 AutoMiningController::AutoMiningController(
     RclNode& node,
@@ -84,7 +86,7 @@ void AutoMiningController::iterate(
             }
 
             // init with planned destination
-            this->traversal_controller.initialize();
+            this->traversal_controller.initializePoint(Eigen::Vector2f::Zero());
             this->stage = Stage::TRAVERSING;
             [[fallthrough]];
         }

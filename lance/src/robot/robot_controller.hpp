@@ -74,6 +74,7 @@ public:
 
 public:
     const HopperState& hopperState() const;
+    const RobotParams& getParams() const;
 
     void iterate(
         int32_t watchdog,

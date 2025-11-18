@@ -73,7 +73,7 @@ class TraversalController
     using Vec2f = Eigen::Vector2f;
     using Vec3f = Eigen::Vector3f;
     using Quatf = Eigen::Quaternionf;
-    using Box3f = Eigen::AlignedBox3f;
+    using Box2f = Eigen::AlignedBox2f;
 
 public:
     TraversalController(
@@ -84,11 +84,10 @@ public:
     ~TraversalController() = default;
 
 public:
-    void initialize(const Vec2f& dest);
-    void initialize(
-        const Vec2f& dest_min,
-        const Vec2f& dest_max);
-    void initialize(const Vec3f& dest);
+    void initializePoint(
+        const Vec2f& dest,
+        const Vec2f& dest_direction = Vec2f::Zero());
+    void initializeZone(const Vec2f& dest_min, const Vec2f& dest_max);
 
     bool isFinished();
     void setCancelled();
@@ -103,6 +102,12 @@ protected:
         INITIALIZATION,
         TRAVERSING,
         FINISHED
+    };
+    enum class DestinationType
+    {
+        POINT,
+        POSE,
+        ZONE
     };
 
 protected:
@@ -120,7 +125,9 @@ protected:
     RclClientPtr<UpdatePathPlanSrv> pplan_control_client;
 
     State state{State::FINISHED};
+
     PathMsg::ConstSharedPtr last_path{nullptr};
-    Box3f dest_zone{};
-    bool using_zone{false};
+    Box2f arena_dest_zone{};
+    Vec2f arena_dest_direction{};
+    DestinationType destination_type{DestinationType::POINT};
 };
