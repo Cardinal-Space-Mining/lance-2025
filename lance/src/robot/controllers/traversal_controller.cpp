@@ -42,6 +42,7 @@
 #include <chrono>
 #include <memory>
 
+#include "../robot_math.hpp"
 #include "../../util/geometry.hpp"
 #include "../../util/ros_utils.hpp"
 
@@ -135,7 +136,7 @@ void TraversalController::iterate(
         }
         case State::TRAVERSING:
         {
-            this->computeTraversal(commands);
+            this->computeTraversal(motor_status, commands);
             break;
         }
         case State::FINISHED:
@@ -169,7 +170,9 @@ void TraversalController::stopPlanningService()
         [](rclcpp::Client<UpdatePathPlanSrv>::SharedFuture) {});
 }
 
-void TraversalController::computeTraversal(RobotMotorCommands& commands)
+void TraversalController::computeTraversal(
+    const RobotMotorStatus& motor_status,
+    RobotMotorCommands& commands)
 {
     constexpr float LOOKAHEAD_PATH_DISTANCE = 0.25f;
     constexpr float TARGETTING_HEADING_THRESH = std::numbers::pi_v<float> / 4.f;
@@ -209,69 +212,64 @@ void TraversalController::computeTraversal(RobotMotorCommands& commands)
         }
     }
 
-    // 2. SEGMENT LOOKAHEAD KEYPOINTS
-    float dist = 0.f;
-    size_t beg_idx = 0;
-    size_t end_idx = 0;
+    // 2. FIND TARGET SEGMENT OR KEYPOINT
+    size_t seg_beg_idx = 0;
+    size_t seg_end_idx = 0;
+    float seg_proj_t = 0.f;
+    float seg_proj_dist = 0.f;
     for (size_t i = 1; i < keypoints_local.size(); i++)
     {
-        const Vec2f prev = keypoints_local[i - 1].template head<2>();
-        const Vec2f curr = keypoints_local[i].template head<2>();
+        const auto prev = keypoints_local[i - 1].template head<2>();
+        const auto curr = keypoints_local[i].template head<2>();
 
-        if (beg_idx == end_idx)
+        // project the robot base onto the segment formed by the current
+        // two keypoints
+        Vec2f diff = curr - prev;
+        seg_proj_t = (diff.dot(-prev)) / diff.squaredNorm();
+
+        // proj_t > 1.f --> "after" second keypoint
+        // proj_t = 1.f --> at second keypoint
+        // proj_t = 0.f --> at first keypoint
+        // proj_t < 0.f --> "before" first keypoint
+        if (seg_proj_t < 1.f)   // "before" second keypoint
         {
-            Vec2f diff = curr - prev;
-            float rel = (diff.dot(-prev)) / diff.squaredNorm();
-
-            // the first segment where the robot base is
-            // inbetween or before the two keypoints
-            if (rel < 1.f)
-            {
-                beg_idx = i;
-                // if we are on the last keypoint, the loop won't
-                // iterate again anyway
-                end_idx = keypoints_local.size() - 1;
-                dist += curr.norm();
-            }
-            else
-            {
-                beg_idx = end_idx = i;
-            }
+            seg_end_idx = i;
+            seg_beg_idx = i - 1;
+            seg_proj_dist = (prev + diff * seg_proj_t).norm();
+            break;
         }
         else
         {
-            end_idx = i;
-            dist += (curr - prev).norm();
-            if (dist >= LOOKAHEAD_PATH_DISTANCE)
-            {
-                break;
-            }
+            seg_beg_idx = seg_end_idx = i;
         }
     }
 
-    // 3. ???
-    size_t target_kp_idx = beg_idx;
-    float dist_next_kp = 0.f;
-    for (size_t i = beg_idx; i <= end_idx; i++)
+    // 3. ALGO
+    if (seg_beg_idx == seg_end_idx)
     {
-        target_kp_idx = i;
-        const Vec2f kp = keypoints_local[i].template head<2>();
-        if ((dist_next_kp = kp.norm()) > KEYPOINT_THRESH)
-        {
-            break;
-        }
-    }
-
-    const Vec2f next_kp = keypoints_local[target_kp_idx].template head<2>();
-    dist_next_kp = next_kp.norm();
-    float cos_theta = next_kp.x() / dist_next_kp;
-
-    if (cos_theta < std::cos(TARGETTING_HEADING_THRESH))
-    {
-        // turn in place
+        // target final keypoint
     }
     else
     {
-        // target the next point
+        // if seg_proj_dist > thresh (off path), target directly to segment
+        // otherwise, lookahead for target and analyze deceleration topology
+
+        // run algo
+        const double fb_l_vel_mps =
+            track_motor_rps_to_ground_mps(motor_status.track_left.velocity);
+        const double fb_r_vel_mps =
+            track_motor_rps_to_ground_mps(motor_status.track_right.velocity);
+        const double avg_vel_mps = (fb_l_vel_mps + fb_r_vel_mps) * 0.5f;
+        const double decell_dist_m =
+            1.5f * avg_vel_mps * avg_vel_mps /
+            this->params.auto_traversal_max_acceleration_mpss;
+        const double target_dist_m =
+            avg_vel_mps * this->params.iteration_period_seconds;
+
+        // find target point:
+        // if robot is before first segment keypoint, interpolate along seg or add distance to first keypoint
+        // loop subsequent keypoints, once dist to 1st < target dist < dist to 2nd, interpolate seg
+
+        // 
     }
 }
