@@ -123,6 +123,7 @@ void AutoController::iterate(
         case Stage::UNKNOWN:
         {
             // algo to determine what stage we should be in...
+            this->localization_controller.initialize();
             this->stage = Stage::LOCALIZATION;
             [[fallthrough]];
         }
@@ -153,7 +154,6 @@ void AutoController::iterate(
             this->stage = Stage::MINING;
             [[fallthrough]];
         }
-        // MINING_STAGE_L:
         case Stage::MINING:
         {
             this->mining_controller.iterate(motor_status, commands);

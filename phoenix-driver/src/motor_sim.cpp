@@ -43,7 +43,7 @@ using Float64Msg = std_msgs::msg::Float64;
 using JointStateMsg = sensor_msgs::msg::JointState;
 using TwistMsg = geometry_msgs::msg::Twist;
 
-static constexpr double TRACK_WIDTH_M = 0.579;
+static constexpr double TRACK_WIDTH_M = 0.636;
 static constexpr double TRACK_EFFECTIVE_OUTPUT_RADIUS_M = 0.07032851;
 static constexpr double TRACK_GEARING = 64.;
 

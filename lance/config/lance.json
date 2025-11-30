@@ -588,7 +588,31 @@
             },
 
             "preset_mining_traversal_dist_meters": 0.25,
-            "preset_offload_backup_dist_meters": 0.25
+            "preset_offload_backup_dist_meters": 0.25,
+
+            "iteration_period_seconds": 0.05,
+            "odom_frame_id": "odom",
+            "arena_frame_id": "map",
+
+            "auto_traversal":
+            {
+                "max_track_velocity_mps": 0.25,
+                "max_angular_velocity_rps": 1.0,
+                "max_acceleration_mpss": 0.5,
+                "keypoint_thresh_m": 0.03,
+                "max_path_deviation_m": 0.03
+            },
+
+            "mining_zone_bounds":
+            {
+                "min": [0.0, 0.0],
+                "max": [2.5, 5.0]
+            },
+            "offload_zone_bounds":
+            {
+                "min": [4.53, 0.2],
+                "max": [6.23, 1.0]
+            }
         }
     },
     "phoenix5_driver":

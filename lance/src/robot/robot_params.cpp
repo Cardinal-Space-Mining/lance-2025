@@ -157,12 +157,16 @@ RobotParams::RobotParams(rclcpp::Node& node) :
         node,
         "auto_traversal.max_angular_velocity_rps",
         1.f)},
-    auto_traversal_max_acceleration_mpss{declare_and_get_param(
+    auto_traversal_max_track_acceleration_mpss{declare_and_get_param(
         node,
         "auto_traversal.max_acceleration_mpss",
         0.5f)},
     auto_traversal_keypoint_thresh_m{
-        declare_and_get_param(node, "auto_traversal.keypoint_thresh_m", 0.03f)}
+        declare_and_get_param(node, "auto_traversal.keypoint_thresh_m", 0.03f)},
+    auto_traversal_max_path_deviation_m{declare_and_get_param(
+        node,
+        "auto_traversal.max_path_deviation_m",
+        0.03f)}
 {
     std::vector<double> buff;
 

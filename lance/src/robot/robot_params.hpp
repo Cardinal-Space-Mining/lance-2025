@@ -99,8 +99,9 @@ public:
 
     const float auto_traversal_max_track_velocity_mps;
     const float auto_traversal_max_angular_velocity_rps;
-    const float auto_traversal_max_acceleration_mpss;
+    const float auto_traversal_max_track_acceleration_mpss;
     const float auto_traversal_keypoint_thresh_m;
+    const float auto_traversal_max_path_deviation_m;
 
 public:
     RobotParams(rclcpp::Node&);

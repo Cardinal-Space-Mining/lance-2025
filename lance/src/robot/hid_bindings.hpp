@@ -70,6 +70,8 @@ using AssistedOffloadToggleButton = StaticJoyButton<Buttons::R_STICK>;
 using PresetMiningInitButton = StaticJoyButton<Buttons::BACK>;
 using PresetOffloadInitButton = StaticJoyButton<Buttons::START>;
 
+using ToggleTraversalCursorMode = StaticJoyButton<Buttons::LOGITECH>;
+
 // using PresetMiningStartButton =
 //     StaticJoyPov<Axes::DPAD_U_D, Axes::DPAD_K::DPAD_UP>;
 // using PresetMiningStopButton =
