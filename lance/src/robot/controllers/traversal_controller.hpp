@@ -55,6 +55,7 @@
 #include "../robot_params.hpp"
 #include "../motor_interface.hpp"
 #include "../../util/pub_map.hpp"
+#include "../../util/joy_utils.hpp"
 
 
 class TraversalController
@@ -63,6 +64,7 @@ class TraversalController
     using Tf2Buffer = tf2_ros::Buffer;
     using PathMsg = nav_msgs::msg::Path;
     using UpdatePathPlanSrv = cardinal_perception::srv::UpdatePathPlanningMode;
+    using JoyState = util::JoyState;
     using GenericPubMap = util::GenericPubMap;
 
     template<typename T>
@@ -94,13 +96,15 @@ public:
 
     void iterate(
         const RobotMotorStatus& motor_status,
-        RobotMotorCommands& commands);
+        RobotMotorCommands& commands,
+        const JoyState* joy = nullptr);
 
 protected:
     enum class State
     {
         INITIALIZATION,
-        TRAVERSING,
+        FOLLOW_PATH,
+        REORIENT,
         FINISHED
     };
     enum class DestinationType

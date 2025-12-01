@@ -600,7 +600,7 @@
                 "max_angular_velocity_rps": 1.0,
                 "max_acceleration_mpss": 0.5,
                 "keypoint_thresh_m": 0.03,
-                "max_path_deviation_m": 0.03
+                "max_path_deviation_m": 0.05
             },
 
             "mining_zone_bounds":

@@ -41,8 +41,13 @@
 
 #include <chrono>
 #include <memory>
+#include <sstream>
+#include <iostream>
+
+#include <geometry_msgs/msg/pose_stamped.hpp>
 
 #include "../robot_math.hpp"
+#include "../hid_bindings.hpp"
 #include "../../util/geometry.hpp"
 #include "../../util/ros_utils.hpp"
 
@@ -50,13 +55,59 @@
 #define PERCEPTION_PATH_TOPIC "/cardinal_perception/planned_path"
 #define PERCEPTION_PPLAN_CONTROL_TOPIC          \
     "/cardinal_perception/update_path_planning"
-#define ARENA_FRAME_ID "map"
-#define ROBOT_FRAME_ID "base_link"
 
 using system_clock = std::chrono::system_clock;
 using namespace util::geom::cvt::ops;
 
 using Iso3f = Eigen::Isometry3f;
+
+
+
+void debugTracksControl(
+    const util::JoyState& joy,
+    const RobotParams& params,
+    RobotMotorCommands& commands)
+{
+    using namespace Bindings;
+
+    const float x = TeleopDriveXAxis::rawValue(joy);
+    const float y = TeleopDriveYAxis::rawValue(joy);
+    if ((x * x + y * y) <
+        (params.driving_magnitude_deadzone * params.driving_magnitude_deadzone))
+    {
+        commands.setTracksVelocity(0., 0.);
+    }
+    else
+    {
+        const float l = y - x;  // y + (-x)
+        const float r = y + x;  // y - (-x)
+        const float s =
+            ((params.tracks_max_velocity_rps * params.driving_medium_scalar) /
+             std::max({1.f, std::abs(l), std::abs(r)}));
+        commands.setTracksVelocity((l * s), (r * s));
+    }
+}
+
+// compute the coefficient representing the ratio of radius-to-corner-
+// deviation-width when turning at a path junction
+template<typename FloatT>
+inline FloatT computeJunctionRadiusCoeff(
+    FloatT cos_theta)  // sqrt is not constexpr until C++26 :(
+{
+    const FloatT cos_half_theta =
+        std::sqrt((FloatT)0.5 + cos_theta * (FloatT)0.5);
+    return cos_half_theta / ((FloatT)1 - cos_half_theta);
+}
+// compute the maximum starting velocity such that it is still possible to decelerate
+// to the target velocity in the given distance at the given max decelleration
+template<typename FloatT>
+inline FloatT
+    backpropegateMaxVelocity(FloatT end_vel, FloatT dist, FloatT max_acc)
+{
+    // v_f^2 = v_i^2 + 2*a*x
+    return std::sqrt((FloatT)2 * dist * max_acc + end_vel * end_vel);
+}
+
 
 
 TraversalController::TraversalController(
@@ -120,7 +171,8 @@ void TraversalController::setCancelled()
 
 void TraversalController::iterate(
     const RobotMotorStatus& motor_status,
-    RobotMotorCommands& commands)
+    RobotMotorCommands& commands,
+    const JoyState* joy)
 {
     switch (this->state)
     {
@@ -131,25 +183,34 @@ void TraversalController::iterate(
                 break;
             }
 
-            this->state = State::TRAVERSING;
+            this->state = State::FOLLOW_PATH;
             [[fallthrough]];
         }
-        case State::TRAVERSING:
+        case State::FOLLOW_PATH:
         {
             this->computeTraversal(motor_status, commands);
             break;
+        }
+        case State::REORIENT:
+        {
+            [[fallthrough]];
         }
         case State::FINISHED:
         {
             this->stopPlanningService();
         }
     }
+
+    if (joy)
+    {
+        debugTracksControl(*joy, this->params, commands);
+    }
 }
 
 void TraversalController::initPlanningService(const Vec3f& dest)
 {
     auto req = std::make_shared<UpdatePathPlanSrv::Request>();
-    req->target.header.frame_id = ARENA_FRAME_ID;
+    req->target.header.frame_id = this->params.arena_frame_id;
     req->target.header.stamp = util::toTimeStamp(system_clock::now());
     req->target.pose.position.x = dest.x();
     req->target.pose.position.y = dest.y();
@@ -171,25 +232,6 @@ void TraversalController::stopPlanningService()
 }
 
 
-// compute the coefficient representing the ratio of radius-to-corner-
-// deviation-width when turning at a path junction
-template<typename FloatT>
-inline FloatT computeJunctionRadiusCoeff(
-    FloatT cos_theta)  // sqrt is not constexpr until C++26 :(
-{
-    const FloatT cos_half_theta =
-        std::sqrt((FloatT)0.5 + cos_theta * (FloatT)0.5);
-    return cos_half_theta / ((FloatT)1 - cos_half_theta);
-}
-// compute the maximum starting velocity such that it is still possible to decelerate
-// to the target velocity in the given distance at the given max decelleration
-template<typename FloatT>
-inline FloatT
-    backpropegateMaxVelocity(FloatT end_vel, FloatT dist, FloatT max_acc)
-{
-    // v_f^2 = v_i^2 + 2*a*x
-    return std::sqrt((FloatT)2 * dist * max_acc + end_vel * end_vel);
-}
 
 void TraversalController::computeTraversal(
     const RobotMotorStatus& motor_status,
@@ -199,14 +241,14 @@ void TraversalController::computeTraversal(
     std::vector<Vec2f> keypoints;
     keypoints.resize(this->last_path->poses.size());
 
-    if (this->last_path->header.frame_id != ROBOT_FRAME_ID)
+    if (this->last_path->header.frame_id != this->params.robot_frame_id)
     {
         try
         {
             Iso3f tf;
             tf << this->tf_buffer
                       .lookupTransform(
-                          ROBOT_FRAME_ID,
+                          this->params.robot_frame_id,
                           this->last_path->header.frame_id,
                           tf2::TimePointZero)
                       .transform;
@@ -221,6 +263,9 @@ void TraversalController::computeTraversal(
         catch (const std::exception& e)
         {
             // failed to transform to robot frame
+            std::cout
+                << "--- TRAVERSAL ITERATION ---\nFailed to transform keypoints to robot frame\n"
+                << std::endl;
             return;
         }
     }
@@ -268,8 +313,15 @@ void TraversalController::computeTraversal(
 
     // 3. ALGO
     Vec2f target_pt;
-    float backprop_max_vel;
+    float backprop_max_vel = std::numeric_limits<float>::infinity();
     // float lv_max = this->params.auto_traversal_max_track_velocity_mps;
+
+    std::ostringstream os;
+    os << "--- TRAVERSAL ITERATION ---"
+        "\n#kp : " << keypoints.size() <<
+        "\nmatched seg : (" << seg_beg_idx << ", " << seg_end_idx << ")"
+        "\nseg proj t : " << seg_proj_t <<
+        "\nseg proj dist : " << seg_proj_dist;
 
     // a. target final keypoint
     if (seg_beg_idx == seg_end_idx)
@@ -279,6 +331,8 @@ void TraversalController::computeTraversal(
             0.f,
             target_pt.norm(),
             this->params.auto_traversal_max_track_acceleration_mpss);
+
+        os << "\ncontrol mode : \"final keypoint\"";
     }
     // b. off the path
     else if (seg_proj_dist > this->params.auto_traversal_max_path_deviation_m)
@@ -297,6 +351,10 @@ void TraversalController::computeTraversal(
             pt_vmax,
             seg_proj_dist,
             this->params.auto_traversal_max_track_acceleration_mpss);
+
+        os <<
+            "\ncontrol mode : \"return to path\""
+            "\njunction vmax : " << pt_vmax;
     }
     // c. follow the path
     else
@@ -306,17 +364,28 @@ void TraversalController::computeTraversal(
         const double fb_r_vel_mps =
             track_motor_rps_to_ground_mps(motor_status.track_right.velocity);
         const double avg_vel_mps = (fb_l_vel_mps + fb_r_vel_mps) * 0.5f;
-        const double decell_dist_m =
-            1.5f * avg_vel_mps * avg_vel_mps /
+
+        const float max_iter_vel =
+            static_cast<float>(avg_vel_mps) +
+            (this->params.auto_traversal_max_track_acceleration_mpss *
+             this->params.iteration_period_seconds);
+        const float decell_dist_m =
+            1.5f * max_iter_vel * max_iter_vel /
             this->params.auto_traversal_max_track_acceleration_mpss;
-        const double target_dist_m =
-            avg_vel_mps * this->params.iteration_period_seconds;
+        const float target_dist_m =
+            max_iter_vel * this->params.iteration_period_seconds;
+
+        os <<
+            "\ncontrol mode : \"follow path\""
+            "\nmax iter vel : " << max_iter_vel <<
+            "\ndecell dist : " << decell_dist_m <<
+            "\ntarget dist : " << target_dist_m;
 
         target_pt = keypoints.back();
 
         Vec2f prev = Vec2f::Zero();
         float dist = 0.f;
-        for (size_t i = seg_end_idx;
+        for (size_t i = (seg_proj_t < 0.f ? seg_beg_idx : seg_end_idx);
              (i < keypoints.size()) &&
              (dist < target_dist_m || dist < decell_dist_m);
              i++)
@@ -373,4 +442,16 @@ void TraversalController::computeTraversal(
             dist += mag;
         }
     }
+
+    os <<
+        "\ntarget pt : (x: " << target_pt.x() << ", y: " << target_pt.y() << ")"
+        "\nbp max vel : " << backprop_max_vel << "\n";
+    std::cout << os.str() << std::endl;
+
+    geometry_msgs::msg::PoseStamped pub_pt;
+    pub_pt.pose.position.x = target_pt.x();
+    pub_pt.pose.position.y = target_pt.y();
+    pub_pt.pose.position.z = 0.;
+    pub_pt.header.frame_id = this->params.robot_frame_id;
+    this->pub_map.publish("traversal_target_point", pub_pt);
 }

@@ -41,7 +41,6 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "../hid_bindings.hpp"
 #include "../robot_params.hpp"
 #include "../motor_interface.hpp"
 #include "../collection_state.hpp"

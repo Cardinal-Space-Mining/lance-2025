@@ -144,7 +144,7 @@ void AutoController::iterate(
         TRAVERSE_TO_MINING_L:
         case Stage::TRAVERSE_TO_MINING:
         {
-            this->traversal_controller.iterate(motor_status, commands);
+            this->traversal_controller.iterate(motor_status, commands, &joy);
             if (!this->traversal_controller.isFinished())
             {
                 break;
@@ -170,7 +170,7 @@ void AutoController::iterate(
         }
         case Stage::TRAVERSE_TO_OFFLOAD:
         {
-            this->traversal_controller.iterate(motor_status, commands);
+            this->traversal_controller.iterate(motor_status, commands, &joy);
             if (!this->traversal_controller.isFinished())
             {
                 break;

@@ -39,6 +39,8 @@
 
 #include "teleop_controller.hpp"
 
+#include "../hid_bindings.hpp"
+
 
 TeleopController::TeleopController(
     RclNode& node,
