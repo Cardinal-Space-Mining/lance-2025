@@ -1,5 +1,5 @@
 /*******************************************************************************
-*   Copyright (C) 2024-2025 Cardinal Space Mining Club                         *
+*   Copyright (C) 2025-2026 Cardinal Space Mining Club                         *
 *                                                                              *
 *                                 ;xxxxxxx:                                    *
 *                                ;$$$$$$$$$       ...::..                      *
@@ -51,6 +51,7 @@
 
 #include "util/pub_map.hpp"
 #include "util/joy_utils.hpp"
+#include "util/ros_utils.hpp"
 
 #include "robot/robot_math.hpp"
 #include "robot/motor_interface.hpp"
@@ -62,6 +63,10 @@
 #define HOPPER_JOINT_NAME     "dump_joint"
 
 using namespace std::chrono_literals;
+using namespace util::ros_aliases;
+
+using util::JoyState;
+using util::GenericPubMap;
 
 using BoolMsg = std_msgs::msg::Bool;
 using Int32Msg = std_msgs::msg::Int32;
@@ -69,23 +74,14 @@ using Float64Msg = std_msgs::msg::Float64;
 using JoyMsg = sensor_msgs::msg::Joy;
 using JointStateMsg = sensor_msgs::msg::JointState;
 
-template<typename T>
-using RclPubPtr = typename rclcpp::Publisher<T>::SharedPtr;
-template<typename T>
-using RclSubPtr = typename rclcpp::Subscription<T>::SharedPtr;
-using RclTimerPtr = rclcpp::TimerBase::SharedPtr;
-
-using util::JoyState;
-using util::GenericPubMap;
-
 
 class RobotControlNode : public rclcpp::Node
 {
 protected:
     struct TalonPubSub
     {
-        RclPubPtr<TalonCtrlMsg> ctrl_pub;
-        RclSubPtr<TalonInfoMsg> info_sub;
+        SharedPub<TalonCtrlMsg> ctrl_pub;
+        SharedSub<TalonInfoMsg> info_sub;
     };
 
 public:
@@ -102,7 +98,7 @@ public:
 
     RobotControlNode() :
         Node{"robot_control"},
-        pub_map{this, "", rclcpp::SensorDataQoS{}},
+        pub_map{*this, "", rclcpp::SensorDataQoS{}},
         robot_controller{*this, this->pub_map},
 
         INIT_TALON_PUB_SUB(track_right, track_right),
@@ -214,9 +210,9 @@ private:
     TalonPubSub hopper_belt_pub_sub;
     TalonPubSub hopper_actuator_pub_sub;
 
-    RclSubPtr<JoyMsg> joy_sub;
-    RclSubPtr<Int32Msg> watchdog_sub;
-    RclTimerPtr control_iteration_timer;
+    SharedSub<JoyMsg> joy_sub;
+    SharedSub<Int32Msg> watchdog_sub;
+    RclTimer control_iteration_timer;
 
     RobotMotorStatus robot_motor_status;
     JoyMsg::ConstSharedPtr last_joy_msg{nullptr};

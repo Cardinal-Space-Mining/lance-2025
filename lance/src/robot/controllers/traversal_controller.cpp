@@ -1,5 +1,5 @@
 /*******************************************************************************
-*   Copyright (C) 2024-2025 Cardinal Space Mining Club                         *
+*   Copyright (C) 2025-2026 Cardinal Space Mining Club                         *
 *                                                                              *
 *                                 ;xxxxxxx:                                    *
 *                                ;$$$$$$$$$       ...::..                      *
@@ -49,7 +49,7 @@
 #include "../robot_math.hpp"
 #include "../hid_bindings.hpp"
 #include "../../util/geometry.hpp"
-#include "../../util/ros_utils.hpp"
+#include "../../util/time_cvt.hpp"
 
 
 #define PERCEPTION_PATH_TOPIC "/cardinal_perception/planned_path"
@@ -211,7 +211,7 @@ void TraversalController::initPlanningService(const Vec3f& dest)
 {
     auto req = std::make_shared<UpdatePathPlanSrv::Request>();
     req->target.header.frame_id = this->params.arena_frame_id;
-    req->target.header.stamp = util::toTimeStamp(system_clock::now());
+    req->target.header.stamp = util::toTimeMsg(system_clock::now());
     req->target.pose.position.x = dest.x();
     req->target.pose.position.y = dest.y();
     req->target.pose.position.z = dest.z();
