@@ -60,7 +60,7 @@
 
 #define ROBOT_TOPIC(subtopic) "/lance/" subtopic
 #define TALON_CTRL_PUB_QOS    10
-#define HOPPER_JOINT_NAME     "dump_joint"
+#define HOPPER_JOINT_NAME     "dump_joint"  // L2: "hopper_joint"
 
 using namespace std::chrono_literals;
 using namespace util::ros_aliases;

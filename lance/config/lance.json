@@ -289,7 +289,10 @@
                 "search_radius": 0.5,
                 "lambda_distance": 1.0,
                 "lambda_penalty": 1.0,
-                "max_neighbors": 11
+                "max_neighbors": 11,
+                "map_obstacle_merge_window": 0.5,
+                "map_passive_crop_horizontal_range": 10.0,
+                "map_passive_crop_vertical_range": 5.0
             }
         },
         "sim":
@@ -671,9 +674,13 @@
     "gz_sim":
     {
         "pragma:default": null,
-        "enabled": {},
+        "enabled":
+        {
+            "robot": "lance"
+        },
         "motor_sim":
         {
+            "robot": "lance",
             "bridge_remappings":
             {
                 "/joint_states": "/gz_joint_states"
@@ -983,6 +990,312 @@
                                 }
                             }
                         ]
+                    }
+                }
+            }
+        },
+        "lance2":
+        {
+            "robot_description":
+            {
+                "name": "lance2",
+                "structure":
+                {
+                    "links": [
+                        "base_link",
+                        "hopper_link",
+                        "lidar_link"
+                    ],
+                    "joints":
+                    {
+                        "hopper_joint":
+                        {
+                            "type": "revolute",
+                            "parent": "base_link",
+                            "child": "hopper_link",
+                            "origin":
+                            {
+                                "xyz": [-0.4572, 0, 0.3488],
+                                "rpy": [0, 0.175, 0]
+                            },
+                            "axis": [0, 1, 0],
+                            "limit":
+                            {
+                                "upper": 0.175,
+                                "lower": -0.175,
+                                "effort": 100,
+                                "velocity": 100
+                            }
+                        },
+                        "lidar_joint":
+                        {
+                            "type": "fixed",
+                            "parent": "base_link",
+                            "child": "lidar_link",
+                            "origin":
+                            {
+                                "xyz": [0.5156, 0.0, 0.5691],
+                                "rpy": [3.14159, 0.349066, 0.0]
+                            }
+                        }
+                    }
+                },
+                "assets":
+                {
+                    "base_link": {
+                        "collision": [
+                            {
+                                "origin": {
+                                    "xyz": [-0.353822, 0.0, 0.1583055],
+                                    "rpy": [0.0, 0.0, 0.0]
+                                },
+                                "geometry": {
+                                    "type": "box",
+                                    "size": [0.265176, 0.4953, 0.127]
+                                }
+                            },
+                            {
+                                "origin": {
+                                    "xyz": [0.1016, 0.0, 0.0782955],
+                                    "rpy": [-1.5708, 0.0, 0.0]
+                                },
+                                "geometry": {
+                                    "type": "cylinder",
+                                    "radius": 0.015875,
+                                    "length": 0.6858
+                                }
+                            },
+                            {
+                                "origin": {
+                                    "xyz": [-0.2413, 0.0, 0.07829550],
+                                    "rpy": [-1.5708, 0.0, 0.0]
+                                },
+                                "geometry": {
+                                    "type": "cylinder",
+                                    "radius": 0.015875,
+                                    "length": 0.6858
+                                }
+                            },
+
+                            {
+                                "origin": {
+                                    "xyz": [0.0, -0.32385, 0.002],
+                                    "rpy": [0.0, 0.0, 0.0]
+                                },
+                                "geometry": {
+                                    "type": "box",
+                                    "size": [0.30648173, 0.0762, 0.01]
+                                }
+                            },
+                            {
+                                "origin": {
+                                    "xyz": [0.277982455, -0.32385, 0.00772738],
+                                    "rpy": [0.0, -0.04581424, 0.0]
+                                },
+                                "geometry": {
+                                    "type": "box",
+                                    "size": [0.25034271, 0.0762, 0.01]
+                                }
+                            },
+                            {
+                                "origin": {
+                                    "xyz": [-0.259248495, -0.32385, 0.007739705],
+                                    "rpy": [0.0, 0.05405797, 0.0]
+                                },
+                                "geometry": {
+                                    "type": "box",
+                                    "size": [0.21272745, 0.0762, 0.01]
+                                }
+                            },
+                            {
+                                "origin": {
+                                    "xyz": [0.02974539, -0.32385, 0.21755967],
+                                    "rpy": [0.0, -1.45674325, 0.0]
+                                },
+                                "geometry": {
+                                    "type": "box",
+                                    "size": [0.78053195, 0.0762, 0.01]
+                                }
+                            },
+                            {
+                                "origin": {
+                                    "xyz": [-0.41681109, -0.32385, 0.16966985],
+                                    "rpy": [0.0, 0.19491940, 0.0]
+                                },
+                                "geometry": {
+                                    "type": "box",
+                                    "size": [0.16907434, 0.0762, 0.01]
+                                }
+                            },
+                            {
+                                "origin": {
+                                    "xyz": [-0.36195, -0.32385, 0.07829550],
+                                    "rpy": [-1.5708, 0.0, 0.0]
+                                },
+                                "geometry": {
+                                    "type": "cylinder",
+                                    "radius": 0.0699,
+                                    "length": 0.0762
+                                }
+                            },
+                            {
+                                "origin": {
+                                    "xyz": [0.40005, -0.32385, 0.07829550],
+                                    "rpy": [-1.5708, 0.0, 0.0]
+                                },
+                                "geometry": {
+                                    "type": "cylinder",
+                                    "radius": 0.0699,
+                                    "length": 0.0762
+                                }
+                            },
+                            {
+                                "origin": {
+                                    "xyz": [-0.36195, -0.32385, 0.24848],
+                                    "rpy": [-1.5708, 0.0, 0.0]
+                                },
+                                "geometry": {
+                                    "type": "cylinder",
+                                    "radius": 0.0505,
+                                    "length": 0.0762
+                                }
+                            },
+
+                            {
+                                "origin": {
+                                    "xyz": [0.0, 0.32385, 0.002],
+                                    "rpy": [0.0, 0.0, 0.0]
+                                },
+                                "geometry": {
+                                    "type": "box",
+                                    "size": [0.30648173, 0.0762, 0.01]
+                                }
+                            },
+                            {
+                                "origin": {
+                                    "xyz": [0.277982455, 0.32385, 0.00772738],
+                                    "rpy": [0.0, -0.04581424, 0.0]
+                                },
+                                "geometry": {
+                                    "type": "box",
+                                    "size": [0.25034271, 0.0762, 0.01]
+                                }
+                            },
+                            {
+                                "origin": {
+                                    "xyz": [-0.259248495, 0.32385, 0.007739705],
+                                    "rpy": [0.0, 0.05405797, 0.0]
+                                },
+                                "geometry": {
+                                    "type": "box",
+                                    "size": [0.21272745, 0.0762, 0.01]
+                                }
+                            },
+                            {
+                                "origin": {
+                                    "xyz": [0.02974539, 0.32385, 0.21755967],
+                                    "rpy": [0.0, -1.45674325, 0.0]
+                                },
+                                "geometry": {
+                                    "type": "box",
+                                    "size": [0.78053195, 0.0762, 0.01]
+                                }
+                            },
+                            {
+                                "origin": {
+                                    "xyz": [-0.41681109, 0.32385, 0.16966985],
+                                    "rpy": [0.0, 0.19491940, 0.0]
+                                },
+                                "geometry": {
+                                    "type": "box",
+                                    "size": [0.16907434, 0.0762, 0.01]
+                                }
+                            },
+                            {
+                                "origin": {
+                                    "xyz": [-0.36195, 0.32385, 0.07829550],
+                                    "rpy": [-1.5708, 0.0, 0.0]
+                                },
+                                "geometry": {
+                                    "type": "cylinder",
+                                    "radius": 0.0699,
+                                    "length": 0.0762
+                                }
+                            },
+                            {
+                                "origin": {
+                                    "xyz": [0.40005, 0.32385, 0.07829550],
+                                    "rpy": [-1.5708, 0.0, 0.0]
+                                },
+                                "geometry": {
+                                    "type": "cylinder",
+                                    "radius": 0.0699,
+                                    "length": 0.0762
+                                }
+                            },
+                            {
+                                "origin": {
+                                    "xyz": [-0.36195, 0.32385, 0.24848],
+                                    "rpy": [-1.5708, 0.0, 0.0]
+                                },
+                                "geometry": {
+                                    "type": "cylinder",
+                                    "radius": 0.0505,
+                                    "length": 0.0762
+                                }
+                            }
+                        ]
+                    },
+                    "hopper_link": {
+                        "collision": [
+                            {
+                                "origin": { "xyz": [0.36340334, 0, 0.093810545] },
+                                "geometry": {
+                                    "type": "box",
+                                    "size": [0.81402490, 0.4699, 0.25108187]
+                                }
+                            },
+                            {
+                                "origin": {
+                                    "xyz": [0.301083685, 0, 0.259628655],
+                                    "rpy": [0, -0.31305275, 0]
+                                },
+                                "geometry": {
+                                    "type": "box",
+                                    "size": [0.72256744, 0.4699, 0.35301489]
+                                }
+                            },
+                            {
+                                "origin": {
+                                    "xyz": [0.748658735, 0, 0.237566115],
+                                    "rpy": [0, 0.88632076, 0]
+                                },
+                                "geometry": {
+                                    "type": "box",
+                                    "size": [0.71974804, 0.3429, 0.20457508]
+                                }
+                            },
+                            {
+                                "origin": {
+                                    "xyz": [0.97470279, 0, -0.07353489],
+                                    "rpy": [1.5708, 0, 0]
+                                },
+                                "geometry": {
+                                    "type": "cylinder",
+                                    "radius": 0.0842295,
+                                    "length": 0.26035
+                                }
+                            }
+                        ]
+                    },
+                    "lidar_link": {
+                        "collision": {
+                            "origin": { "xyz" : [0, 0, 0] },
+                            "geometry": {
+                                "type": "box",
+                                "size": [0.1, 0.5207, 0.1]
+                            }
+                        }
                     }
                 }
             }

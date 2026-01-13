@@ -65,6 +65,9 @@ static double act_val_to_gz_joint_target(double act_val)
 {
     double angle = (std::numbers::pi / 180.) * (15. + (act_val / 1000.) * -30.);
     return angle > 0.1 ? 0.1 : angle;
+
+    // L2:
+    // return (std::numbers::pi / 180.) * (10. + (act_val / 1000.) * -20.);
 }
 
 #define SIM_STEP_DT_MS 1
@@ -363,7 +366,7 @@ public:
                 // std::cout << "Received GZ Joint State Msg" << std::endl;
                 for (size_t i = 0; i < msg.name.size(); i++)
                 {
-                    if (msg.name[i] == "dump_joint")
+                    if (msg.name[i] == "dump_joint")    // L2: "hopper_joint"
                     {
                         double target = act_val_to_gz_joint_target(
                             this->linear_act_->position_);
