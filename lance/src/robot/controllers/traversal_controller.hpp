@@ -118,7 +118,7 @@ protected:
     void initPlanningService(const Vec3f&);
     void stopPlanningService();
 
-    void computeTraversal(
+    bool computeTraversal(
         const RobotMotorStatus& motor_status,
         RobotMotorCommands& commands);
 

@@ -188,8 +188,11 @@ void TraversalController::iterate(
         }
         case State::FOLLOW_PATH:
         {
-            this->computeTraversal(motor_status, commands);
-            break;
+            if (!this->computeTraversal(motor_status, commands))
+            {
+                break;
+            }
+            [[fallthrough]];
         }
         case State::REORIENT:
         {
@@ -201,10 +204,10 @@ void TraversalController::iterate(
         }
     }
 
-    if (joy)
-    {
-        debugTracksControl(*joy, this->params, commands);
-    }
+    // if (joy)
+    // {
+    //     debugTracksControl(*joy, this->params, commands);
+    // }
 }
 
 void TraversalController::initPlanningService(const Vec3f& dest)
@@ -233,7 +236,7 @@ void TraversalController::stopPlanningService()
 
 
 
-void TraversalController::computeTraversal(
+bool TraversalController::computeTraversal(
     const RobotMotorStatus& motor_status,
     RobotMotorCommands& commands)
 {
@@ -263,10 +266,10 @@ void TraversalController::computeTraversal(
         catch (const std::exception& e)
         {
             // failed to transform to robot frame
-            std::cout
-                << "--- TRAVERSAL ITERATION ---\nFailed to transform keypoints to robot frame\n"
-                << std::endl;
-            return;
+            // std::cout
+            //     << "--- TRAVERSAL ITERATION ---\nFailed to transform keypoints to robot frame\n"
+            //     << std::endl;
+            return false;
         }
     }
     else
@@ -277,6 +280,13 @@ void TraversalController::computeTraversal(
             keypoints[i].x() = static_cast<float>(pt.x);
             keypoints[i].y() = static_cast<float>(pt.y);
         }
+    }
+
+    if (keypoints.back().norm() <=
+        this->params.auto_traversal_keypoint_thresh_m)
+    {
+        commands.disableTracks();
+        return true;
     }
 
     // 2. FIND TARGET SEGMENT OR KEYPOINT
@@ -316,12 +326,12 @@ void TraversalController::computeTraversal(
     float backprop_max_vel = std::numeric_limits<float>::infinity();
     // float lv_max = this->params.auto_traversal_max_track_velocity_mps;
 
-    std::ostringstream os;
-    os << "--- TRAVERSAL ITERATION ---"
-        "\n#kp : " << keypoints.size() <<
-        "\nmatched seg : (" << seg_beg_idx << ", " << seg_end_idx << ")"
-        "\nseg proj t : " << seg_proj_t <<
-        "\nseg proj dist : " << seg_proj_dist;
+    // std::ostringstream os;
+    // os << "--- TRAVERSAL ITERATION ---"
+    //     "\n#kp : " << keypoints.size() <<
+    //     "\nmatched seg : (" << seg_beg_idx << ", " << seg_end_idx << ")"
+    //     "\nseg proj t : " << seg_proj_t <<
+    //     "\nseg proj dist : " << seg_proj_dist;
 
     // a. target final keypoint
     if (seg_beg_idx == seg_end_idx)
@@ -332,7 +342,7 @@ void TraversalController::computeTraversal(
             target_pt.norm(),
             this->params.auto_traversal_max_track_acceleration_mpss);
 
-        os << "\ncontrol mode : \"final keypoint\"";
+        // os << "\ncontrol mode : \"final keypoint\"";
     }
     // b. off the path
     else if (seg_proj_dist > this->params.auto_traversal_max_path_deviation_m)
@@ -352,9 +362,9 @@ void TraversalController::computeTraversal(
             seg_proj_dist,
             this->params.auto_traversal_max_track_acceleration_mpss);
 
-        os <<
-            "\ncontrol mode : \"return to path\""
-            "\njunction vmax : " << pt_vmax;
+        // os <<
+        //     "\ncontrol mode : \"return to path\""
+        //     "\njunction vmax : " << pt_vmax;
     }
     // c. follow the path
     else
@@ -375,11 +385,11 @@ void TraversalController::computeTraversal(
         const float target_dist_m =
             max_iter_vel * this->params.iteration_period_seconds;
 
-        os <<
-            "\ncontrol mode : \"follow path\""
-            "\nmax iter vel : " << max_iter_vel <<
-            "\ndecell dist : " << decell_dist_m <<
-            "\ntarget dist : " << target_dist_m;
+        // os <<
+        //     "\ncontrol mode : \"follow path\""
+        //     "\nmax iter vel : " << max_iter_vel <<
+        //     "\ndecell dist : " << decell_dist_m <<
+        //     "\ntarget dist : " << target_dist_m;
 
         target_pt = keypoints.back();
 
@@ -443,15 +453,42 @@ void TraversalController::computeTraversal(
         }
     }
 
-    os <<
-        "\ntarget pt : (x: " << target_pt.x() << ", y: " << target_pt.y() << ")"
-        "\nbp max vel : " << backprop_max_vel << "\n";
-    std::cout << os.str() << std::endl;
+    const float max_vel = std::min(
+        backprop_max_vel,
+        this->params.auto_traversal_max_track_velocity_mps);
+    const Vec2f dir =
+        Vec2f{target_pt.x() * 10.f, std::max(0.f, target_pt.y())}.normalized();
 
-    geometry_msgs::msg::PoseStamped pub_pt;
-    pub_pt.pose.position.x = target_pt.x();
-    pub_pt.pose.position.y = target_pt.y();
-    pub_pt.pose.position.z = 0.;
-    pub_pt.header.frame_id = this->params.robot_frame_id;
-    this->pub_map.publish("traversal_target_point", pub_pt);
+    // relative direction to track proportions
+    const float l1 = dir.y() + dir.x();
+    const float r1 = dir.y() - dir.x();
+    // renormalize and scale by max vel
+    const float s = max_vel / std::max({1.f, std::abs(l1), std::abs(r1)});
+    const float l2 = l1 * s;
+    const float r2 = r1 * s;
+    // compute normalization to constrain angular velocity
+    const float a = std::max(
+        1.f,
+        std::abs(
+            (r2 - l2) /
+            (static_cast<float>(TRACK_SEPARATION_M) *
+             this->params.auto_traversal_max_angular_velocity_rps)));
+    // apply results
+    commands.setTracksVelocity(
+        ground_mps_to_track_motor_rps(l2 / a),
+        ground_mps_to_track_motor_rps(r2 / a));
+
+    // os <<
+    //     "\ntarget pt : (x: " << target_pt.x() << ", y: " << target_pt.y() << ")"
+    //     "\nbp max vel : " << backprop_max_vel << "\n";
+    // std::cout << os.str() << std::endl;
+
+    // geometry_msgs::msg::PoseStamped pub_pt;
+    // pub_pt.pose.position.x = target_pt.x();
+    // pub_pt.pose.position.y = target_pt.y();
+    // pub_pt.pose.position.z = 0.;
+    // pub_pt.header.frame_id = this->params.robot_frame_id;
+    // this->pub_map.publish("traversal_target_point", pub_pt);
+
+    return false;
 }
