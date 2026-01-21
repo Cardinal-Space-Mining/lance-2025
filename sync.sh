@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-# ==========================
-# ROS2 Workspace Sync Script
-# Auto-detect workspace root
-# ==========================
-
 CACHE_FILE="/tmp/last_lance_sync.conf"
 
 # ---- AUTO-DETECT WORKSPACE ROOT ----
@@ -26,30 +21,28 @@ detect_workspace() {
   return 1
 }
 
-AUTO_LOCAL_WS="$(detect_workspace || true)"
-
 # ---- DEFAULTS ----
-LOCAL_WS="$AUTO_LOCAL_WS"
+LOCAL_WS="$(detect_workspace || true)"
 REMOTE_USER=""
 REMOTE_HOST=""
 REMOTE_WS=""
+DELETE_ENABLED=false
 
 SSH_PORT=22
 SSH_OPTS="-p $SSH_PORT"
 
-DELETE_ENABLED=true
-EXTRA_EXCLUDES=()
-
 RSYNC_BASE_OPTS=(-avz --progress)
+
 DRY_RUN=""
 
-# ---- ROS EXCLUDES (keep .git!) ----
-BASE_EXCLUDES=(
-  build/
-  install/
-  log/
-  __pycache__/
-)
+WS_EXCLUDES=("*csm-sim*")
+WS_INCLUDES=("src/***" ".git/***")
+
+BAG_EXCLUDES=()
+BAG_INCLUDES=("bag_recordings/***")
+
+EXCLUDES=()
+INCLUDES=()
 
 # ---- LOAD CACHE ----
 if [[ -f "$CACHE_FILE" ]]; then
@@ -65,18 +58,21 @@ usage() {
   echo "  -u USER        Remote SSH user"
   echo "  -h HOST        Remote IP or hostname"
   echo "  -r PATH        Remote workspace path"
-  echo "  -l PATH        Local workspace path (override auto-detect)"
+  echo "  -l PATH        Local workspace path"
   echo "  -n             Dry run"
-  echo "  --no-delete    Disable rsync --delete"
-  echo "  -x DIRS        Extra excludes (comma-separated, relative paths)"
+  echo "  -d             Apply rsync --delete"
+  echo "  -x PATTERNS    Exclude patterns (comma-separated, precedence over includes)"
+  echo "  -i PATTERNS    Include patterns (comma-separated)"
+  echo "  --force        Don't validate before running"
+  echo "  --ws           Sync workspace selection (preconfigured inc/exc, delete enabled)"
+  echo "  --bags         Sync bags (preconfigured inc/exc, delete disabled)"
   echo ""
-  echo "Workspace auto-detected as:"
-  echo "  ${AUTO_LOCAL_WS:-<not found>}"
   exit 1
 }
 
 # ---- PARSE ARGS ----
 MODE="$1"
+FORCE=false
 shift || true
 
 while [[ $# -gt 0 ]]; do
@@ -86,24 +82,43 @@ while [[ $# -gt 0 ]]; do
     -r) REMOTE_WS="$2"; shift 2 ;;
     -l) LOCAL_WS="$2"; shift 2 ;;
     -n) DRY_RUN="--dry-run"; shift ;;
-    --no-delete) DELETE_ENABLED=false; shift ;;
+    -d) DELETE_ENABLED=true; shift ;;
     -x)
-      IFS=',' read -ra EXTRA_EXCLUDES <<< "$2"
+      EXC=()
+      IFS=',' read -ra EXC <<< "$2"
+      EXCLUDES+=("${EXC[@]}")
       shift 2
       ;;
+    -i)
+      INC=()
+      IFS=',' read -ra INC <<< "$2"
+      INCLUDES+=("${INC[@]}")
+      shift 2
+      ;;
+    --force) FORCE=true; shift ;;
+    --ws)
+        DELETE_ENABLED=true
+        EXCLUDES+=("${WS_EXCLUDES[@]}")
+        INCLUDES+=("${WS_INCLUDES[@]}")
+        shift
+        ;;
+    --bags)
+        DELETE_ENABLED=false
+        EXCLUDES+=("${BAG_EXCLUDES[@]}")
+        INCLUDES+=("${BAG_INCLUDES[@]}")
+        shift
+        ;;
     *) usage ;;
   esac
 done
 
+# ---- VALIDATION ----
 if [[ -z "$MODE" ]]; then
   usage
 fi
 
-# ---- VALIDATION ----
 if [[ -z "$LOCAL_WS" ]]; then
   echo "Could not determine local workspace root."
-  echo "Run the script from inside a ROS 2 workspace src/ tree,"
-  echo "or specify -l <path>."
   exit 1
 fi
 
@@ -113,30 +128,28 @@ if [[ -z "$REMOTE_USER" || -z "$REMOTE_HOST" || -z "$REMOTE_WS" ]]; then
   exit 1
 fi
 
-# ---- BUILD RSYNC OPTIONS ----
-RSYNC_OPTS=("${RSYNC_BASE_OPTS[@]}")
-[[ "$DELETE_ENABLED" == true ]] && RSYNC_OPTS+=(--delete)
-[[ -n "$DRY_RUN" ]] && RSYNC_OPTS+=("$DRY_RUN")
-
-# ---- BUILD EXCLUDES ----
-RSYNC_EXCLUDES=()
-for ex in "${BASE_EXCLUDES[@]}"; do
-  RSYNC_EXCLUDES+=(--exclude "$ex")
-done
-
-for ex in "${EXTRA_EXCLUDES[@]}"; do
-  RSYNC_EXCLUDES+=(--exclude "$ex")
-done
-
-# ---- SAVE CACHE ----
+# ---- SAVE CACHE (NO include patterns!) ----
 cat > "$CACHE_FILE" <<EOF
 REMOTE_USER="$REMOTE_USER"
 REMOTE_HOST="$REMOTE_HOST"
 REMOTE_WS="$REMOTE_WS"
 LOCAL_WS="$LOCAL_WS"
-DELETE_ENABLED=$DELETE_ENABLED
-EXTRA_EXCLUDES="${EXTRA_EXCLUDES[*]}"
 EOF
+
+# ---- BUILD RSYNC OPTIONS ----
+RSYNC_OPTS=("${RSYNC_BASE_OPTS[@]}")
+[[ "$DELETE_ENABLED" == true ]] && RSYNC_OPTS+=(--delete)
+[[ -n "$DRY_RUN" ]] && RSYNC_OPTS+=("$DRY_RUN")
+
+# ---- BUILD FILTER RULES ----
+RSYNC_FILTERS=()
+for exc in "${EXCLUDES[@]}"; do
+    RSYNC_FILTERS+=(--exclude "$exc")
+done
+for inc in "${INCLUDES[@]}"; do
+    RSYNC_FILTERS+=(--include "$inc")
+done
+RSYNC_FILTERS+=(--exclude "*")
 
 REMOTE="$REMOTE_USER@$REMOTE_HOST"
 
@@ -153,26 +166,47 @@ case "$MODE" in
   twoway)
     echo "Two-way sync"
     echo "WARNING: This may delete files on either side!"
-    read -p "Continue? (y/N): " confirm
-    [[ "$confirm" != "y" ]] && exit 0
     ;;
   *)
-    usage
-    ;;
+    usage ;;
 esac
 
 if [[ "$MODE" == "push" || "$MODE" == "twoway" ]]; then
-  rsync "${RSYNC_OPTS[@]}" -e "ssh $SSH_OPTS" \
-    "${RSYNC_EXCLUDES[@]}" \
-    "$LOCAL_WS/" \
-    "$REMOTE:$REMOTE_WS/"
+    PUSH_CMD=(
+        rsync
+        "${RSYNC_OPTS[@]}"
+        -e "ssh $SSH_OPTS"
+        "${RSYNC_FILTERS[@]}"
+        "$LOCAL_WS/"
+        "$REMOTE:$REMOTE_WS/"
+    )
+    if [[ "${FORCE}" == false ]]; then
+        echo "${PUSH_CMD[@]}"
+    fi
+fi
+if [[ "$MODE" == "pull" || "$MODE" == "twoway" ]]; then
+    PULL_CMD=(
+        rsync
+        "${RSYNC_OPTS[@]}"
+        -e "ssh $SSH_OPTS"
+        "${RSYNC_FILTERS[@]}"
+        "$REMOTE:$REMOTE_WS/"
+        "$LOCAL_WS/"
+    )
+    if [[ "${FORCE}" == false ]]; then
+        echo "${PULL_CMD[@]}"
+    fi
+fi
+if [[ "${FORCE}" == false ]]; then
+    read -p "Do you want to continue? (Y/n): " confirm
+    [[ "$confirm" != "Y" ]] && exit 0
 fi
 
-if [[ "$MODE" == "pull" || "$MODE" == "twoway" ]]; then
-  rsync "${RSYNC_OPTS[@]}" -e "ssh $SSH_OPTS" \
-    "${RSYNC_EXCLUDES[@]}" \
-    "$REMOTE:$REMOTE_WS/" \
-    "$LOCAL_WS/"
+if [[ -n "${PUSH_CMD}" ]]; then
+    "${PUSH_CMD[@]}"
+fi
+if [[ -n "${PULL_CMD}" ]]; then
+    "${PULL_CMD[@]}"
 fi
 
 echo "Sync complete."
