@@ -1,6 +1,9 @@
 ## LANCE-2025
 This repo houses all client and robot code used for running LANCE "1.5" (2025). If setting up from scratch, you will want to read this entire document. For instructions on building/running, see the relevant sections: [BUILDING](#building) | [RUNNING](#running).
 
+> [!IMPORTANT]
+> This is now considered legacy code, however, development for LANCE-1.5/2 continues [here](https://github.com/Cardinal-Space-Mining/lance-2026).
+
 ## Workspace Setup
 Create a new workspace directory
 ```
@@ -119,4 +122,4 @@ The build script exports compile commands which can help VSCode's C/C++ extensio
     "version": 4
 }
 ```
-__*Last updated: 9/13/25*__
+__*Last updated: 1/21/26*__
