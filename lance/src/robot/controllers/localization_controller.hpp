@@ -1,5 +1,5 @@
 /*******************************************************************************
-*   Copyright (C) 2024-2025 Cardinal Space Mining Club                         *
+*   Copyright (C) 2025-2026 Cardinal Space Mining Club                         *
 *                                                                              *
 *                                 ;xxxxxxx:                                    *
 *                                ;$$$$$$$$$       ...::..                      *
@@ -66,7 +66,11 @@ class LocalizationController
     using RclClientPtr = typename rclcpp::Client<T>::SharedPtr;
 
 public:
-    LocalizationController(RclNode&, GenericPubMap&, const RobotParams&, const Tf2Buffer&);
+    LocalizationController(
+        RclNode&,
+        GenericPubMap&,
+        const RobotParams&,
+        const Tf2Buffer&);
     ~LocalizationController() = default;
 
 public:

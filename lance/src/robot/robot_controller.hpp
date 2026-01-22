@@ -1,5 +1,5 @@
 /*******************************************************************************
-*   Copyright (C) 2024-2025 Cardinal Space Mining Club                         *
+*   Copyright (C) 2025-2026 Cardinal Space Mining Club                         *
 *                                                                              *
 *                                 ;xxxxxxx:                                    *
 *                                ;$$$$$$$$$       ...::..                      *
@@ -74,6 +74,7 @@ public:
 
 public:
     const HopperState& hopperState() const;
+    const RobotParams& getParams() const;
 
     void iterate(
         int32_t watchdog,

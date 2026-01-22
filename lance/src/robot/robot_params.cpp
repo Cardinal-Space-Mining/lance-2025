@@ -1,5 +1,5 @@
 /*******************************************************************************
-*   Copyright (C) 2024-2025 Cardinal Space Mining Club                         *
+*   Copyright (C) 2025-2026 Cardinal Space Mining Club                         *
 *                                                                              *
 *                                 ;xxxxxxx:                                    *
 *                                ;$$$$$$$$$       ...::..                      *
@@ -133,7 +133,58 @@ RobotParams::RobotParams(rclcpp::Node& node) :
         node,
         "preset_mining_traversal_dist_meters",
         0.25f)},
-    preset_offload_backup_dist_meters{
-        declare_and_get_param(node, "preset_offload_backup_dist_meters", 0.25f)}
+    preset_offload_backup_dist_meters{declare_and_get_param(
+        node,
+        "preset_offload_backup_dist_meters",
+        0.25f)},
+
+    iteration_period_seconds{
+        declare_and_get_param(node, "iteration_period_seconds", 0.05f)},
+    robot_frame_id{declare_and_get_param<std::string>(
+        node,
+        "robot_frame_id",
+        "base_link")},
+    odom_frame_id{
+        declare_and_get_param<std::string>(node, "odom_frame_id", "odom")},
+    arena_frame_id{
+        declare_and_get_param<std::string>(node, "arena_frame_id", "map")},
+
+    auto_traversal_max_track_velocity_mps{declare_and_get_param(
+        node,
+        "auto_traversal.max_track_velocity_mps",
+        0.25f)},
+    auto_traversal_max_angular_velocity_rps{declare_and_get_param(
+        node,
+        "auto_traversal.max_angular_velocity_rps",
+        1.f)},
+    auto_traversal_max_track_acceleration_mpss{declare_and_get_param(
+        node,
+        "auto_traversal.max_acceleration_mpss",
+        0.5f)},
+    auto_traversal_keypoint_thresh_m{
+        declare_and_get_param(node, "auto_traversal.keypoint_thresh_m", 0.03f)},
+    auto_traversal_max_path_deviation_m{declare_and_get_param(
+        node,
+        "auto_traversal.max_path_deviation_m",
+        0.03f)}
 {
+    std::vector<double> buff;
+
+    declare_param(node, "mining_zone_bounds.min", buff, {0., 0.});
+    assert(buff.size() > 1);
+    this->mining_zone_bounds.min().x() = static_cast<float>(buff[0]);
+    this->mining_zone_bounds.min().y() = static_cast<float>(buff[1]);
+    declare_param(node, "mining_zone_bounds.max", buff, {0., 0.});
+    assert(buff.size() > 1);
+    this->mining_zone_bounds.max().x() = static_cast<float>(buff[0]);
+    this->mining_zone_bounds.max().y() = static_cast<float>(buff[1]);
+
+    declare_param(node, "offload_zone_bounds.min", buff, {0., 0.});
+    assert(buff.size() > 1);
+    this->offload_zone_bounds.min().x() = static_cast<float>(buff[0]);
+    this->offload_zone_bounds.min().y() = static_cast<float>(buff[1]);
+    declare_param(node, "offload_zone_bounds.max", buff, {0., 0.});
+    assert(buff.size() > 1);
+    this->offload_zone_bounds.max().x() = static_cast<float>(buff[0]);
+    this->offload_zone_bounds.max().y() = static_cast<float>(buff[1]);
 }

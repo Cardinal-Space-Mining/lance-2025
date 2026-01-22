@@ -1,3 +1,42 @@
+/*******************************************************************************
+*   Copyright (C) 2025-2026 Cardinal Space Mining Club                         *
+*                                                                              *
+*                                 ;xxxxxxx:                                    *
+*                                ;$$$$$$$$$       ...::..                      *
+*                                $$$$$$$$$$x   .:::::::::::..                  *
+*                             x$$$$$$$$$$$$$$::::::::::::::::.                 *
+*                         :$$$$$&X;      .xX:::::::::::::.::...                *
+*                 .$$Xx++$$$$+  :::.     :;:   .::::::.  ....  :               *
+*                :$$$$$$$$$  ;:      ;xXXXXXXXx  .::.  .::::. .:.              *
+*               :$$$$$$$$: ;      ;xXXXXXXXXXXXXx: ..::::::  .::.              *
+*              ;$$$$$$$$ ::   :;XXXXXXXXXXXXXXXXXX+ .::::.  .:::               *
+*               X$$$$$X : +XXXXXXXXXXXXXXXXXXXXXXXX; .::  .::::.               *
+*                .$$$$ :xXXXXXXXXXXXXXXXXXXXXXXXXXXX.   .:::::.                *
+*                 X$$X XXXXXXXXXXXXXXXXXXXXXXXXXXXXx:  .::::.                  *
+*                 $$$:.XXXXXXXXXXXXXXXXXXXXXXXXXXX  ;; ..:.                    *
+*                 $$& :XXXXXXXXXXXXXXXXXXXXXXXX;  +XX; X$$;                    *
+*                 $$$: XXXXXXXXXXXXXXXXXXXXXX; :XXXXX; X$$;                    *
+*                 X$$X XXXXXXXXXXXXXXXXXXX; .+XXXXXXX; $$$                     *
+*                 $$$$ ;XXXXXXXXXXXXXXX+  +XXXXXXXXx+ X$$$+                    *
+*               x$$$$$X ;XXXXXXXXXXX+ :xXXXXXXXX+   .;$$$$$$                   *
+*              +$$$$$$$$ ;XXXXXXx;;+XXXXXXXXX+    : +$$$$$$$$                  *
+*               +$$$$$$$$: xXXXXXXXXXXXXXX+      ; X$$$$$$$$                   *
+*                :$$$$$$$$$. +XXXXXXXXX;      ;: x$$$$$$$$$                    *
+*                ;x$$$$XX$$$$+ .;+X+      :;: :$$$$$xX$$$X                     *
+*               ;;;;;;;;;;X$$$$$$$+      :X$$$$$$&.                            *
+*               ;;;;;;;:;;;;;x$$$$$$$$$$$$$$$$x.                               *
+*               :;;;;;;;;;;;;.  :$$$$$$$$$$X                                   *
+*                .;;;;;;;;:;;    +$$$$$$$$$                                    *
+*                  .;;;;;;.       X$$$$$$$:                                    *
+*                                                                              *
+*   Unless required by applicable law or agreed to in writing, software        *
+*   distributed under the License is distributed on an "AS IS" BASIS,          *
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   *
+*   See the License for the specific language governing permissions and        *
+*   limitations under the License.                                             *
+*                                                                              *
+*******************************************************************************/
+
 #include <chrono>
 #include <memory>
 #include <string>
@@ -16,6 +55,7 @@
 
 
 using namespace util;
+using namespace util::ros_aliases;
 using namespace std::chrono_literals;
 
 #define ROBOT_TOPIC(subtopic) "/lance/" subtopic
@@ -33,9 +73,9 @@ class Phoenix5Driver : public rclcpp::Node
     struct RclTalonSRX
     {
         TalonSRX motor;
-        RclPubPtr<TalonInfoMsg> info_pub;
-        RclPubPtr<TalonFaultsMsg> faults_pub;
-        RclSubPtr<TalonCtrlMsg> ctrl_sub;
+        SharedPub<TalonInfoMsg> info_pub;
+        SharedPub<TalonFaultsMsg> faults_pub;
+        SharedSub<TalonCtrlMsg> ctrl_sub;
     };
 
 public:
@@ -56,10 +96,10 @@ private:
 private:
     RclTalonSRX hopper_act;
 
-    RclSubPtr<Int32Msg> watchdog_status_sub;
+    SharedSub<Int32Msg> watchdog_status_sub;
 
-    RclTimerPtr info_pub_timer;
-    RclTimerPtr fault_pub_timer;
+    RclTimer info_pub_timer;
+    RclTimer fault_pub_timer;
 
     bool is_disabled = false;
 };

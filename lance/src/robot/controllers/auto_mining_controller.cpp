@@ -1,5 +1,5 @@
 /*******************************************************************************
-*   Copyright (C) 2024-2025 Cardinal Space Mining Club                         *
+*   Copyright (C) 2025-2026 Cardinal Space Mining Club                         *
 *                                                                              *
 *                                 ;xxxxxxx:                                    *
 *                                ;$$$$$$$$$       ...::..                      *
@@ -38,6 +38,8 @@
 *******************************************************************************/
 
 #include "auto_mining_controller.hpp"
+
+#include <Eigen/Core>
 
 
 AutoMiningController::AutoMiningController(
@@ -84,7 +86,7 @@ void AutoMiningController::iterate(
             }
 
             // init with planned destination
-            this->traversal_controller.initialize();
+            this->traversal_controller.initializePoint(Eigen::Vector2f::Zero());
             this->stage = Stage::TRAVERSING;
             [[fallthrough]];
         }

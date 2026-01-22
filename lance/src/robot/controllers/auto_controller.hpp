@@ -1,5 +1,5 @@
 /*******************************************************************************
-*   Copyright (C) 2024-2025 Cardinal Space Mining Club                         *
+*   Copyright (C) 2025-2026 Cardinal Space Mining Club                         *
 *                                                                              *
 *                                 ;xxxxxxx:                                    *
 *                                ;$$$$$$$$$       ...::..                      *
@@ -85,10 +85,10 @@ protected:
     enum class Stage
     {
         LOCALIZATION = 0,
+        TRAVERSE_TO_MINING,
         MINING,
-        TRAVERSAL,
+        TRAVERSE_TO_OFFLOAD,
         OFFLOAD,
-        RETRAVERSAL,
         UNKNOWN
     };
 

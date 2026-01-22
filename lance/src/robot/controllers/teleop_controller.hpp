@@ -1,5 +1,5 @@
 /*******************************************************************************
-*   Copyright (C) 2024-2025 Cardinal Space Mining Club                         *
+*   Copyright (C) 2025-2026 Cardinal Space Mining Club                         *
 *                                                                              *
 *                                 ;xxxxxxx:                                    *
 *                                ;$$$$$$$$$       ...::..                      *
@@ -41,7 +41,6 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "../hid_bindings.hpp"
 #include "../robot_params.hpp"
 #include "../motor_interface.hpp"
 #include "../collection_state.hpp"

@@ -1,5 +1,5 @@
 /*******************************************************************************
-*   Copyright (C) 2024-2025 Cardinal Space Mining Club                         *
+*   Copyright (C) 2025-2026 Cardinal Space Mining Club                         *
 *                                                                              *
 *                                 ;xxxxxxx:                                    *
 *                                ;$$$$$$$$$       ...::..                      *
@@ -39,48 +39,69 @@
 
 #pragma once
 
+#include <string>
+
+#include <Eigen/Geometry>
+
 #include <rclcpp/rclcpp.hpp>
 
 
 struct RobotParams
 {
+    using Box2f = Eigen::AlignedBox2f;
+
 public:
-    float default_stick_deadzone;
-    float driving_magnitude_deadzone;
-    float driving_low_scalar;
-    float driving_medium_scalar;
-    float driving_high_scalar;
+    const float default_stick_deadzone;
+    const float driving_magnitude_deadzone;
+    const float driving_low_scalar;
+    const float driving_medium_scalar;
+    const float driving_high_scalar;
 
-    float trencher_max_velocity_rps;
-    float trencher_mining_velocity_rps;
-    float hopper_belt_max_velocity_rps;
-    float hopper_belt_mining_velocity_rps;
-    float tracks_max_velocity_rps;
-    float tracks_mining_velocity_rps;
-    float tracks_mining_adjustment_range_rps;
-    float tracks_offload_velocity_rps;
+    const float trencher_max_velocity_rps;
+    const float trencher_mining_velocity_rps;
+    const float hopper_belt_max_velocity_rps;
+    const float hopper_belt_mining_velocity_rps;
+    const float tracks_max_velocity_rps;
+    const float tracks_mining_velocity_rps;
+    const float tracks_mining_adjustment_range_rps;
+    const float tracks_offload_velocity_rps;
 
-    float hopper_actuator_max_speed;
-    float hopper_actuator_plunge_speed;
-    float hopper_actuator_extract_speed;
+    const float hopper_actuator_max_speed;
+    const float hopper_actuator_plunge_speed;
+    const float hopper_actuator_extract_speed;
 
-    float hopper_actuator_offload_target;
-    float hopper_actuator_traversal_target;
-    float hopper_actuator_transport_target;
-    float hopper_actuator_mining_target;
-    float hopper_actuator_mining_min;
-    float hopper_actuator_targetting_thresh;
+    const float hopper_actuator_offload_target;
+    const float hopper_actuator_traversal_target;
+    const float hopper_actuator_transport_target;
+    const float hopper_actuator_mining_target;
+    const float hopper_actuator_mining_min;
+    const float hopper_actuator_targetting_thresh;
 
-    float hopper_belt_mining_duty_cycle_base_seconds;
+    const float hopper_belt_mining_duty_cycle_base_seconds;
 
-    float collection_model_initial_volume_liters;
-    float collection_model_capacity_volume_liters;
-    float collection_model_initial_belt_footprint_meters;
-    float collection_model_belt_capacity_meters;
-    float collection_model_belt_offload_length_meters;
+    const float collection_model_initial_volume_liters;
+    const float collection_model_capacity_volume_liters;
+    const float collection_model_initial_belt_footprint_meters;
+    const float collection_model_belt_capacity_meters;
+    const float collection_model_belt_offload_length_meters;
 
-    float preset_mining_traversal_dist_meters;
-    float preset_offload_backup_dist_meters;
+    const float preset_mining_traversal_dist_meters;
+    const float preset_offload_backup_dist_meters;
+
+    const float iteration_period_seconds;
+
+    const std::string robot_frame_id;
+    const std::string odom_frame_id;
+    const std::string arena_frame_id;
+
+    Box2f mining_zone_bounds;
+    Box2f offload_zone_bounds;
+
+    const float auto_traversal_max_track_velocity_mps;
+    const float auto_traversal_max_angular_velocity_rps;
+    const float auto_traversal_max_track_acceleration_mpss;
+    const float auto_traversal_keypoint_thresh_m;
+    const float auto_traversal_max_path_deviation_m;
 
 public:
     RobotParams(rclcpp::Node&);

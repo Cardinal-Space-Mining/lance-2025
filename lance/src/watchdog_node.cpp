@@ -1,5 +1,5 @@
 /*******************************************************************************
-*   Copyright (C) 2024-2025 Cardinal Space Mining Club                         *
+*   Copyright (C) 2025-2026 Cardinal Space Mining Club                         *
 *                                                                              *
 *                                 ;xxxxxxx:                                    *
 *                                ;$$$$$$$$$       ...::..                      *
@@ -44,9 +44,12 @@
 
 #include "lance/srv/set_robot_mode.hpp"
 
+#include "util/ros_utils.hpp"
 
-using namespace std::chrono_literals;
+
 using namespace std::chrono;
+using namespace std::chrono_literals;
+using namespace util::ros_aliases;
 
 
 #define WATCHDOG_PUB_DT           100ms
@@ -58,12 +61,6 @@ using namespace std::chrono;
 
 class RobotStatusServer : public rclcpp::Node
 {
-    template<typename T>
-    using RclPubPtr = typename rclcpp::Publisher<T>::SharedPtr;
-    template<typename T>
-    using RclSrvPtr = typename rclcpp::Service<T>::SharedPtr;
-    using RclTimerPtr = rclcpp::TimerBase::SharedPtr;
-
     using Int32Msg = std_msgs::msg::Int32;
     using SetRobotModeSrv = lance::srv::SetRobotMode;
 
@@ -111,9 +108,9 @@ protected:
     }
 
 protected:
-    RclPubPtr<Int32Msg> watchdog_status_pub;
-    RclSrvPtr<SetRobotModeSrv> robot_state_service;
-    RclTimerPtr watchdog_timer;
+    SharedPub<Int32Msg> watchdog_status_pub;
+    SharedSrv<SetRobotModeSrv> robot_state_service;
+    RclTimer watchdog_timer;
 
     int robot_mode{0};
 };

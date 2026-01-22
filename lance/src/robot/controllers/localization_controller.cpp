@@ -1,5 +1,5 @@
 /*******************************************************************************
-*   Copyright (C) 2024-2025 Cardinal Space Mining Club                         *
+*   Copyright (C) 2025-2026 Cardinal Space Mining Club                         *
 *                                                                              *
 *                                 ;xxxxxxx:                                    *
 *                                ;$$$$$$$$$       ...::..                      *
@@ -80,7 +80,11 @@ bool LocalizationController::isFinished()
     return this->stage == Stage::FINISHED;
 }
 
-void LocalizationController::setCancelled() { this->stage = Stage::FINISHED; }
+void LocalizationController::setCancelled()
+{
+    this->stage = Stage::FINISHED;
+    this->setLfdControl(false);
+}
 
 void LocalizationController::iterate(
     const RobotMotorStatus& motor_status,

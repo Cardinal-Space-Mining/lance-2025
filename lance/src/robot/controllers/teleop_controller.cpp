@@ -1,5 +1,5 @@
 /*******************************************************************************
-*   Copyright (C) 2024-2025 Cardinal Space Mining Club                         *
+*   Copyright (C) 2025-2026 Cardinal Space Mining Club                         *
 *                                                                              *
 *                                 ;xxxxxxx:                                    *
 *                                ;$$$$$$$$$       ...::..                      *
@@ -38,6 +38,8 @@
 *******************************************************************************/
 
 #include "teleop_controller.hpp"
+
+#include "../hid_bindings.hpp"
 
 
 TeleopController::TeleopController(

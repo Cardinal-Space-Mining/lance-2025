@@ -26,16 +26,12 @@
 
 #include "ros_utils.hpp"
 
+using namespace util::ros_aliases;
 using namespace std::chrono_literals;
 
 using TalonCtrlMsg = phoenix_ros_driver::msg::TalonCtrl;
 using TalonInfoMsg = phoenix_ros_driver::msg::TalonInfo;
 using TalonFaultsMsg = phoenix_ros_driver::msg::TalonFaults;
-
-template<typename T>
-using RclPubPtr = typename rclcpp::Publisher<T>::SharedPtr;
-template<typename T>
-using RclSubPtr = typename rclcpp::Subscription<T>::SharedPtr;
 
 using OdometryMsg = nav_msgs::msg::Odometry;
 using Int32Msg = std_msgs::msg::Int32;
@@ -43,7 +39,7 @@ using Float64Msg = std_msgs::msg::Float64;
 using JointStateMsg = sensor_msgs::msg::JointState;
 using TwistMsg = geometry_msgs::msg::Twist;
 
-static constexpr double TRACK_WIDTH_M = 0.579;
+static constexpr double TRACK_WIDTH_M = 0.636;
 static constexpr double TRACK_EFFECTIVE_OUTPUT_RADIUS_M = 0.07032851;
 static constexpr double TRACK_GEARING = 64.;
 
@@ -69,6 +65,9 @@ static double act_val_to_gz_joint_target(double act_val)
 {
     double angle = (std::numbers::pi / 180.) * (15. + (act_val / 1000.) * -30.);
     return angle > 0.1 ? 0.1 : angle;
+
+    // L2:
+    // return (std::numbers::pi / 180.) * (10. + (act_val / 1000.) * -20.);
 }
 
 #define SIM_STEP_DT_MS 1
@@ -326,11 +325,11 @@ public:
 // -----------------------------
 // Simulator Node
 // -----------------------------
-class PhoenixPhysicalSimulator : public rclcpp::Node
+class PhoenixPhysicalSimulator : public RclNode
 {
 public:
     PhoenixPhysicalSimulator() :
-        Node("phoenix_physical_simulator"),
+        RclNode("phoenix_physical_simulator"),
         battery_(16.0, 0.01),  // 10mΩ internal resistance
         use_gz_track_feedback(util::declare_and_get_param(*this, "use_gz_track_feedback", false))
     {
@@ -367,7 +366,7 @@ public:
                 // std::cout << "Received GZ Joint State Msg" << std::endl;
                 for (size_t i = 0; i < msg.name.size(); i++)
                 {
-                    if (msg.name[i] == "dump_joint")
+                    if (msg.name[i] == "dump_joint")    // L2: "hopper_joint"
                     {
                         double target = act_val_to_gz_joint_target(
                             this->linear_act_->position_);
@@ -533,21 +532,21 @@ private:
     std::unordered_map<std::string, std::shared_ptr<FalconMotorSim>> motors_;
     std::shared_ptr<LinearActuatorSim> linear_act_;
 
-    std::unordered_map<std::string, RclPubPtr<TalonInfoMsg>> publisher_info_;
-    std::unordered_map<std::string, RclPubPtr<TalonFaultsMsg>>
+    std::unordered_map<std::string, SharedPub<TalonInfoMsg>> publisher_info_;
+    std::unordered_map<std::string, SharedPub<TalonFaultsMsg>>
         publisher_faults_;
-    std::unordered_map<std::string, RclSubPtr<TalonCtrlMsg>> subscription_ctrl_;
+    std::unordered_map<std::string, SharedSub<TalonCtrlMsg>> subscription_ctrl_;
 
-    RclSubPtr<Int32Msg> watchdog_sub_;
+    SharedSub<Int32Msg> watchdog_sub_;
 
-    RclSubPtr<JointStateMsg> gz_joint_sub;
-    RclSubPtr<OdometryMsg> left_track_odom_sub;
-    RclSubPtr<OdometryMsg> right_track_odom_sub;
-    RclPubPtr<Float64Msg> act_vel_pub;
-    RclPubPtr<TwistMsg> track_twist_pub;
+    SharedSub<JointStateMsg> gz_joint_sub;
+    SharedSub<OdometryMsg> left_track_odom_sub;
+    SharedSub<OdometryMsg> right_track_odom_sub;
+    SharedPub<Float64Msg> act_vel_pub;
+    SharedPub<TwistMsg> track_twist_pub;
 
-    rclcpp::TimerBase::SharedPtr sim_timer_;
-    rclcpp::TimerBase::SharedPtr io_timer_;
+    RclTimer sim_timer_;
+    RclTimer io_timer_;
 };
 
 int main(int argc, char** argv)

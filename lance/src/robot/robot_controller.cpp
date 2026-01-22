@@ -1,5 +1,5 @@
 /*******************************************************************************
-*   Copyright (C) 2024-2025 Cardinal Space Mining Club                         *
+*   Copyright (C) 2025-2026 Cardinal Space Mining Club                         *
 *                                                                              *
 *                                 ;xxxxxxx:                                    *
 *                                ;$$$$$$$$$       ...::..                      *
@@ -84,6 +84,11 @@ RobotController::RobotController(RclNode& node, GenericPubMap& pub_map) :
 const HopperState& RobotController::hopperState() const
 {
     return this->collection_state.getHopperState();
+}
+
+const RobotParams& RobotController::getParams() const
+{
+    return this->params;
 }
 
 void RobotController::iterate(

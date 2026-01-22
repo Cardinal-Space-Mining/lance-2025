@@ -1,5 +1,5 @@
 /*******************************************************************************
-*   Copyright (C) 2024-2025 Cardinal Space Mining Club                         *
+*   Copyright (C) 2025-2026 Cardinal Space Mining Club                         *
 *                                                                              *
 *                                 ;xxxxxxx:                                    *
 *                                ;$$$$$$$$$       ...::..                      *
@@ -44,6 +44,7 @@
 
 static constexpr double TRACK_GEARING = 64.;
 static constexpr double TRACK_EFFECTIVE_OUTPUT_RADIUS_M = 0.07032851;
+static constexpr double TRACK_SEPARATION_M = 0.636;
 
 static constexpr double TRENCHER_WIDTH_M = 0.254;
 static constexpr double TRENCHER_GEARING = 32.;

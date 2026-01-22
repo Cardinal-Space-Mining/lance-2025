@@ -1,5 +1,5 @@
 /*******************************************************************************
-*   Copyright (C) 2024-2025 Cardinal Space Mining Club                         *
+*   Copyright (C) 2025-2026 Cardinal Space Mining Club                         *
 *                                                                              *
 *                                 ;xxxxxxx:                                    *
 *                                ;$$$$$$$$$       ...::..                      *
@@ -69,6 +69,8 @@ using AssistedOffloadToggleButton = StaticJoyButton<Buttons::R_STICK>;
 
 using PresetMiningInitButton = StaticJoyButton<Buttons::BACK>;
 using PresetOffloadInitButton = StaticJoyButton<Buttons::START>;
+
+using ToggleTraversalCursorMode = StaticJoyButton<Buttons::LOGITECH>;
 
 // using PresetMiningStartButton =
 //     StaticJoyPov<Axes::DPAD_U_D, Axes::DPAD_K::DPAD_UP>;
